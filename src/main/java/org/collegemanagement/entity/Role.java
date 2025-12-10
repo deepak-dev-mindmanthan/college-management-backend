@@ -12,7 +12,7 @@ import org.collegemanagement.enums.RoleType;
 @Getter
 @Setter
 @NoArgsConstructor
-@AllArgsConstructor
+@AllArgsConstructor()
 public class Role {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -20,4 +20,8 @@ public class Role {
     @Enumerated(EnumType.STRING)
     @Column(unique = true, nullable = false)
     private RoleType name;
+
+    public Role(RoleType roleType) {
+        this.name = roleType;
+    }
 }
