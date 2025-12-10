@@ -1,30 +1,26 @@
 package org.collegemanagement.dto;
 
-
 import lombok.Getter;
 import lombok.Setter;
-import org.collegemanagement.enums.Status;
 import org.collegemanagement.enums.BillingCycle;
 import org.collegemanagement.enums.SubscriptionPlan;
 
 @Getter
 @Setter
-
-public class CollegeRequest {
-
-    private Long id;
+public class TenantSignUpRequest {
+    // College information
     private String collegeName;
     private String collegeEmail;
     private String collegePhone;
     private String collegeAddress;
-    private Status status;
 
-    // College Admin details
+    // Admin information
     private String adminName;
     private String adminEmail;
     private String adminPassword;
 
-    // Subscription configuration (optional - defaults applied when missing)
+    // Subscription information
     private SubscriptionPlan subscriptionPlan;
     private BillingCycle billingCycle;
 }
+

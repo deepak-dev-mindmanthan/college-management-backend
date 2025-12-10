@@ -1,13 +1,17 @@
 package org.collegemanagement.controllers;
 
-import org.collegemanagement.entity.Role;
-import org.collegemanagement.enums.RoleType;
-import org.collegemanagement.enums.Status;
-import org.collegemanagement.entity.User;
 import org.collegemanagement.dto.CollegeDto;
 import org.collegemanagement.dto.CollegeRequest;
+import org.collegemanagement.dto.SubscriptionDto;
+import org.collegemanagement.dto.SubscriptionRequest;
+import org.collegemanagement.entity.College;
+import org.collegemanagement.entity.Role;
+import org.collegemanagement.entity.User;
+import org.collegemanagement.enums.RoleType;
+import org.collegemanagement.enums.Status;
 import org.collegemanagement.services.CollegeService;
 import org.collegemanagement.services.RoleService;
+import org.collegemanagement.services.SubscriptionService;
 import org.collegemanagement.services.UserManager;
 import org.springframework.http.ResponseEntity;
 import org.springframework.transaction.annotation.Transactional;
@@ -26,11 +30,13 @@ public class SuperAdminController {
     private final CollegeService collegeService;
     private final UserManager userManager;
     private final RoleService roleService;
+    private final SubscriptionService subscriptionService;
 
-    public SuperAdminController(CollegeService collegeService, UserManager userManager, RoleService roleService) {
+    public SuperAdminController(CollegeService collegeService, UserManager userManager, RoleService roleService, SubscriptionService subscriptionService) {
         this.collegeService = collegeService;
         this.userManager = userManager;
         this.roleService = roleService;
+        this.subscriptionService = subscriptionService;
     }
 
     @PostMapping("/college/create")
@@ -52,12 +58,21 @@ public class SuperAdminController {
                 .build();
 
         CollegeDto college = collegeService.create(collegeDto);
+        College collegeEntity = collegeService.findByEmail(collegeDto.getEmail());
+        SubscriptionDto subscription = SubscriptionDto.fromEntity(subscriptionService.createOrUpdateForCollege(
+                collegeEntity,
+                SubscriptionRequest.builder()
+                        .plan(request.getSubscriptionPlan())
+                        .billingCycle(request.getBillingCycle())
+                        .build()
+        ));
+        college.setSubscription(subscription);
         User collegeAdmin = User.builder()
                 .name(request.getAdminName())
                 .email(request.getAdminEmail())
                 .password(request.getAdminPassword())
                 .roles(roleService.getRoles(RoleType.ROLE_COLLEGE_ADMIN))
-                .college(collegeService.findByEmail(collegeDto.getEmail()))
+                .college(collegeEntity)
                 .build();
 
         userManager.createUser(collegeAdmin);
@@ -92,6 +107,17 @@ public class SuperAdminController {
                 .build();
 
         CollegeDto college = collegeService.create(collegeDto);
+        College collegeEntity = collegeService.findByEmail(collegeDto.getEmail());
+        if (request.getSubscriptionPlan() != null || request.getBillingCycle() != null) {
+            SubscriptionDto subscription = SubscriptionDto.fromEntity(subscriptionService.createOrUpdateForCollege(
+                    collegeEntity,
+                    SubscriptionRequest.builder()
+                            .plan(request.getSubscriptionPlan())
+                            .billingCycle(request.getBillingCycle())
+                            .build()
+            ));
+            college.setSubscription(subscription);
+        }
         return ResponseEntity.ok(college);
     }
 

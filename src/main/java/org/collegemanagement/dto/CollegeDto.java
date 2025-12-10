@@ -21,6 +21,7 @@ public class CollegeDto {
     private String address;
     private Status status;
     private List<UserDto> users;
+    private SubscriptionDto subscription;
 
     // Convert from Entity to DTO
     public static CollegeDto fromEntity(College college) {
@@ -31,6 +32,7 @@ public class CollegeDto {
                 .phone(college.getPhone())
                 .address(college.getAddress())
                 .status(college.getStatus())
+                .subscription(SubscriptionDto.fromEntity(college.getSubscription()))
                 .users(college.getUsers() != null
                         ? college.getUsers().stream().map(UserDto::fromEntity).collect(Collectors.toList())
                         : null)
@@ -46,6 +48,8 @@ public class CollegeDto {
                 .phone(dto.getPhone())
                 .address(dto.getAddress())
                 .status(dto.getStatus())
+                // Subscription is managed separately to avoid accidental duplicates
+                .subscription(null)
                 .users(dto.getUsers() != null
                         ? dto.getUsers().stream().map(UserDto::toEntity).collect(Collectors.toList())
                         : null)

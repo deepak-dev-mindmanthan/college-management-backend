@@ -95,7 +95,7 @@ public class UserManager implements UserDetailsManager {
 
     @Override
     public boolean userExists(String username) {
-        return false;
+        return userRepository.findUserByEmail(username).isPresent();
     }
 
     public UserDto getUserById(Long id) {

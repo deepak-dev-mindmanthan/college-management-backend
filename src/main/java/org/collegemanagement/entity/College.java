@@ -31,6 +31,10 @@ public class College {
     @Enumerated(EnumType.STRING)
     private Status status = Status.ACTIVE; // ACTIVE, SUSPENDED
 
+    @OneToOne(mappedBy = "college", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    @JsonInclude(JsonInclude.Include.NON_NULL)
+    private Subscription subscription;
+
     @OneToMany(mappedBy = "college", cascade = CascadeType.ALL)
     @JsonInclude(JsonInclude.Include.NON_NULL)
     private List<User> users;
