@@ -2,6 +2,7 @@ package org.collegemanagement.controllers;
 
 import org.collegemanagement.dto.CollegeDto;
 import org.collegemanagement.dto.CollegeRequest;
+import org.collegemanagement.dto.PlanPriceRequest;
 import org.collegemanagement.dto.SubscriptionDto;
 import org.collegemanagement.dto.SubscriptionRequest;
 import org.collegemanagement.entity.College;
@@ -11,6 +12,7 @@ import org.collegemanagement.enums.RoleType;
 import org.collegemanagement.enums.Status;
 import org.collegemanagement.services.CollegeService;
 import org.collegemanagement.services.RoleService;
+import org.collegemanagement.services.PlanPriceService;
 import org.collegemanagement.services.SubscriptionService;
 import org.collegemanagement.services.UserManager;
 import org.springframework.http.ResponseEntity;
@@ -31,12 +33,14 @@ public class SuperAdminController {
     private final UserManager userManager;
     private final RoleService roleService;
     private final SubscriptionService subscriptionService;
+    private final PlanPriceService planPriceService;
 
-    public SuperAdminController(CollegeService collegeService, UserManager userManager, RoleService roleService, SubscriptionService subscriptionService) {
+    public SuperAdminController(CollegeService collegeService, UserManager userManager, RoleService roleService, SubscriptionService subscriptionService, PlanPriceService planPriceService) {
         this.collegeService = collegeService;
         this.userManager = userManager;
         this.roleService = roleService;
         this.subscriptionService = subscriptionService;
+        this.planPriceService = planPriceService;
     }
 
     @PostMapping("/college/create")
@@ -126,6 +130,20 @@ public class SuperAdminController {
     public ResponseEntity<?> deleteCollege(@PathVariable Long id) {
         collegeService.deleteCollege(id);
         return ResponseEntity.ok("College deleted successfully.");
+    }
+
+    @PostMapping("/subscription/price")
+    public ResponseEntity<?> upsertPlanPrice(@RequestBody PlanPriceRequest request) {
+        if (request.getPlan() == null || request.getBillingCycle() == null || request.getAmount() == null) {
+            return ResponseEntity.badRequest().body("plan, billingCycle and amount are required.");
+        }
+        return ResponseEntity.ok(planPriceService.upsert(
+                request.getPlan(),
+                request.getBillingCycle(),
+                request.getAmount(),
+                request.getCurrency(),
+                request.isActive()
+        ));
     }
 
     @GetMapping("/dashboard")

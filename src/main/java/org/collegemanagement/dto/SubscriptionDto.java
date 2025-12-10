@@ -11,6 +11,7 @@ import org.collegemanagement.enums.SubscriptionPlan;
 import org.collegemanagement.enums.SubscriptionStatus;
 
 import java.time.LocalDate;
+import java.math.BigDecimal;
 
 @Getter
 @Setter
@@ -22,6 +23,8 @@ public class SubscriptionDto {
     private SubscriptionPlan plan;
     private BillingCycle billingCycle;
     private SubscriptionStatus status;
+    private BigDecimal priceAmount;
+    private String currency;
     private LocalDate startsAt;
     private LocalDate expiresAt;
 
@@ -34,6 +37,8 @@ public class SubscriptionDto {
                 .plan(subscription.getPlan())
                 .billingCycle(subscription.getBillingCycle())
                 .status(subscription.getStatus())
+                .priceAmount(subscription.getPriceAmount())
+                .currency(subscription.getCurrency())
                 .startsAt(subscription.getStartsAt())
                 .expiresAt(subscription.getExpiresAt())
                 .build();

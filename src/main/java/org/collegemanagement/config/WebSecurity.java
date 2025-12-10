@@ -42,6 +42,7 @@ public class WebSecurity {
         http
                 .authorizeHttpRequests((authorize) -> authorize
                         .requestMatchers("/api/v1/auth/**").permitAll()
+                        .requestMatchers("/api/v1/pricing/**").permitAll()
                         .requestMatchers("/api/v1/superuser/**").hasRole("SUPER_ADMIN")
                         .requestMatchers("/api/v1/college-admin/**").hasAnyRole("SUPER_ADMIN","COLLEGE_ADMIN")
                         .requestMatchers("/swagger-ui.html","/api/docs","/api/swagger-ui/**", "/v3/api-docs/**").permitAll()

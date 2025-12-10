@@ -8,11 +8,13 @@ import org.collegemanagement.enums.FeeStatus;
 import org.collegemanagement.enums.RoleType;
 import org.collegemanagement.services.*;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDateTime;
@@ -36,6 +38,56 @@ public class CollegeAdminController {
     private final NotificationService notificationService;
     private final FeeService feeService;
 
+    private Authentication currentAuth() {
+        return SecurityContextHolder.getContext().getAuthentication();
+    }
+
+    private boolean isSuperAdmin(Authentication authentication) {
+        if (authentication == null) return false;
+        return authentication.getAuthorities().stream().anyMatch(a ->
+                "ROLE_SUPER_ADMIN".equalsIgnoreCase(a.getAuthority()) || "SUPER_ADMIN".equalsIgnoreCase(a.getAuthority()));
+    }
+
+    private Long currentCollegeId(Authentication authentication) {
+        if (authentication == null || authentication.getPrincipal() == null) return null;
+        if (authentication.getPrincipal() instanceof User user && user.getCollege() != null) {
+            return user.getCollege().getId();
+        }
+        return null;
+    }
+
+    private void requireSameCollege(Long targetCollegeId) {
+        Authentication auth = currentAuth();
+        if (isSuperAdmin(auth)) {
+            return;
+        }
+        Long currentCollege = currentCollegeId(auth);
+        if (currentCollege == null || targetCollegeId == null || !currentCollege.equals(targetCollegeId)) {
+            throw new AccessDeniedException("Access denied: cross-college access is not permitted.");
+        }
+    }
+
+    private void requireSameCollege(User user) {
+        if (user == null || user.getCollege() == null) {
+            throw new AccessDeniedException("Access denied: user not assigned to a college.");
+        }
+        requireSameCollege(user.getCollege().getId());
+    }
+
+    private void requireSameCollege(Course course) {
+        if (course == null || course.getCollege() == null) {
+            throw new AccessDeniedException("Access denied: course not assigned to a college.");
+        }
+        requireSameCollege(course.getCollege().getId());
+    }
+
+    private void requireSameCollege(Subject subject) {
+        if (subject == null || subject.getCourse() == null || subject.getCourse().getCollege() == null) {
+            throw new AccessDeniedException("Access denied: subject not assigned to a college.");
+        }
+        requireSameCollege(subject.getCourse().getCollege().getId());
+    }
+
 
     public CollegeAdminController(UserManager userManager, CollegeService collegeService, RoleService roleService, TokenGenerator tokenGenerator, CourseService courseService, SubjectService subjectService, AttendanceService attendanceService, ExamResultService examResultService, ExamService examService, NotificationService notificationService, FeeService feeService) {
         this.userManager = userManager;
@@ -56,6 +108,8 @@ public class CollegeAdminController {
         if (!collegeService.existsById(request.getCollegeId())) {
             return ResponseEntity.badRequest().body("No college found with id " + request.getCollegeId());
         }
+        requireSameCollege(request.getCollegeId());
+        requireSameCollege(request.getCollegeId());
         User newTeacher = User.builder()
                 .name(request.getName())
                 .email(request.getEmail())
@@ -74,6 +128,7 @@ public class CollegeAdminController {
 
     @GetMapping("/teachers/{collegeId}")
     public ResponseEntity<List<User>> getAllTeachers(@PathVariable Long collegeId) {
+        requireSameCollege(collegeId);
         List<User> teachers = userManager.findByCollegeIdAndRoles(collegeId, roleService.getRoles(RoleType.ROLE_TEACHER));
         return ResponseEntity.ok(teachers);
     }
@@ -85,6 +140,7 @@ public class CollegeAdminController {
         }
         UserDto updateUserDto = userManager.getUserById(id);
         User updateUser = UserDto.toEntity(updateUserDto);
+        requireSameCollege(updateUser);
 
 
         if (request.getEmail() != null) {
@@ -111,6 +167,7 @@ public class CollegeAdminController {
         if (!userManager.userExists(id)) {
             return ResponseEntity.badRequest().body("Teacher not found.");
         }
+        requireSameCollege(userManager.getUserById(id).getCollege().getId());
         userManager.deleteUserById(id);
         return ResponseEntity.ok("Teacher deleted successfully.");
     }
@@ -121,6 +178,7 @@ public class CollegeAdminController {
         if (!collegeService.existsById(request.getCollegeId())) {
             return ResponseEntity.badRequest().body("No college found with id " + request.getCollegeId());
         }
+        requireSameCollege(request.getCollegeId());
 
         User newStudent = User.builder()
                 .name(request.getName())
@@ -141,6 +199,7 @@ public class CollegeAdminController {
 
     @GetMapping("/students/{collegeId}")
     public ResponseEntity<List<User>> getAllStudents(@PathVariable Long collegeId) {
+        requireSameCollege(collegeId);
         List<User> students = userManager.findByCollegeIdAndRoles(collegeId, roleService.getRoles(RoleType.ROLE_TEACHER));
         return ResponseEntity.ok(students);
     }
@@ -150,6 +209,7 @@ public class CollegeAdminController {
         if (!userManager.userExists(id)) {
             return ResponseEntity.badRequest().body("Student not found.");
         }
+        requireSameCollege(userManager.getUserById(id).getCollege().getId());
         userManager.deleteUserById(id);
         return ResponseEntity.ok("Student deleted successfully.");
     }
@@ -162,6 +222,7 @@ public class CollegeAdminController {
         }
         UserDto updateUserDto = userManager.getUserById(id);
         User updateUser = UserDto.toEntity(updateUserDto);
+        requireSameCollege(updateUser);
 
 
         if (request.getEmail() != null) {
@@ -187,11 +248,12 @@ public class CollegeAdminController {
 
     @PostMapping("/courses")
     public ResponseEntity<?> createCourse(@RequestBody CreateCourseRequest request) {
-        if (collegeService.existsById(request.getCollegeId())) {
+        if (!collegeService.existsById(request.getCollegeId())) {
             return ResponseEntity.badRequest().body("College not found.");
         }
 
         College college = collegeService.findById(request.getCollegeId());
+        requireSameCollege(college.getId());
 
         Course course = new Course();
         course.setName(request.getName());
@@ -204,6 +266,7 @@ public class CollegeAdminController {
 
     @GetMapping("/courses")
     public ResponseEntity<List<Course>> getCourses(@RequestParam Long collegeId) {
+        requireSameCollege(collegeId);
         List<Course> courses = courseService.findByCollegeId(collegeId);
         return ResponseEntity.ok(courses);
     }
@@ -216,6 +279,7 @@ public class CollegeAdminController {
         }
 
         Course course = courseService.findById(request.getCourseId());
+        requireSameCollege(course);
 
         User teacher;
         if (request.getTeacherId() != null) {
@@ -241,11 +305,16 @@ public class CollegeAdminController {
     @GetMapping("/subjects")
     public ResponseEntity<List<Subject>> getSubjects(@RequestParam Long courseId) {
         List<Subject> subjects = subjectService.findByCourseId(courseId);
+        if (!subjects.isEmpty()) {
+            requireSameCollege(subjects.get(0).getCourse());
+        }
         return ResponseEntity.ok(subjects);
     }
 
     @GetMapping("/attendance")
     public ResponseEntity<List<Attendance>> getAttendanceRecords(@RequestParam Long studentId) {
+        User student = userManager.findById(studentId);
+        requireSameCollege(student);
         return ResponseEntity.ok(attendanceService.findByStudentId(studentId));
     }
 
@@ -254,6 +323,7 @@ public class CollegeAdminController {
     @PostMapping("/exams")
     public ResponseEntity<?> createExam(@RequestBody CreateExamRequest request) {
         Subject subject = subjectService.findById(request.getSubjectId());
+        requireSameCollege(subject);
 
         Exam exam = Exam.builder()
                 .name(request.getName())
@@ -270,6 +340,8 @@ public class CollegeAdminController {
     public ResponseEntity<?> addExamResult(@RequestBody ExamResultRequest request) {
         Exam exam = examService.findExamById(request.getExamId());
         User student = userManager.findById(request.getStudentId());
+        requireSameCollege(exam.getSubject());
+        requireSameCollege(student);
 
         ExamResult result = new ExamResult();
         result.setExam(exam);
@@ -282,6 +354,8 @@ public class CollegeAdminController {
 
     @GetMapping("/exam-results")
     public ResponseEntity<List<ExamResult>> getResults(@RequestParam Long studentId) {
+        User student = userManager.findById(studentId);
+        requireSameCollege(student);
         return ResponseEntity.ok(examResultService.findByStudentId(studentId));
     }
 
@@ -291,6 +365,7 @@ public class CollegeAdminController {
     @PostMapping("/notifications")
     public ResponseEntity<?> sendNotification(@RequestBody NotificationRequest request) {
         User receiverUser = userManager.findById(request.getReceiverId());
+        requireSameCollege(receiverUser);
 
         Notification notification =  Notification.builder()
                 .title(request.getTitle())
@@ -306,6 +381,8 @@ public class CollegeAdminController {
 
     @GetMapping("/notifications")
     public ResponseEntity<List<Notification>> getNotifications(@RequestParam Long receiverId) {
+        User receiverUser = userManager.findById(receiverId);
+        requireSameCollege(receiverUser);
         return ResponseEntity.ok(notificationService.getNotificationsByReceiverId(receiverId));
     }
 
@@ -322,6 +399,7 @@ public class CollegeAdminController {
     @PostMapping("/fees")
     public ResponseEntity<?> createFee(@RequestBody FeeRequest request) {
         User student = userManager.findById(request.getStudentId());
+        requireSameCollege(student);
         Fee fee = Fee.builder()
                 .student(student)
                 .amount(request.getAmount())
@@ -335,12 +413,15 @@ public class CollegeAdminController {
 
     @GetMapping("/fees")
     public ResponseEntity<List<Fee>> getFees(@RequestParam Long studentId) {
+        User student = userManager.findById(studentId);
+        requireSameCollege(student);
         return ResponseEntity.ok(feeService.findByStudentId(studentId));
     }
 
     @PutMapping("/fees/{id}/pay")
     public ResponseEntity<?> markFeeAsPaid(@PathVariable Long id) {
         Fee fee = feeService.findById(id);
+        requireSameCollege(fee.getStudent());
         fee.setStatus(FeeStatus.PAID);
         feeService.save(fee);
         return ResponseEntity.ok("Fee marked as paid.");
@@ -350,6 +431,7 @@ public class CollegeAdminController {
 
     @GetMapping("/dashboard")
     public ResponseEntity<Map<String, Long>> getCollegeAdminDashboard(@RequestParam Long collegeId) {
+        requireSameCollege(collegeId);
         Map<String, Long> dashboardData = new HashMap<>();
         dashboardData.put("totalStudents", userManager.countByCollegeIdAndRoles(collegeId, roleService.getRoles(RoleType.ROLE_STUDENT)));
         dashboardData.put("totalTeachers", userManager.countByCollegeIdAndRoles(collegeId, roleService.getRoles(RoleType.ROLE_TEACHER)));

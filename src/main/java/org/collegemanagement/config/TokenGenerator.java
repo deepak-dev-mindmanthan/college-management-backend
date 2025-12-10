@@ -53,7 +53,9 @@ public class TokenGenerator {
             claimsBuilder
                     .claim("subscriptionPlan", subscription.getPlan().name())
                     .claim("subscriptionStatus", subscription.getStatus().name())
-                    .claim("subscriptionExpiresAt", subscription.getExpiresAt().toString());
+                    .claim("subscriptionExpiresAt", subscription.getExpiresAt().toString())
+                    .claim("subscriptionPriceAmount", subscription.getPriceAmount())
+                    .claim("subscriptionCurrency", subscription.getCurrency());
         }
         if (user.getCollege() != null) {
             claimsBuilder.claim("collegeId", user.getCollege().getId());
@@ -82,7 +84,9 @@ public class TokenGenerator {
             claimsBuilder
                     .claim("subscriptionPlan", subscription.getPlan().name())
                     .claim("subscriptionStatus", subscription.getStatus().name())
-                    .claim("subscriptionExpiresAt", subscription.getExpiresAt().toString());
+                    .claim("subscriptionExpiresAt", subscription.getExpiresAt().toString())
+                    .claim("subscriptionPriceAmount", subscription.getPriceAmount())
+                    .claim("subscriptionCurrency", subscription.getCurrency());
         }
         if (user.getCollege() != null) {
             claimsBuilder.claim("collegeId", user.getCollege().getId());
@@ -101,7 +105,11 @@ public class TokenGenerator {
         }
 
         Subscription subscription = null;
-        boolean isSuperAdmin = user.getRoles().stream().anyMatch(role -> role.getName() == RoleType.ROLE_SUPER_ADMIN);
+        boolean isSuperAdmin =
+                (user.getRoles() != null && user.getRoles().stream().anyMatch(role -> role.getName() == RoleType.ROLE_SUPER_ADMIN))
+                        || authentication.getAuthorities().stream().anyMatch(a ->
+                        "ROLE_SUPER_ADMIN".equalsIgnoreCase(a.getAuthority()) || "SUPER_ADMIN".equalsIgnoreCase(a.getAuthority()))
+                        || user.getCollege() == null; // treat users without a college (e.g., super admins) as exempt
         if (!isSuperAdmin) {
             subscription = subscriptionService.ensureActiveSubscription(user);
         }
@@ -129,6 +137,8 @@ public class TokenGenerator {
             tokenDTO.setSubscriptionPlan(subscription.getPlan());
             tokenDTO.setSubscriptionStatus(subscription.getStatus());
             tokenDTO.setSubscriptionExpiresAt(subscription.getExpiresAt());
+            tokenDTO.setSubscriptionPriceAmount(subscription.getPriceAmount());
+            tokenDTO.setSubscriptionCurrency(subscription.getCurrency());
         }
 
         return tokenDTO;
