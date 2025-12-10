@@ -1,0 +1,41 @@
+spring:
+  application:
+    name: CollectManagement
+  profiles:
+    active: dev
+  datasource:
+    url: jdbc:mysql://localhost:3306/school_management
+    username: root
+    password: root
+    driver-class-name: com.mysql.cj.jdbc.Driver
+  jpa:
+    hibernate:
+      ddl-auto: update
+
+
+
+# Define the access token paths correctly
+access-token:
+  private: keys/access_token/private
+  public: keys/access_token/public
+
+# Define the refresh token paths correctly
+refresh-token:
+  private: keys/refresh_token/private
+  public: keys/refresh_token/public
+# Logging Configuration
+logging:
+  level:
+    org:
+      springframework:
+        security: DEBUG
+
+
+springdoc:
+  api-docs:
+    enabled: true
+  swagger-ui:
+    path: /api/docs
+    operationsSorter: method
+    tagsSorter: alpha
+

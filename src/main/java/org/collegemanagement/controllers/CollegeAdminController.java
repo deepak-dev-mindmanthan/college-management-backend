@@ -1,0 +1,362 @@
+package org.collegemanagement.controllers;
+
+
+import org.collegemanagement.config.TokenGenerator;
+import org.collegemanagement.dto.*;
+import org.collegemanagement.entity.*;
+import org.collegemanagement.enums.FeeStatus;
+import org.collegemanagement.enums.RoleType;
+import org.collegemanagement.services.*;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.web.bind.annotation.*;
+
+import java.time.LocalDateTime;
+import java.util.*;
+import java.util.stream.Collectors;
+
+@RestController
+@PreAuthorize("hasAnyRole('COLLEGE_ADMIN','SUPER_ADMIN')")
+@RequestMapping("/api/v1/college-admin")
+public class CollegeAdminController {
+
+    private final UserManager userManager;
+    private final CollegeService collegeService;
+    private final RoleService roleService;
+    private final TokenGenerator tokenGenerator;
+    private final CourseService courseService;
+    private final SubjectService subjectService;
+    private final AttendanceService attendanceService;
+    private final ExamResultService examResultService;
+    private final ExamService examService;
+    private final NotificationService notificationService;
+    private final FeeService feeService;
+
+
+    public CollegeAdminController(UserManager userManager, CollegeService collegeService, RoleService roleService, TokenGenerator tokenGenerator, CourseService courseService, SubjectService subjectService, AttendanceService attendanceService, ExamResultService examResultService, ExamService examService, NotificationService notificationService, FeeService feeService) {
+        this.userManager = userManager;
+        this.collegeService = collegeService;
+        this.roleService = roleService;
+        this.tokenGenerator = tokenGenerator;
+        this.courseService = courseService;
+        this.subjectService = subjectService;
+        this.attendanceService = attendanceService;
+        this.examResultService = examResultService;
+        this.examService = examService;
+        this.notificationService = notificationService;
+        this.feeService = feeService;
+    }
+
+    @PostMapping("/teachers")
+    public ResponseEntity<?> createTeacher(@RequestBody CreateTeacherOrStudentRequest request) {
+        if (!collegeService.existsById(request.getCollegeId())) {
+            return ResponseEntity.badRequest().body("No college found with id " + request.getCollegeId());
+        }
+        User newTeacher = User.builder()
+                .name(request.getName())
+                .email(request.getEmail())
+                .password(request.getPassword())
+                .roles(roleService.getRoles(RoleType.ROLE_TEACHER))
+                .college(collegeService.findById(request.getCollegeId()))
+                .build();
+        userManager.createUser(newTeacher);
+
+        Collection<GrantedAuthority> authorities = newTeacher.getRoles().stream()
+                .map(role -> new SimpleGrantedAuthority(role.getName().name().toUpperCase()))
+                .collect(Collectors.toSet());
+        Authentication authentication = UsernamePasswordAuthenticationToken.authenticated(newTeacher, request.getPassword(), authorities);
+        return ResponseEntity.ok(tokenGenerator.createToken(authentication));
+    }
+
+    @GetMapping("/teachers/{collegeId}")
+    public ResponseEntity<List<User>> getAllTeachers(@PathVariable Long collegeId) {
+        List<User> teachers = userManager.findByCollegeIdAndRoles(collegeId, roleService.getRoles(RoleType.ROLE_TEACHER));
+        return ResponseEntity.ok(teachers);
+    }
+
+    @PutMapping("/teachers/{id}")
+    public ResponseEntity<?> updateTeacher(@PathVariable Long id, @RequestBody CreateTeacherOrStudentRequest request) {
+        if (!userManager.userExists(id)) {
+            return ResponseEntity.badRequest().body("Teacher not found with id " + id);
+        }
+        UserDto updateUserDto = userManager.getUserById(id);
+        User updateUser = UserDto.toEntity(updateUserDto);
+
+
+        if (request.getEmail() != null) {
+            updateUser.setEmail(request.getEmail());
+        }
+
+        if (request.getPassword() != null) {
+            updateUser.setPassword(request.getPassword());
+        }
+        if (request.getName() != null) {
+            updateUser.setName(request.getName());
+        }
+
+        if (request.getCollegeId() != null) {
+            updateUser.setCollege(collegeService.findById(request.getCollegeId()));
+        }
+        updateUser.setRoles(roleService.getRoles(RoleType.ROLE_TEACHER));
+        userManager.createUser(updateUser);
+        return ResponseEntity.ok("Teacher updated successfully.");
+    }
+
+    @DeleteMapping("/teachers/{id}")
+    public ResponseEntity<?> deleteTeacher(@PathVariable Long id) {
+        if (!userManager.userExists(id)) {
+            return ResponseEntity.badRequest().body("Teacher not found.");
+        }
+        userManager.deleteUserById(id);
+        return ResponseEntity.ok("Teacher deleted successfully.");
+    }
+
+
+    @PostMapping("/students")
+    public ResponseEntity<?> createStudent(@RequestBody CreateTeacherOrStudentRequest request) {
+        if (!collegeService.existsById(request.getCollegeId())) {
+            return ResponseEntity.badRequest().body("No college found with id " + request.getCollegeId());
+        }
+
+        User newStudent = User.builder()
+                .name(request.getName())
+                .email(request.getEmail())
+                .password(request.getPassword())
+                .roles(roleService.getRoles(RoleType.ROLE_STUDENT))
+                .college(collegeService.findById(request.getCollegeId()))
+                .build();
+
+        userManager.createUser(newStudent);
+
+        Collection<GrantedAuthority> authorities = newStudent.getRoles().stream()
+                .map(role -> new SimpleGrantedAuthority(role.getName().name().toUpperCase()))
+                .collect(Collectors.toSet());
+        Authentication authentication = UsernamePasswordAuthenticationToken.authenticated(newStudent, request.getPassword(), authorities);
+        return ResponseEntity.ok(tokenGenerator.createToken(authentication));
+    }
+
+    @GetMapping("/students/{collegeId}")
+    public ResponseEntity<List<User>> getAllStudents(@PathVariable Long collegeId) {
+        List<User> students = userManager.findByCollegeIdAndRoles(collegeId, roleService.getRoles(RoleType.ROLE_TEACHER));
+        return ResponseEntity.ok(students);
+    }
+
+    @DeleteMapping("/students/{id}")
+    public ResponseEntity<?> deleteStudent(@PathVariable Long id) {
+        if (!userManager.userExists(id)) {
+            return ResponseEntity.badRequest().body("Student not found.");
+        }
+        userManager.deleteUserById(id);
+        return ResponseEntity.ok("Student deleted successfully.");
+    }
+
+
+    @PutMapping("/students/{id}")
+    public ResponseEntity<?> updateStudent(@PathVariable Long id, @RequestBody CreateTeacherOrStudentRequest request) {
+        if (!userManager.userExists(id)) {
+            return ResponseEntity.badRequest().body("Student not found with id " + id);
+        }
+        UserDto updateUserDto = userManager.getUserById(id);
+        User updateUser = UserDto.toEntity(updateUserDto);
+
+
+        if (request.getEmail() != null) {
+            updateUser.setEmail(request.getEmail());
+        }
+
+        if (request.getPassword() != null) {
+            updateUser.setPassword(request.getPassword());
+        }
+        if (request.getName() != null) {
+            updateUser.setName(request.getName());
+        }
+
+        if (request.getCollegeId() != null) {
+            updateUser.setCollege(collegeService.findById(request.getCollegeId()));
+        }
+        updateUser.setRoles(roleService.getRoles(RoleType.ROLE_STUDENT));
+        userManager.createUser(updateUser);
+        return ResponseEntity.ok("Student updated successfully.");
+    }
+
+
+
+    @PostMapping("/courses")
+    public ResponseEntity<?> createCourse(@RequestBody CreateCourseRequest request) {
+        if (collegeService.existsById(request.getCollegeId())) {
+            return ResponseEntity.badRequest().body("College not found.");
+        }
+
+        College college = collegeService.findById(request.getCollegeId());
+
+        Course course = new Course();
+        course.setName(request.getName());
+        course.setDescription(request.getDescription());
+        course.setCollege(college);
+
+        courseService.createCourse(course);
+        return ResponseEntity.ok("Course created successfully.");
+    }
+
+    @GetMapping("/courses")
+    public ResponseEntity<List<Course>> getCourses(@RequestParam Long collegeId) {
+        List<Course> courses = courseService.findByCollegeId(collegeId);
+        return ResponseEntity.ok(courses);
+    }
+
+    @PostMapping("/subjects")
+    public ResponseEntity<?> createSubject(@RequestBody CreateSubjectRequest request) {
+
+        if (!courseService.exitsByCourseId(request.getCourseId())) {
+            return ResponseEntity.badRequest().body("Course not found with id:"+request.getCourseId());
+        }
+
+        Course course = courseService.findById(request.getCourseId());
+
+        User teacher;
+        if (request.getTeacherId() != null) {
+            teacher = userManager.findById(request.getTeacherId());
+            if (teacher==null) {
+                return ResponseEntity.badRequest().body("Teacher not found.");
+            }
+        }
+        else {
+            return ResponseEntity.badRequest().body("Teacher id cannot be null");
+        }
+
+        Subject subject = Subject.builder()
+                .name(request.getName())
+                .code(request.getCode())
+                .course(course)
+                .teacher(teacher)
+                .build();
+
+        return ResponseEntity.ok(subjectService.createSubject(subject));
+    }
+
+    @GetMapping("/subjects")
+    public ResponseEntity<List<Subject>> getSubjects(@RequestParam Long courseId) {
+        List<Subject> subjects = subjectService.findByCourseId(courseId);
+        return ResponseEntity.ok(subjects);
+    }
+
+    @GetMapping("/attendance")
+    public ResponseEntity<List<Attendance>> getAttendanceRecords(@RequestParam Long studentId) {
+        return ResponseEntity.ok(attendanceService.findByStudentId(studentId));
+    }
+
+
+
+    @PostMapping("/exams")
+    public ResponseEntity<?> createExam(@RequestBody CreateExamRequest request) {
+        Subject subject = subjectService.findById(request.getSubjectId());
+
+        Exam exam = Exam.builder()
+                .name(request.getName())
+                .date(request.getDate())
+                .subject(subject)
+                .build();
+
+
+        examService.createExam(exam);
+        return ResponseEntity.ok("Exam scheduled successfully.");
+    }
+
+    @PostMapping("/exam-results")
+    public ResponseEntity<?> addExamResult(@RequestBody ExamResultRequest request) {
+        Exam exam = examService.findExamById(request.getExamId());
+        User student = userManager.findById(request.getStudentId());
+
+        ExamResult result = new ExamResult();
+        result.setExam(exam);
+        result.setStudent(student);
+        result.setMarks(request.getMarks());
+
+        examResultService.createExamResult(result);
+        return ResponseEntity.ok("Result added successfully.");
+    }
+
+    @GetMapping("/exam-results")
+    public ResponseEntity<List<ExamResult>> getResults(@RequestParam Long studentId) {
+        return ResponseEntity.ok(examResultService.findByStudentId(studentId));
+    }
+
+
+
+
+    @PostMapping("/notifications")
+    public ResponseEntity<?> sendNotification(@RequestBody NotificationRequest request) {
+        User receiverUser = userManager.findById(request.getReceiverId());
+
+        Notification notification =  Notification.builder()
+                .title(request.getTitle())
+                .message(request.getMessage())
+                .receiver(receiverUser)
+                .timestamp(LocalDateTime.now())
+                .isRead(false)
+                .build();
+
+
+        return ResponseEntity.ok(notificationService.createNotification(notification));
+    }
+
+    @GetMapping("/notifications")
+    public ResponseEntity<List<Notification>> getNotifications(@RequestParam Long receiverId) {
+        return ResponseEntity.ok(notificationService.getNotificationsByReceiverId(receiverId));
+    }
+
+    @PutMapping("/notifications/{id}/mark-read")
+    public ResponseEntity<?> markNotificationAsRead(@PathVariable Long id) {
+        Notification notification = notificationService.findById(id);
+        notification.setRead(true);
+        notificationService.updateNotification(notification);
+
+        return ResponseEntity.ok("Notification marked as read.");
+    }
+
+
+    @PostMapping("/fees")
+    public ResponseEntity<?> createFee(@RequestBody FeeRequest request) {
+        User student = userManager.findById(request.getStudentId());
+        Fee fee = Fee.builder()
+                .student(student)
+                .amount(request.getAmount())
+                .dueDate(request.getDueDate())
+                .status(request.getStatus())
+                .build();
+
+        feeService.save(fee);
+        return ResponseEntity.ok("Fee record created successfully.");
+    }
+
+    @GetMapping("/fees")
+    public ResponseEntity<List<Fee>> getFees(@RequestParam Long studentId) {
+        return ResponseEntity.ok(feeService.findByStudentId(studentId));
+    }
+
+    @PutMapping("/fees/{id}/pay")
+    public ResponseEntity<?> markFeeAsPaid(@PathVariable Long id) {
+        Fee fee = feeService.findById(id);
+        fee.setStatus(FeeStatus.PAID);
+        feeService.save(fee);
+        return ResponseEntity.ok("Fee marked as paid.");
+    }
+
+
+
+    @GetMapping("/dashboard")
+    public ResponseEntity<Map<String, Long>> getCollegeAdminDashboard(@RequestParam Long collegeId) {
+        Map<String, Long> dashboardData = new HashMap<>();
+        dashboardData.put("totalStudents", userManager.countByCollegeIdAndRoles(collegeId, roleService.getRoles(RoleType.ROLE_STUDENT)));
+        dashboardData.put("totalTeachers", userManager.countByCollegeIdAndRoles(collegeId, roleService.getRoles(RoleType.ROLE_TEACHER)));
+        dashboardData.put("totalSubjects", subjectService.countByCollegeId(collegeId));
+
+        return ResponseEntity.ok(dashboardData);
+    }
+
+
+}
