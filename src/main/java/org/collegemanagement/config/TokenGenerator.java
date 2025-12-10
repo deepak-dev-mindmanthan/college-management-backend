@@ -11,6 +11,7 @@ import org.collegemanagement.dto.Token;
 import org.collegemanagement.entity.Subscription;
 import org.collegemanagement.entity.User;
 import org.collegemanagement.enums.RoleType;
+import org.collegemanagement.enums.CurrencyCode;
 import org.collegemanagement.services.SubscriptionService;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.security.authentication.BadCredentialsException;
@@ -55,7 +56,7 @@ public class TokenGenerator {
                     .claim("subscriptionStatus", subscription.getStatus().name())
                     .claim("subscriptionExpiresAt", subscription.getExpiresAt().toString())
                     .claim("subscriptionPriceAmount", subscription.getPriceAmount())
-                    .claim("subscriptionCurrency", subscription.getCurrency());
+                    .claim("subscriptionCurrency", subscription.getCurrency().name());
         }
         if (user.getCollege() != null) {
             claimsBuilder.claim("collegeId", user.getCollege().getId());
@@ -86,7 +87,7 @@ public class TokenGenerator {
                     .claim("subscriptionStatus", subscription.getStatus().name())
                     .claim("subscriptionExpiresAt", subscription.getExpiresAt().toString())
                     .claim("subscriptionPriceAmount", subscription.getPriceAmount())
-                    .claim("subscriptionCurrency", subscription.getCurrency());
+                    .claim("subscriptionCurrency", subscription.getCurrency().name());
         }
         if (user.getCollege() != null) {
             claimsBuilder.claim("collegeId", user.getCollege().getId());

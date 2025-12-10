@@ -7,6 +7,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import org.collegemanagement.enums.BillingCycle;
+import org.collegemanagement.enums.CurrencyCode;
 import org.collegemanagement.enums.SubscriptionPlan;
 
 import java.math.BigDecimal;
@@ -34,8 +35,9 @@ public class PlanPrice {
     @Column(nullable = false, precision = 12, scale = 2)
     private BigDecimal amount;
 
+    @Enumerated(EnumType.STRING)
     @Column(nullable = false)
-    private String currency = "USD";
+    private CurrencyCode currency = CurrencyCode.USD;
 
     @Column(nullable = false)
     private boolean active = true;

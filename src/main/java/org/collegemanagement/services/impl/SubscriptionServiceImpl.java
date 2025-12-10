@@ -10,6 +10,7 @@ import org.collegemanagement.enums.BillingCycle;
 import org.collegemanagement.enums.RoleType;
 import org.collegemanagement.enums.SubscriptionPlan;
 import org.collegemanagement.enums.SubscriptionStatus;
+import org.collegemanagement.enums.CurrencyCode;
 import org.collegemanagement.repositories.SubscriptionRepository;
 import org.collegemanagement.services.PlanPriceService;
 import org.collegemanagement.services.SubscriptionService;
@@ -31,6 +32,7 @@ public class SubscriptionServiceImpl implements SubscriptionService {
     private final SubscriptionRepository subscriptionRepository;
     private final PlanPriceService planPriceService;
     private static final Map<SubscriptionPlan, Map<BillingCycle, BigDecimal>> DEFAULT_PRICES = new EnumMap<>(SubscriptionPlan.class);
+    private static final CurrencyCode DEFAULT_CURRENCY = CurrencyCode.USD;
 
     static {
         Map<BillingCycle, BigDecimal> starter = new EnumMap<>(BillingCycle.class);
@@ -59,7 +61,7 @@ public class SubscriptionServiceImpl implements SubscriptionService {
                 .map(m -> m.get(billingCycle))
                 .orElseThrow(() -> new IllegalStateException("No default price configured for " + plan + " / " + billingCycle));
         // Seed default so it becomes editable later
-        return planPriceService.upsert(plan, billingCycle, defaultAmount, "USD", true);
+        return planPriceService.upsert(plan, billingCycle, defaultAmount, DEFAULT_CURRENCY, true);
     }
 
     @Transactional

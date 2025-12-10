@@ -9,6 +9,7 @@ import org.collegemanagement.entity.Subscription;
 import org.collegemanagement.enums.BillingCycle;
 import org.collegemanagement.enums.SubscriptionPlan;
 import org.collegemanagement.enums.SubscriptionStatus;
+import org.collegemanagement.enums.CurrencyCode;
 
 import java.time.LocalDate;
 import java.math.BigDecimal;
@@ -24,7 +25,7 @@ public class SubscriptionDto {
     private BillingCycle billingCycle;
     private SubscriptionStatus status;
     private BigDecimal priceAmount;
-    private String currency;
+    private CurrencyCode currency;
     private LocalDate startsAt;
     private LocalDate expiresAt;
 

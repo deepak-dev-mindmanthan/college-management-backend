@@ -4,6 +4,7 @@ import lombok.RequiredArgsConstructor;
 import org.collegemanagement.entity.PlanPrice;
 import org.collegemanagement.enums.BillingCycle;
 import org.collegemanagement.enums.SubscriptionPlan;
+import org.collegemanagement.enums.CurrencyCode;
 import org.collegemanagement.repositories.PlanPriceRepository;
 import org.collegemanagement.services.PlanPriceService;
 import org.springframework.stereotype.Service;
@@ -21,14 +22,14 @@ public class PlanPriceServiceImpl implements PlanPriceService {
 
     @Transactional
     @Override
-    public PlanPrice upsert(SubscriptionPlan plan, BillingCycle billingCycle, BigDecimal amount, String currency, boolean active) {
+    public PlanPrice upsert(SubscriptionPlan plan, BillingCycle billingCycle, BigDecimal amount, CurrencyCode currency, boolean active) {
         Optional<PlanPrice> existing = planPriceRepository.findByPlanAndBillingCycleAndActiveTrue(plan, billingCycle);
         PlanPrice price = existing.orElse(PlanPrice.builder()
                 .plan(plan)
                 .billingCycle(billingCycle)
                 .build());
         price.setAmount(amount);
-        price.setCurrency(currency != null ? currency : "USD");
+        price.setCurrency(currency != null ? currency : CurrencyCode.USD);
         price.setActive(active);
         return planPriceRepository.save(price);
     }

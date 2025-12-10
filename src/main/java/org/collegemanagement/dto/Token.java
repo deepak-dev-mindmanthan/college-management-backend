@@ -7,6 +7,7 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 import org.collegemanagement.enums.SubscriptionPlan;
 import org.collegemanagement.enums.SubscriptionStatus;
+import org.collegemanagement.enums.CurrencyCode;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -23,5 +24,5 @@ public class Token {
     private SubscriptionStatus subscriptionStatus;
     private LocalDate subscriptionExpiresAt;
     private BigDecimal subscriptionPriceAmount;
-    private String subscriptionCurrency;
+    private CurrencyCode subscriptionCurrency;
 }

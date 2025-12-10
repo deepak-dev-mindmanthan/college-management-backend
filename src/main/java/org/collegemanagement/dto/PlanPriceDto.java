@@ -8,6 +8,7 @@ import lombok.Setter;
 import org.collegemanagement.entity.PlanPrice;
 import org.collegemanagement.enums.BillingCycle;
 import org.collegemanagement.enums.SubscriptionPlan;
+import org.collegemanagement.enums.CurrencyCode;
 
 import java.math.BigDecimal;
 
@@ -21,7 +22,7 @@ public class PlanPriceDto {
     private SubscriptionPlan plan;
     private BillingCycle billingCycle;
     private BigDecimal amount;
-    private String currency;
+    private CurrencyCode currency;
     private boolean active;
 
     public static PlanPriceDto fromEntity(PlanPrice price) {
