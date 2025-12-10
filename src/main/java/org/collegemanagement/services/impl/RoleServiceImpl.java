@@ -2,19 +2,20 @@ package org.collegemanagement.services.impl;
 
 import org.collegemanagement.entity.Role;
 import org.collegemanagement.enums.RoleType;
+import org.collegemanagement.exception.ResourceNotFoundException;
 import org.collegemanagement.repositories.RoleRepository;
 import org.collegemanagement.services.RoleService;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.HashSet;
+import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
 
 @Service
 public class RoleServiceImpl implements RoleService {
-
 
     private final RoleRepository roleRepository;
 
@@ -30,6 +31,10 @@ public class RoleServiceImpl implements RoleService {
 
     @Override
     public Set<Role> getRoles(RoleType roleType) {
-        return new HashSet<>(roleRepository.findRolesByName(roleType));
+        List<Role> roles = roleRepository.findRolesByName(roleType);
+        if(roles.isEmpty()){
+            throw new ResourceNotFoundException("Role not found with name:"+roleType);
+        }
+        return new HashSet<>();
     }
 }
