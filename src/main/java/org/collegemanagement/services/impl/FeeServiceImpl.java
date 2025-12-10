@@ -25,6 +25,16 @@ public class FeeServiceImpl implements FeeService {
     }
 
     @Override
+    public List<Fee> findByCollegeId(long collegeId) {
+        return feeRepository.findByStudentCollegeId(collegeId);
+    }
+
+    @Override
+    public List<Fee> findByCollegeIdAndStatus(long collegeId, org.collegemanagement.enums.FeeStatus status) {
+        return feeRepository.findByStudentCollegeIdAndStatus(collegeId, status);
+    }
+
+    @Override
     public Fee findById(long id) {
         return feeRepository.findById(id).orElseThrow(() -> new ResourceNotFoundException("Fee not found with id:"+id));
     }

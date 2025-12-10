@@ -109,7 +109,6 @@ public class CollegeAdminController {
             return ResponseEntity.badRequest().body("No college found with id " + request.getCollegeId());
         }
         requireSameCollege(request.getCollegeId());
-        requireSameCollege(request.getCollegeId());
         User newTeacher = User.builder()
                 .name(request.getName())
                 .email(request.getEmail())
@@ -200,7 +199,7 @@ public class CollegeAdminController {
     @GetMapping("/students/{collegeId}")
     public ResponseEntity<List<User>> getAllStudents(@PathVariable Long collegeId) {
         requireSameCollege(collegeId);
-        List<User> students = userManager.findByCollegeIdAndRoles(collegeId, roleService.getRoles(RoleType.ROLE_TEACHER));
+        List<User> students = userManager.findByCollegeIdAndRoles(collegeId, roleService.getRoles(RoleType.ROLE_STUDENT));
         return ResponseEntity.ok(students);
     }
 
@@ -242,6 +241,67 @@ public class CollegeAdminController {
         updateUser.setRoles(roleService.getRoles(RoleType.ROLE_STUDENT));
         userManager.createUser(updateUser);
         return ResponseEntity.ok("Student updated successfully.");
+    }
+
+    // ACCOUNTANT MANAGEMENT
+    @PostMapping("/accountants")
+    public ResponseEntity<?> createAccountant(@RequestBody CreateTeacherOrStudentRequest request) {
+        if (!collegeService.existsById(request.getCollegeId())) {
+            return ResponseEntity.badRequest().body("No college found with id " + request.getCollegeId());
+        }
+        requireSameCollege(request.getCollegeId());
+        User accountant = User.builder()
+                .name(request.getName())
+                .email(request.getEmail())
+                .password(request.getPassword())
+                .roles(roleService.getRoles(RoleType.ROLE_ACCOUNTANT))
+                .college(collegeService.findById(request.getCollegeId()))
+                .build();
+        userManager.createUser(accountant);
+        return ResponseEntity.ok("Accountant created successfully.");
+    }
+
+    @GetMapping("/accountants/{collegeId}")
+    public ResponseEntity<List<User>> getAccountants(@PathVariable Long collegeId) {
+        requireSameCollege(collegeId);
+        List<User> accountants = userManager.findByCollegeIdAndRoles(collegeId, roleService.getRoles(RoleType.ROLE_ACCOUNTANT));
+        return ResponseEntity.ok(accountants);
+    }
+
+    @PutMapping("/accountants/{id}")
+    public ResponseEntity<?> updateAccountant(@PathVariable Long id, @RequestBody CreateTeacherOrStudentRequest request) {
+        if (!userManager.userExists(id)) {
+            return ResponseEntity.badRequest().body("Accountant not found with id " + id);
+        }
+        UserDto updateUserDto = userManager.getUserById(id);
+        User updateUser = UserDto.toEntity(updateUserDto);
+        requireSameCollege(updateUser);
+
+        if (request.getEmail() != null) {
+            updateUser.setEmail(request.getEmail());
+        }
+        if (request.getPassword() != null) {
+            updateUser.setPassword(request.getPassword());
+        }
+        if (request.getName() != null) {
+            updateUser.setName(request.getName());
+        }
+        if (request.getCollegeId() != null) {
+            updateUser.setCollege(collegeService.findById(request.getCollegeId()));
+        }
+        updateUser.setRoles(roleService.getRoles(RoleType.ROLE_ACCOUNTANT));
+        userManager.createUser(updateUser);
+        return ResponseEntity.ok("Accountant updated successfully.");
+    }
+
+    @DeleteMapping("/accountants/{id}")
+    public ResponseEntity<?> deleteAccountant(@PathVariable Long id) {
+        if (!userManager.userExists(id)) {
+            return ResponseEntity.badRequest().body("Accountant not found.");
+        }
+        requireSameCollege(userManager.getUserById(id).getCollege().getId());
+        userManager.deleteUserById(id);
+        return ResponseEntity.ok("Accountant deleted successfully.");
     }
 
 
@@ -435,6 +495,7 @@ public class CollegeAdminController {
         Map<String, Long> dashboardData = new HashMap<>();
         dashboardData.put("totalStudents", userManager.countByCollegeIdAndRoles(collegeId, roleService.getRoles(RoleType.ROLE_STUDENT)));
         dashboardData.put("totalTeachers", userManager.countByCollegeIdAndRoles(collegeId, roleService.getRoles(RoleType.ROLE_TEACHER)));
+        dashboardData.put("totalAccountants", userManager.countByCollegeIdAndRoles(collegeId, roleService.getRoles(RoleType.ROLE_ACCOUNTANT)));
         dashboardData.put("totalSubjects", subjectService.countByCollegeId(collegeId));
 
         return ResponseEntity.ok(dashboardData);
