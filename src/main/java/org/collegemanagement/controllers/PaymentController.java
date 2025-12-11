@@ -5,6 +5,7 @@ import org.collegemanagement.dto.SubscriptionDto;
 import org.collegemanagement.dto.SubscriptionRequest;
 import org.collegemanagement.entity.College;
 import org.collegemanagement.entity.User;
+import org.collegemanagement.exception.ResourceNotFoundException;
 import org.collegemanagement.services.CollegeService;
 import org.collegemanagement.services.SubscriptionService;
 import org.springframework.http.ResponseEntity;
@@ -65,8 +66,11 @@ public class PaymentController {
             return ResponseEntity.badRequest().build();
         }
         College college = collegeService.findById(request.getCollegeId());
-        requireSameCollege(college.getId());
+        if(college==null){
+            throw new ResourceNotFoundException("College not found with id"+request.getCollegeId());
+        }
 
+        requireSameCollege(college.getId());
         SubscriptionRequest subReq = SubscriptionRequest.builder()
                 .plan(request.getPlan())
                 .billingCycle(request.getBillingCycle())

@@ -110,8 +110,8 @@ public class UserManager implements UserDetailsManager {
     }
 
 
-    public List<Long> countByRoles(Set<Role> roles) {
-        return userRepository.countByRoles(roles);
+    public Long countByRole(Role roles) {
+        return userRepository.countByRolesContaining(roles);
     }
 
     public long countByCollegeIdAndRoles(Long id, Set<Role> roles) {

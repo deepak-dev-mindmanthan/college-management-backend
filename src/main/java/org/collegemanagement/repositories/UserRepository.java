@@ -16,7 +16,7 @@ public interface UserRepository extends JpaRepository<User, Long> {
 
     List<User> findByCollegeIdAndRoles(Long id, Set<Role> roles);
 
-    List<Long> countByRoles(Set<Role> roles);
+    Long countByRolesContaining(Role role);
 
     long countByCollegeIdAndRoles(Long id, Set<Role> roles);
 

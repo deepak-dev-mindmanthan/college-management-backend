@@ -10,4 +10,5 @@ import java.util.Set;
 public interface RoleService {
     Role getRoleById(Long id);
     Set<Role> getRoles(RoleType roleType);
+    Role getRoleByName(RoleType roleType);
 }

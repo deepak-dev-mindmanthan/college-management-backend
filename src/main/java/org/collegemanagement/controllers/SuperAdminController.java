@@ -112,10 +112,10 @@ public class SuperAdminController {
     public ResponseEntity<Map<String, Long>> getSuperAdminDashboard() {
         Map<String, Long> dashboardData = new HashMap<>();
         dashboardData.put("totalColleges", collegeService.count());
-        dashboardData.put("totalStudents", userManager.countByRoles(roleService.getRoles(RoleType.ROLE_STUDENT)).getFirst());
-        dashboardData.put("totalTeachers", userManager.countByRoles(roleService.getRoles(RoleType.ROLE_TEACHER)).getFirst());
-        dashboardData.put("totalParents", userManager.countByRoles(roleService.getRoles(RoleType.ROLE_PARENT)).getFirst());
-        dashboardData.put("totalSuperAdmins", userManager.countByRoles(roleService.getRoles(RoleType.ROLE_SUPER_ADMIN)).getFirst());
+        dashboardData.put("totalStudents", userManager.countByRole(roleService.getRoleByName(RoleType.ROLE_STUDENT)));
+        dashboardData.put("totalTeachers", userManager.countByRole(roleService.getRoleByName(RoleType.ROLE_TEACHER)));
+        dashboardData.put("totalParents", userManager.countByRole(roleService.getRoleByName(RoleType.ROLE_PARENT)));
+        dashboardData.put("totalSuperAdmins", userManager.countByRole(roleService.getRoleByName(RoleType.ROLE_SUPER_ADMIN)));
         return ResponseEntity.ok(dashboardData);
     }
 

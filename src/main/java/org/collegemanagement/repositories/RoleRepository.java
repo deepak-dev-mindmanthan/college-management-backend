@@ -9,4 +9,5 @@ import java.util.List;
 public interface RoleRepository extends JpaRepository<Role, Long> {
     List<Role> findRolesByName(RoleType name);
     boolean existsByName(RoleType name);
+    Role findRoleByName(RoleType roleType);
 }

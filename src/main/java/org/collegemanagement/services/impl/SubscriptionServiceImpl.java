@@ -52,6 +52,7 @@ public class SubscriptionServiceImpl implements SubscriptionService {
         DEFAULT_PRICES.put(SubscriptionPlan.PREMIUM, premium);
     }
 
+
     private PlanPrice resolvePrice(SubscriptionPlan plan, BillingCycle billingCycle) {
         Optional<PlanPrice> active = planPriceService.findActivePrice(plan, billingCycle);
         if (active.isPresent()) {
@@ -95,6 +96,12 @@ public class SubscriptionServiceImpl implements SubscriptionService {
                 .expiresAt(expiry)
                 .college(college)
                 .build();
+
+        Subscription currentSubscription = subscriptionRepository.findSubscriptionByCollegeId(college.getId());
+
+        if (currentSubscription != null) {
+            subscription.setId(currentSubscription.getId());
+        }
 
         return subscriptionRepository.save(subscription);
     }

@@ -34,4 +34,9 @@ public class RoleServiceImpl implements RoleService {
         }
         return new HashSet<>(roles);
     }
+
+    @Override
+    public Role getRoleByName(RoleType roleType) {
+        return roleRepository.findRoleByName(roleType);
+    }
 }

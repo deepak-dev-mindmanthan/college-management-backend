@@ -10,5 +10,6 @@ import java.util.Optional;
 public interface SubscriptionRepository extends JpaRepository<Subscription, Long> {
     Optional<Subscription> findTopByCollegeIdAndStatusInOrderByExpiresAtDesc(Long collegeId, List<SubscriptionStatus> statuses);
     List<Subscription> findByCollegeIdAndStatusIn(Long collegeId, List<SubscriptionStatus> statuses);
+    Subscription findSubscriptionByCollegeId(Long collegeId);
 }
 
