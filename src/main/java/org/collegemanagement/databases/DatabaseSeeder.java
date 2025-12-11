@@ -1,4 +1,4 @@
-package org.collegemanagement.config;
+package org.collegemanagement.databases;
 
 import lombok.RequiredArgsConstructor;
 import org.collegemanagement.entity.Role;

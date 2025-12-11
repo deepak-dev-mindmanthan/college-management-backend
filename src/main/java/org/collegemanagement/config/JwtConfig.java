@@ -7,6 +7,7 @@ import com.nimbusds.jose.jwk.RSAKey;
 import com.nimbusds.jose.jwk.source.ImmutableJWKSet;
 import com.nimbusds.jose.jwk.source.JWKSource;
 import com.nimbusds.jose.proc.SecurityContext;
+import org.collegemanagement.security.jwt.KeyUtils;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -29,21 +30,10 @@ public class JwtConfig {
 
     @Bean
     @Primary
-    JwtEncoder jwtAccessTokenEncoder() {
+    JwtEncoder jwtTokenEncoder() {
         JWK jwk = new RSAKey
-                .Builder(keyUtils.getAccessTokenPublicKey())
-                .privateKey(keyUtils.getAccessTokenPrivateKey())
-                .build();
-        JWKSource<SecurityContext> jwks = new ImmutableJWKSet<>(new JWKSet(jwk));
-        return new NimbusJwtEncoder(jwks);
-    }
-
-    @Bean
-    @Qualifier("jwtRefreshTokenEncoder")
-    JwtEncoder jwtRefreshTokenEncoder() {
-        JWK jwk = new RSAKey
-                .Builder(keyUtils.getRefreshTokenPublicKey())
-                .privateKey(keyUtils.getRefreshTokenPrivateKey())
+                .Builder(keyUtils.getPublicKey())
+                .privateKey(keyUtils.getPrivateKey())
                 .build();
         JWKSource<SecurityContext> jwks = new ImmutableJWKSet<>(new JWKSet(jwk));
         return new NimbusJwtEncoder(jwks);
@@ -52,14 +42,9 @@ public class JwtConfig {
     @Bean
     @Primary
     public JwtDecoder jwtAccessTokenDecoder() {
-        return NimbusJwtDecoder.withPublicKey(keyUtils.getAccessTokenPublicKey()).build();
+        return NimbusJwtDecoder.withPublicKey(keyUtils.getPublicKey()).build();
     }
 
-    @Bean
-    @Qualifier("jwtRefreshTokenDecoder")
-    JwtDecoder jwtRefreshTokenDecoder() {
-        return NimbusJwtDecoder.withPublicKey(keyUtils.getRefreshTokenPublicKey()).build();
-    }
     @Bean
     PasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder();

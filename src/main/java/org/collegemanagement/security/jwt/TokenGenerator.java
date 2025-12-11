@@ -1,4 +1,4 @@
-package org.collegemanagement.config;
+package org.collegemanagement.security.jwt;
 
 
 import java.text.MessageFormat;
@@ -11,7 +11,6 @@ import org.collegemanagement.dto.Token;
 import org.collegemanagement.entity.Subscription;
 import org.collegemanagement.entity.User;
 import org.collegemanagement.enums.RoleType;
-import org.collegemanagement.enums.CurrencyCode;
 import org.collegemanagement.services.SubscriptionService;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.security.authentication.BadCredentialsException;
@@ -25,15 +24,12 @@ import org.springframework.stereotype.Component;
 @Component
 public class TokenGenerator {
 
-    final JwtEncoder accessTokenEncoder;
-    final JwtEncoder refreshTokenEncoder;
+    final JwtEncoder tokenEncoder;
     final SubscriptionService subscriptionService;
 
-    public TokenGenerator(JwtEncoder accessTokenEncoder,
-                          @Qualifier("jwtRefreshTokenEncoder") JwtEncoder refreshTokenEncoder,
+    public TokenGenerator(JwtEncoder tokenEncoder,
                           SubscriptionService subscriptionService) {
-        this.accessTokenEncoder = accessTokenEncoder;
-        this.refreshTokenEncoder = refreshTokenEncoder;
+        this.tokenEncoder = tokenEncoder;
         this.subscriptionService = subscriptionService;
     }
 
@@ -65,7 +61,7 @@ public class TokenGenerator {
             claimsBuilder.claim("email", user.getEmail());
         }
 
-        return accessTokenEncoder.encode(JwtEncoderParameters.from(claimsBuilder.build())).getTokenValue();
+        return tokenEncoder.encode(JwtEncoderParameters.from(claimsBuilder.build())).getTokenValue();
     }
 
     private String createRefreshToken(User user, Authentication authentication, Subscription subscription) {
@@ -96,8 +92,9 @@ public class TokenGenerator {
             claimsBuilder.claim("email", user.getEmail());
         }
 
-        return refreshTokenEncoder.encode(JwtEncoderParameters.from(claimsBuilder.build())).getTokenValue();
+        return tokenEncoder.encode(JwtEncoderParameters.from(claimsBuilder.build())).getTokenValue();
     }
+
     public Token createToken(Authentication authentication) {
         if (!(authentication.getPrincipal() instanceof User user)) {
             throw new BadCredentialsException(

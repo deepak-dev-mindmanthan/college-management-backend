@@ -14,15 +14,11 @@ spring:
 
 
 
-# Define the access token paths correctly
-access-token:
-  private: keys/access_token/private
-  public: keys/access_token/public
+# Define the token paths correctly
+token:
+  private: keys/token/private
+  public: keys/token/public
 
-# Define the refresh token paths correctly
-refresh-token:
-  private: keys/refresh_token/private
-  public: keys/refresh_token/public
 # Logging Configuration
 logging:
   level:

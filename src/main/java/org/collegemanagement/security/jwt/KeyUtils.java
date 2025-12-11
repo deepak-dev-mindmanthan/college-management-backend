@@ -1,4 +1,4 @@
-package org.collegemanagement.config;
+package org.collegemanagement.security.jwt;
 
 import lombok.extern.slf4j.Slf4j;
 
@@ -22,20 +22,13 @@ import java.security.spec.X509EncodedKeySpec;
 public class KeyUtils {
     final Environment environment;
 
-    @Value("${access-token.private}")
-    private String accessTokenPrivateKeyPath;
+    @Value("${token.private}")
+    private String privateKeyPath;
 
-    @Value("${access-token.public}")
-    private String accessTokenPublicKeyPath;
+    @Value("${token.public}")
+    private String publicKeyPath;
 
-    @Value("${refresh-token.private}")
-    private String refreshTokenPrivateKeyPath;
-
-    @Value("${refresh-token.public}")
-    private String refreshTokenPublicKeyPath;
-
-    private KeyPair _accessTokenKeyPair;
-    private KeyPair _refreshTokenKeyPair;
+    private KeyPair _tokenKeyPair;
 
     public KeyUtils(Environment environment) {
         this.environment = environment;
@@ -44,36 +37,22 @@ public class KeyUtils {
 
     // ---------------- PUBLIC API ----------------
 
-    public RSAPublicKey getAccessTokenPublicKey() {
-        return (RSAPublicKey) getAccessTokenKeyPair().getPublic();
+    public RSAPublicKey getPublicKey() {
+        return (RSAPublicKey) getTokenKeyPair().getPublic();
     }
 
-    public RSAPrivateKey getAccessTokenPrivateKey() {
-        return (RSAPrivateKey) getAccessTokenKeyPair().getPrivate();
+    public RSAPrivateKey getPrivateKey() {
+        return (RSAPrivateKey) getTokenKeyPair().getPrivate();
     }
 
-    public RSAPublicKey getRefreshTokenPublicKey() {
-        return (RSAPublicKey) getRefreshTokenKeyPair().getPublic();
-    }
-
-    public RSAPrivateKey getRefreshTokenPrivateKey() {
-        return (RSAPrivateKey) getRefreshTokenKeyPair().getPrivate();
-    }
 
     // ---------------- INTERNAL LOGIC ----------------
 
-    private KeyPair getAccessTokenKeyPair() {
-        if (_accessTokenKeyPair == null) {
-            _accessTokenKeyPair = loadOrGenerate(accessTokenPublicKeyPath, accessTokenPrivateKeyPath);
+    private KeyPair getTokenKeyPair() {
+        if (_tokenKeyPair == null) {
+            _tokenKeyPair = loadOrGenerate(publicKeyPath, privateKeyPath);
         }
-        return _accessTokenKeyPair;
-    }
-
-    private KeyPair getRefreshTokenKeyPair() {
-        if (_refreshTokenKeyPair == null) {
-            _refreshTokenKeyPair = loadOrGenerate(refreshTokenPublicKeyPath, refreshTokenPrivateKeyPath);
-        }
-        return _refreshTokenKeyPair;
+        return _tokenKeyPair;
     }
 
 

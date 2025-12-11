@@ -1,20 +1,9 @@
 package org.collegemanagement.controllers;
 
-import org.collegemanagement.dto.CollegeDto;
-import org.collegemanagement.dto.CollegeRequest;
-import org.collegemanagement.dto.PlanPriceRequest;
-import org.collegemanagement.dto.SubscriptionDto;
-import org.collegemanagement.dto.SubscriptionRequest;
+import org.collegemanagement.dto.*;
 import org.collegemanagement.entity.College;
-import org.collegemanagement.entity.Role;
-import org.collegemanagement.entity.User;
 import org.collegemanagement.enums.RoleType;
-import org.collegemanagement.enums.Status;
-import org.collegemanagement.services.CollegeService;
-import org.collegemanagement.services.RoleService;
-import org.collegemanagement.services.PlanPriceService;
-import org.collegemanagement.services.SubscriptionService;
-import org.collegemanagement.services.UserManager;
+import org.collegemanagement.services.*;
 import org.springframework.http.ResponseEntity;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
@@ -22,7 +11,6 @@ import org.springframework.web.bind.annotation.*;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 @RestController
 @RequestMapping("/api/v1/superuser")
@@ -34,17 +22,19 @@ public class SuperAdminController {
     private final RoleService roleService;
     private final SubscriptionService subscriptionService;
     private final PlanPriceService planPriceService;
+    private final CollegeRegistrationService collegeRegistrationService;
 
-    public SuperAdminController(CollegeService collegeService, UserManager userManager, RoleService roleService, SubscriptionService subscriptionService, PlanPriceService planPriceService) {
+    public SuperAdminController(CollegeService collegeService, UserManager userManager, RoleService roleService, SubscriptionService subscriptionService, PlanPriceService planPriceService, CollegeRegistrationService collegeRegistrationService) {
         this.collegeService = collegeService;
         this.userManager = userManager;
         this.roleService = roleService;
         this.subscriptionService = subscriptionService;
         this.planPriceService = planPriceService;
+        this.collegeRegistrationService = collegeRegistrationService;
     }
 
     @PostMapping("/college/create")
-    public ResponseEntity<?> createCollege(@RequestBody CollegeRequest request) {
+    public ResponseEntity<?> createCollege(@RequestBody TenantSignUpRequest request) {
         if (collegeService.existsByName(request.getCollegeName())) {
             return ResponseEntity.badRequest().body("College with this name already exists.");
         }
@@ -53,35 +43,7 @@ public class SuperAdminController {
             return ResponseEntity.badRequest().body("Admin Email already used.");
         }
 
-        CollegeDto collegeDto = CollegeDto.builder()
-                .name(request.getCollegeName())
-                .email(request.getCollegeEmail())
-                .phone(request.getCollegePhone())
-                .address(request.getCollegeAddress())
-                .status(Status.ACTIVE)
-                .build();
-
-        CollegeDto college = collegeService.create(collegeDto);
-        College collegeEntity = collegeService.findByEmail(collegeDto.getEmail());
-        SubscriptionDto subscription = SubscriptionDto.fromEntity(subscriptionService.createOrUpdateForCollege(
-                collegeEntity,
-                SubscriptionRequest.builder()
-                        .plan(request.getSubscriptionPlan())
-                        .billingCycle(request.getBillingCycle())
-                        .build()
-        ));
-        college.setSubscription(subscription);
-        User collegeAdmin = User.builder()
-                .name(request.getAdminName())
-                .email(request.getAdminEmail())
-                .password(request.getAdminPassword())
-                .roles(roleService.getRoles(RoleType.ROLE_COLLEGE_ADMIN))
-                .college(collegeEntity)
-                .build();
-
-        userManager.createUser(collegeAdmin);
-
-        return ResponseEntity.ok(college);
+        return ResponseEntity.ok(collegeRegistrationService.registerCollegeTenant(request));
     }
 
     @GetMapping("/college/all")
@@ -150,10 +112,10 @@ public class SuperAdminController {
     public ResponseEntity<Map<String, Long>> getSuperAdminDashboard() {
         Map<String, Long> dashboardData = new HashMap<>();
         dashboardData.put("totalColleges", collegeService.count());
-        dashboardData.put("totalStudents", userManager.countByRoles(roleService.getRoles(RoleType.ROLE_STUDENT)).get(0));
-        dashboardData.put("totalTeachers", userManager.countByRoles(roleService.getRoles(RoleType.ROLE_TEACHER)).get(0));
-        dashboardData.put("totalParents", userManager.countByRoles(roleService.getRoles(RoleType.ROLE_PARENT)).get(0));
-        dashboardData.put("totalSuperAdmins", userManager.countByRoles(roleService.getRoles(RoleType.ROLE_SUPER_ADMIN)).get(0));
+        dashboardData.put("totalStudents", userManager.countByRoles(roleService.getRoles(RoleType.ROLE_STUDENT)).getFirst());
+        dashboardData.put("totalTeachers", userManager.countByRoles(roleService.getRoles(RoleType.ROLE_TEACHER)).getFirst());
+        dashboardData.put("totalParents", userManager.countByRoles(roleService.getRoles(RoleType.ROLE_PARENT)).getFirst());
+        dashboardData.put("totalSuperAdmins", userManager.countByRoles(roleService.getRoles(RoleType.ROLE_SUPER_ADMIN)).getFirst());
         return ResponseEntity.ok(dashboardData);
     }
 

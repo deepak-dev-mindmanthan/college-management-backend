@@ -2,6 +2,9 @@ package org.collegemanagement.config;
 
 
 import lombok.extern.slf4j.Slf4j;
+import org.collegemanagement.security.handler.CustomAccessDeniedHandler;
+import org.collegemanagement.security.handler.CustomAuthenticationEntryPoint;
+import org.collegemanagement.security.jwt.JWTtoUserConverter;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -29,12 +32,22 @@ public class WebSecurity {
 
     final PasswordEncoder passwordEncoder;
     final UserDetailsManager userDetailsManager;
+    CustomAuthenticationEntryPoint customAuthenticationEntryPoint;
+    CustomAccessDeniedHandler customAccessDeniedHandler;
 
-    public WebSecurity(JWTtoUserConverter jwtToUserConverter, JwtDecoder jwtRefreshTokenDecoder, PasswordEncoder passwordEncoder, UserDetailsManager userDetailsManager) {
+    public WebSecurity(JWTtoUserConverter jwtToUserConverter,
+                       JwtDecoder jwtRefreshTokenDecoder,
+                       PasswordEncoder passwordEncoder,
+                       UserDetailsManager userDetailsManager,
+                       CustomAuthenticationEntryPoint customAuthenticationEntryPoint,
+                       CustomAccessDeniedHandler customAccessDeniedHandler
+    ) {
         this.jwtToUserConverter = jwtToUserConverter;
         this.jwtRefreshTokenDecoder = jwtRefreshTokenDecoder;
         this.passwordEncoder = passwordEncoder;
         this.userDetailsManager = userDetailsManager;
+        this.customAuthenticationEntryPoint = customAuthenticationEntryPoint;
+        this.customAccessDeniedHandler = customAccessDeniedHandler;
     }
 
     @Bean
@@ -44,21 +57,21 @@ public class WebSecurity {
                         .requestMatchers("/api/v1/auth/**").permitAll()
                         .requestMatchers("/api/v1/pricing/**").permitAll()
                         .requestMatchers("/api/v1/superuser/**").hasRole("SUPER_ADMIN")
-                        .requestMatchers("/api/v1/college-admin/**").hasAnyRole("SUPER_ADMIN","COLLEGE_ADMIN")
-                        .requestMatchers("/swagger-ui.html","/api/docs","/api/swagger-ui/**", "/v3/api-docs/**").permitAll()
+                        .requestMatchers("/api/v1/college-admin/**").hasAnyRole("SUPER_ADMIN", "COLLEGE_ADMIN")
+                        .requestMatchers("/swagger-ui.html", "/api/docs", "/api/swagger-ui/**", "/v3/api-docs/**").permitAll()
                         .anyRequest().authenticated()
                 )
                 .csrf(AbstractHttpConfigurer::disable)
                 .cors(AbstractHttpConfigurer::disable)
                 .httpBasic(AbstractHttpConfigurer::disable)
                 .oauth2ResourceServer((oauth2) ->
-                        oauth2.jwt((jwt) -> jwt.jwtAuthenticationConverter(jwtToUserConverter))
+                        oauth2.authenticationEntryPoint(customAuthenticationEntryPoint)
+                                .accessDeniedHandler(customAccessDeniedHandler)
+                                .jwt((jwt) -> jwt.jwtAuthenticationConverter(jwtToUserConverter))
                 )
-                .sessionManagement((session) -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-                .exceptionHandling((exceptions) -> exceptions
-                        .authenticationEntryPoint(new BearerTokenAuthenticationEntryPoint())
-                        .accessDeniedHandler(new BearerTokenAccessDeniedHandler())
-                );
+                .sessionManagement((session) -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS));
+
+
         return http.build();
     }
 

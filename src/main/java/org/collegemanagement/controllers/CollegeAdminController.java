@@ -1,7 +1,7 @@
 package org.collegemanagement.controllers;
 
 
-import org.collegemanagement.config.TokenGenerator;
+import org.collegemanagement.security.jwt.TokenGenerator;
 import org.collegemanagement.dto.*;
 import org.collegemanagement.entity.*;
 import org.collegemanagement.enums.FeeStatus;

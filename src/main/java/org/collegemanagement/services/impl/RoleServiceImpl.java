@@ -32,6 +32,6 @@ public class RoleServiceImpl implements RoleService {
         if(roles.isEmpty()){
             throw new ResourceNotFoundException("Role not found with name:"+roleType);
         }
-        return new HashSet<>();
+        return new HashSet<>(roles);
     }
 }

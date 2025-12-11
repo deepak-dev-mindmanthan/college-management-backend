@@ -1,19 +1,15 @@
 package org.collegemanagement.controllers;
 
-import org.collegemanagement.config.TokenGenerator;
-import org.collegemanagement.dto.CollegeDto;
+import org.collegemanagement.security.jwt.TokenGenerator;
 import org.collegemanagement.dto.LoginRequest;
 import org.collegemanagement.dto.SignUpRequest;
-import org.collegemanagement.dto.SubscriptionDto;
-import org.collegemanagement.dto.SubscriptionRequest;
 import org.collegemanagement.dto.TenantSignUpRequest;
 import org.collegemanagement.dto.Token;
-import org.collegemanagement.entity.College;
 import org.collegemanagement.entity.User;
 import org.collegemanagement.enums.RoleType;
+import org.collegemanagement.services.CollegeRegistrationService;
 import org.collegemanagement.services.CollegeService;
 import org.collegemanagement.services.RoleService;
-import org.collegemanagement.services.SubscriptionService;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -43,7 +39,7 @@ public class AuthController {
     final private JwtAuthenticationProvider refreshTokenAuthProvider;
     private final RoleService roleService;
     private final CollegeService collegeService;
-    private final SubscriptionService subscriptionService;
+    private final CollegeRegistrationService collegeRegistrationService;
 
     public AuthController(UserDetailsManager userDetailsManager,
                           TokenGenerator tokenGenerator,
@@ -51,14 +47,14 @@ public class AuthController {
                           @Qualifier("jwtRefreshTokenAuthProvider") JwtAuthenticationProvider refreshTokenAuthProvider,
                           RoleService roleService,
                           CollegeService collegeService,
-                          SubscriptionService subscriptionService) {
+                          CollegeRegistrationService collegeRegistrationService) {
         this.userDetailsManager = userDetailsManager;
         this.tokenGenerator = tokenGenerator;
         this.daoAuthenticationProvider = daoAuthenticationProvider;
         this.refreshTokenAuthProvider = refreshTokenAuthProvider;
         this.roleService = roleService;
         this.collegeService = collegeService;
-        this.subscriptionService = subscriptionService;
+        this.collegeRegistrationService = collegeRegistrationService;
     }
 
     @PostMapping("/register")
@@ -72,6 +68,7 @@ public class AuthController {
                 .password(signUpRequest.getPassword())
                 .roles(roleService.getRoles(RoleType.ROLE_SUPER_ADMIN))
                 .build();
+
         userDetailsManager.createUser(user);
         List<String> roles = user.getRoles().stream()
                 .map(role -> role.getName().name())
@@ -95,42 +92,7 @@ public class AuthController {
             return ResponseEntity.badRequest().body("Admin email already used.");
         }
 
-        CollegeDto collegeDto = CollegeDto.builder()
-                .name(request.getCollegeName())
-                .email(request.getCollegeEmail())
-                .phone(request.getCollegePhone())
-                .address(request.getCollegeAddress())
-                .build();
-
-        CollegeDto createdCollege = collegeService.create(collegeDto);
-        College collegeEntity = collegeService.findByEmail(createdCollege.getEmail());
-
-        SubscriptionDto subscription = SubscriptionDto.fromEntity(
-                subscriptionService.createOrUpdateForCollege(
-                        collegeEntity,
-                        SubscriptionRequest.builder()
-                                .plan(request.getSubscriptionPlan())
-                                .billingCycle(request.getBillingCycle())
-                                .build()
-                )
-        );
-        createdCollege.setSubscription(subscription);
-
-        User collegeAdmin = User.builder()
-                .name(request.getAdminName())
-                .email(request.getAdminEmail())
-                .password(request.getAdminPassword())
-                .roles(roleService.getRoles(RoleType.ROLE_COLLEGE_ADMIN))
-                .college(collegeEntity)
-                .build();
-
-        userDetailsManager.createUser(collegeAdmin);
-
-        Collection<GrantedAuthority> authorities = collegeAdmin.getRoles().stream()
-                .map(role -> new SimpleGrantedAuthority(role.getName().name().toUpperCase()))
-                .collect(Collectors.toSet());
-        Authentication authentication = UsernamePasswordAuthenticationToken.authenticated(collegeAdmin, request.getAdminPassword(), authorities);
-        return ResponseEntity.ok(tokenGenerator.createToken(authentication));
+        return ResponseEntity.ok(collegeRegistrationService.registerCollegeTenant(request));
     }
 
 
@@ -142,12 +104,14 @@ public class AuthController {
 
     @PostMapping("/token")
     public ResponseEntity<Token> token(@RequestBody Token tokenDTO) {
+        System.out.println(tokenDTO.getRefreshToken());
+
         Authentication authentication = refreshTokenAuthProvider.authenticate(new BearerTokenAuthenticationToken(tokenDTO.getRefreshToken()));
         Jwt jwt = (Jwt) authentication.getCredentials();
+
         //TODO: check if present in db and not revoked, etc
         return ResponseEntity.ok(tokenGenerator.createToken(authentication));
     }
-
 
 
 }
