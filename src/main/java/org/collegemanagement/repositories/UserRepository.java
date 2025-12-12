@@ -20,4 +20,6 @@ public interface UserRepository extends JpaRepository<User, Long> {
 
     long countByCollegeIdAndRoles(Long id, Set<Role> roles);
 
+    boolean getUserById(Long id);
+    boolean existsByEmail(String email);
 }

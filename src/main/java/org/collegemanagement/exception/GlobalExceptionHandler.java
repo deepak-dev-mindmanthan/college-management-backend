@@ -21,4 +21,9 @@ public class GlobalExceptionHandler{
         return ResponseEntity.status(HttpStatus.FORBIDDEN).body(new ExceptionResponse(HttpStatus.FORBIDDEN.value(),"Access denied: " + ex.getMessage()));
     }
 
+    @ExceptionHandler({ResourceConflictException.class})
+    public ResponseEntity<ExceptionResponse> handleConflictException(ResourceConflictException  ex) {
+        return ResponseEntity.status(HttpStatus.FORBIDDEN).body(new ExceptionResponse(HttpStatus.CONFLICT.value(),"Error: " + ex.getMessage()));
+    }
+
 }

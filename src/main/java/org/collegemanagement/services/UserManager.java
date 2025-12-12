@@ -9,6 +9,8 @@ import java.util.stream.Collectors;
 import org.collegemanagement.entity.Role;
 import org.collegemanagement.entity.User;
 import org.collegemanagement.dto.UserDto;
+import org.collegemanagement.exception.ResourceConflictException;
+import org.collegemanagement.exception.ResourceNotFoundException;
 import org.collegemanagement.repositories.UserRepository;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
@@ -36,6 +38,11 @@ public class UserManager implements UserDetailsManager {
     public void createUser(UserDetails userDetails) {
         User user = (User) userDetails;
         user.setPassword(passwordEncoder.encode(user.getPassword()));
+
+        if(userRepository.existsByEmail(user.getEmail())){
+            throw new ResourceConflictException(    "User already exists with email :"+user.getEmail());
+        }
+
         userRepository.save(user);
     }
 

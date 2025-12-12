@@ -25,6 +25,8 @@ public class College {
 
     @Column(nullable = false, unique = true)
     private String email;
+
+    @Column(nullable = false, unique = true)
     private String phone;
     private String address;
 
