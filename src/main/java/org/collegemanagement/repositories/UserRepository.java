@@ -14,11 +14,11 @@ public interface UserRepository extends JpaRepository<User, Long> {
 
     List<User> findUsersByNameAndRoles(String name, Set<Role> roles);
 
-    List<User> findByCollegeIdAndRoles(Long id, Set<Role> roles);
+    List<User> findByCollegeIdAndRolesContaining(Long id, Role roles);
 
     Long countByRolesContaining(Role role);
 
-    long countByCollegeIdAndRoles(Long id, Set<Role> roles);
+    long countByCollegeIdAndRolesContaining(Long id, Role roles);
 
     boolean getUserById(Long id);
     boolean existsByEmail(String email);

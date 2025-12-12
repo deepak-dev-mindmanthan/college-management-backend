@@ -128,7 +128,7 @@ public class CollegeAdminController {
     @GetMapping("/teachers/{collegeId}")
     public ResponseEntity<List<User>> getAllTeachers(@PathVariable Long collegeId) {
         requireSameCollege(collegeId);
-        List<User> teachers = userManager.findByCollegeIdAndRoles(collegeId, roleService.getRoles(RoleType.ROLE_TEACHER));
+        List<User> teachers = userManager.findByCollegeIdAndRoles(collegeId, roleService.getRoleByName(RoleType.ROLE_TEACHER));
         return ResponseEntity.ok(teachers);
     }
 
@@ -199,7 +199,7 @@ public class CollegeAdminController {
     @GetMapping("/students/{collegeId}")
     public ResponseEntity<List<User>> getAllStudents(@PathVariable Long collegeId) {
         requireSameCollege(collegeId);
-        List<User> students = userManager.findByCollegeIdAndRoles(collegeId, roleService.getRoles(RoleType.ROLE_STUDENT));
+        List<User> students = userManager.findByCollegeIdAndRoles(collegeId, roleService.getRoleByName(RoleType.ROLE_STUDENT));
         return ResponseEntity.ok(students);
     }
 
@@ -264,7 +264,7 @@ public class CollegeAdminController {
     @GetMapping("/accountants/{collegeId}")
     public ResponseEntity<List<User>> getAccountants(@PathVariable Long collegeId) {
         requireSameCollege(collegeId);
-        List<User> accountants = userManager.findByCollegeIdAndRoles(collegeId, roleService.getRoles(RoleType.ROLE_ACCOUNTANT));
+        List<User> accountants = userManager.findByCollegeIdAndRoles(collegeId, roleService.getRoleByName(RoleType.ROLE_ACCOUNTANT));
         return ResponseEntity.ok(accountants);
     }
 
@@ -493,9 +493,9 @@ public class CollegeAdminController {
     public ResponseEntity<Map<String, Long>> getCollegeAdminDashboard(@RequestParam Long collegeId) {
         requireSameCollege(collegeId);
         Map<String, Long> dashboardData = new HashMap<>();
-        dashboardData.put("totalStudents", userManager.countByCollegeIdAndRoles(collegeId, roleService.getRoles(RoleType.ROLE_STUDENT)));
-        dashboardData.put("totalTeachers", userManager.countByCollegeIdAndRoles(collegeId, roleService.getRoles(RoleType.ROLE_TEACHER)));
-        dashboardData.put("totalAccountants", userManager.countByCollegeIdAndRoles(collegeId, roleService.getRoles(RoleType.ROLE_ACCOUNTANT)));
+        dashboardData.put("totalStudents", userManager.countByCollegeIdAndRole(collegeId, roleService.getRoleByName(RoleType.ROLE_STUDENT)));
+        dashboardData.put("totalTeachers", userManager.countByCollegeIdAndRole(collegeId, roleService.getRoleByName(RoleType.ROLE_TEACHER)));
+        dashboardData.put("totalAccountants", userManager.countByCollegeIdAndRole(collegeId, roleService.getRoleByName(RoleType.ROLE_ACCOUNTANT)));
         dashboardData.put("totalSubjects", subjectService.countByCollegeId(collegeId));
 
         return ResponseEntity.ok(dashboardData);

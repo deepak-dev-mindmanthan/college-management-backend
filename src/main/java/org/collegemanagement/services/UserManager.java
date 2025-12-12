@@ -79,8 +79,8 @@ public class UserManager implements UserDetailsManager {
         return user.isPresent();
     }
 
-    public List<User> findByCollegeIdAndRoles(Long id, Set<Role> roles) {
-        return userRepository.findByCollegeIdAndRoles(id, roles).stream().peek(item -> {
+    public List<User> findByCollegeIdAndRoles(Long id, Role roles) {
+        return userRepository.findByCollegeIdAndRolesContaining(id, roles).stream().peek(item -> {
             if (item.getCollege() != null) {
                 item.getCollege().setUsers(null);
             }
@@ -121,8 +121,8 @@ public class UserManager implements UserDetailsManager {
         return userRepository.countByRolesContaining(roles);
     }
 
-    public long countByCollegeIdAndRoles(Long id, Set<Role> roles) {
-        return userRepository.countByCollegeIdAndRoles(id, roles);
+    public long countByCollegeIdAndRole(Long id, Role roles) {
+        return userRepository.countByCollegeIdAndRolesContaining(id, roles);
     }
 
 
