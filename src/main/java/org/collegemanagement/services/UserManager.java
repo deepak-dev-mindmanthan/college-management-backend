@@ -9,6 +9,7 @@ import java.util.stream.Collectors;
 import org.collegemanagement.entity.Role;
 import org.collegemanagement.entity.User;
 import org.collegemanagement.dto.UserDto;
+import org.collegemanagement.exception.InvalidUserNameOrPasswordException;
 import org.collegemanagement.exception.ResourceConflictException;
 import org.collegemanagement.exception.ResourceNotFoundException;
 import org.collegemanagement.repositories.UserRepository;
@@ -44,6 +45,16 @@ public class UserManager implements UserDetailsManager {
         }
 
         userRepository.save(user);
+    }
+
+    public boolean verifyPassword(String email,String password) {
+        Optional<User> optionalUser = userRepository.findUserByEmail(email);
+        if(optionalUser.isEmpty()){
+            throw new InvalidUserNameOrPasswordException("Invalid username or password.");
+        }else{
+            User user = optionalUser.get();
+            return passwordEncoder.matches(password,user.getPassword());
+        }
     }
 
     @Transactional

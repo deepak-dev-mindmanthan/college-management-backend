@@ -1,5 +1,6 @@
 package org.collegemanagement.controllers;
 
+import org.collegemanagement.exception.InvalidUserNameOrPasswordException;
 import org.collegemanagement.security.jwt.TokenGenerator;
 import org.collegemanagement.dto.LoginRequest;
 import org.collegemanagement.dto.SignUpRequest;
@@ -10,6 +11,7 @@ import org.collegemanagement.enums.RoleType;
 import org.collegemanagement.services.CollegeRegistrationService;
 import org.collegemanagement.services.CollegeService;
 import org.collegemanagement.services.RoleService;
+import org.collegemanagement.services.UserManager;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -33,7 +35,7 @@ import java.util.stream.Collectors;
 @RestController
 @RequestMapping("/api/v1/auth")
 public class AuthController {
-    final private UserDetailsManager userDetailsManager;
+    final private UserManager userDetailsManager;
     final private TokenGenerator tokenGenerator;
     final private DaoAuthenticationProvider daoAuthenticationProvider;
     final private JwtAuthenticationProvider refreshTokenAuthProvider;
@@ -41,7 +43,7 @@ public class AuthController {
     private final CollegeService collegeService;
     private final CollegeRegistrationService collegeRegistrationService;
 
-    public AuthController(UserDetailsManager userDetailsManager,
+    public AuthController(UserManager userDetailsManager,
                           TokenGenerator tokenGenerator,
                           DaoAuthenticationProvider daoAuthenticationProvider,
                           @Qualifier("jwtRefreshTokenAuthProvider") JwtAuthenticationProvider refreshTokenAuthProvider,
@@ -91,6 +93,9 @@ public class AuthController {
         if (userDetailsManager.userExists(request.getAdminEmail())) {
             return ResponseEntity.badRequest().body("Admin email already used.");
         }
+        if(collegeService.exitsByPhone(request.getCollegePhone())){
+            return ResponseEntity.badRequest().body("College with this phone already exists.");
+        }
 
         return ResponseEntity.ok(collegeRegistrationService.registerCollegeTenant(request));
     }
@@ -98,6 +103,10 @@ public class AuthController {
 
     @PostMapping("/login")
     public ResponseEntity<Token> login(@RequestBody LoginRequest loginRequest) {
+        boolean validUser = userDetailsManager.verifyPassword(loginRequest.getEmail(), loginRequest.getPassword());
+        if (!validUser) {
+            throw new InvalidUserNameOrPasswordException("Invalid username or password.");
+        }
         Authentication authentication = daoAuthenticationProvider.authenticate(UsernamePasswordAuthenticationToken.unauthenticated(loginRequest.getEmail(), loginRequest.getPassword()));
         return ResponseEntity.ok(tokenGenerator.createToken(authentication));
     }

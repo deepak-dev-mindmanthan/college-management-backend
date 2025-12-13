@@ -64,7 +64,7 @@ public class TokenGenerator {
         return tokenEncoder.encode(JwtEncoderParameters.from(claimsBuilder.build())).getTokenValue();
     }
 
-    private String createRefreshToken(User user, Authentication authentication, Subscription subscription) {
+    private String createRefreshToken(User user, Subscription subscription) {
         Instant now = Instant.now();
         List<String> roles = user.getRoles().stream()
                 .map(role -> role.getName().name())
@@ -123,12 +123,12 @@ public class TokenGenerator {
             Duration duration = Duration.between(now, expiresAt);
             long daysUntilExpired = duration.toDays();
             if (daysUntilExpired < 7) {
-                refreshToken = createRefreshToken(user, authentication, subscription);
+                refreshToken = createRefreshToken(user, subscription);
             } else {
                 refreshToken = jwt.getTokenValue();
             }
         } else {
-            refreshToken = createRefreshToken(user, authentication, subscription);
+            refreshToken = createRefreshToken(user, subscription);
         }
         tokenDTO.setRefreshToken(refreshToken);
         if (subscription != null) {

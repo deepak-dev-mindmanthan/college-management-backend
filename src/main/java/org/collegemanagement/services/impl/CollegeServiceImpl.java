@@ -70,6 +70,11 @@ public class CollegeServiceImpl implements CollegeService {
     }
 
     @Override
+    public boolean exitsByPhone(String phone) {
+        return collegeRepository.existsCollegeByPhone(phone);
+    }
+
+    @Override
     public long count() {
         return collegeRepository.count();
     }

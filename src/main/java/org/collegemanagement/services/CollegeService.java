@@ -14,6 +14,7 @@ public interface CollegeService {
     List<CollegeDto> findAll();
     void deleteCollege(Long id);
     boolean existsById(Long id);
+    boolean exitsByPhone(String phone);
     long count();
 
 }

@@ -25,4 +25,5 @@ public class Token {
     private LocalDate subscriptionExpiresAt;
     private BigDecimal subscriptionPriceAmount;
     private CurrencyCode subscriptionCurrency;
+
 }

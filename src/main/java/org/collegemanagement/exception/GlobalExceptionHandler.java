@@ -23,7 +23,12 @@ public class GlobalExceptionHandler{
 
     @ExceptionHandler({ResourceConflictException.class})
     public ResponseEntity<ExceptionResponse> handleConflictException(ResourceConflictException  ex) {
-        return ResponseEntity.status(HttpStatus.FORBIDDEN).body(new ExceptionResponse(HttpStatus.CONFLICT.value(),"Error: " + ex.getMessage()));
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(new ExceptionResponse(HttpStatus.CONFLICT.value(),ex.getMessage()));
+    }
+
+    @ExceptionHandler({InvalidUserNameOrPasswordException.class})
+    public ResponseEntity<ExceptionResponse> handleInvalidUserNameOrPasswordException(InvalidUserNameOrPasswordException  ex) {
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(new ExceptionResponse(HttpStatus.UNAUTHORIZED.value(), ex.getMessage()));
     }
 
 }
