@@ -21,5 +21,6 @@ public interface UserRepository extends JpaRepository<User, Long> {
     long countByCollegeIdAndRolesContaining(Long id, Role roles);
 
     boolean getUserById(Long id);
+    boolean existsByEmailAndIdNot(String email, Long id);
     boolean existsByEmail(String email);
 }

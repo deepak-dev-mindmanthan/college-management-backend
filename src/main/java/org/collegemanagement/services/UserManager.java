@@ -37,23 +37,55 @@ public class UserManager implements UserDetailsManager {
     @Transactional
     @Override
     public void createUser(UserDetails userDetails) {
+
         User user = (User) userDetails;
         user.setPassword(passwordEncoder.encode(user.getPassword()));
-
-        if(userRepository.existsByEmail(user.getEmail())){
-            throw new ResourceConflictException(    "User already exists with email :"+user.getEmail());
+        if (userRepository.existsByEmail(user.getEmail())) {
+            throw new ResourceConflictException("User already exists with email :" + user.getEmail());
         }
-
         userRepository.save(user);
     }
 
-    public boolean verifyPassword(String email,String password) {
+    @Transactional
+    public User update(User user) {
+
+        User existingUser = userRepository.findById(user.getId())
+                .orElseThrow(() ->
+                        new ResourceNotFoundException("User not found with id: " + user.getId())
+                );
+
+        if (user.getEmail() != null &&
+                !user.getEmail().equals(existingUser.getEmail())) {
+
+            if (userRepository.existsByEmailAndIdNot(user.getEmail(), user.getId())) {
+                throw new ResourceConflictException(
+                        "Email already in use: " + user.getEmail()
+                );
+            }
+
+            existingUser.setEmail(user.getEmail());
+        }
+        if (user.getName() != null) {
+            existingUser.setName(user.getName());
+        }
+
+        if (user.getPassword() != null && !user.getPassword().isBlank()) {
+            existingUser.setPassword(
+                    passwordEncoder.encode(user.getPassword())
+            );
+        }
+
+        return userRepository.save(existingUser);
+    }
+
+
+    public boolean verifyPassword(String email, String password) {
         Optional<User> optionalUser = userRepository.findUserByEmail(email);
-        if(optionalUser.isEmpty()){
+        if (optionalUser.isEmpty()) {
             throw new InvalidUserNameOrPasswordException("Invalid username or password.");
-        }else{
+        } else {
             User user = optionalUser.get();
-            return passwordEncoder.matches(password,user.getPassword());
+            return passwordEncoder.matches(password, user.getPassword());
         }
     }
 

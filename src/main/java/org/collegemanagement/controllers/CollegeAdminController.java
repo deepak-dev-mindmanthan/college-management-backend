@@ -134,30 +134,14 @@ public class CollegeAdminController {
 
     @PutMapping("/teachers/{id}")
     public ResponseEntity<?> updateTeacher(@PathVariable Long id, @RequestBody CreateTeacherOrStudentRequest request) {
-        if (!userManager.userExists(id)) {
-            return ResponseEntity.badRequest().body("Teacher not found with id " + id);
-        }
-        UserDto updateUserDto = userManager.getUserById(id);
-        User updateUser = UserDto.toEntity(updateUserDto);
-        requireSameCollege(updateUser);
-
-
-        if (request.getEmail() != null) {
-            updateUser.setEmail(request.getEmail());
-        }
-
-        if (request.getPassword() != null) {
-            updateUser.setPassword(request.getPassword());
-        }
-        if (request.getName() != null) {
-            updateUser.setName(request.getName());
-        }
-
-        if (request.getCollegeId() != null) {
-            updateUser.setCollege(collegeService.findById(request.getCollegeId()));
-        }
-        updateUser.setRoles(roleService.getRoles(RoleType.ROLE_TEACHER));
-        userManager.createUser(updateUser);
+        User updateUser = User.builder()
+                .id(id)
+                .name(request.getName())
+                .email(request.getEmail())
+                .password(request.getPassword())
+                .roles(roleService.getRoles(RoleType.ROLE_TEACHER))
+                .build();
+        userManager.update(updateUser);
         return ResponseEntity.ok("Teacher updated successfully.");
     }
 
