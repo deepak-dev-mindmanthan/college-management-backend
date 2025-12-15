@@ -1,6 +1,7 @@
 package org.collegemanagement.controllers;
 
 
+import org.collegemanagement.exception.ResourceNotFoundException;
 import org.collegemanagement.security.jwt.TokenGenerator;
 import org.collegemanagement.dto.*;
 import org.collegemanagement.entity.*;
@@ -62,7 +63,7 @@ public class CollegeAdminController {
             return;
         }
         Long currentCollege = currentCollegeId(auth);
-        if (currentCollege == null || targetCollegeId == null || !currentCollege.equals(targetCollegeId)) {
+        if (currentCollege == null || !currentCollege.equals(targetCollegeId)) {
             throw new AccessDeniedException("Access denied: cross-college access is not permitted.");
         }
     }
@@ -141,6 +142,7 @@ public class CollegeAdminController {
                 .password(request.getPassword())
                 .roles(roleService.getRoles(RoleType.ROLE_TEACHER))
                 .build();
+        requireSameCollege(userManager.getUserById(id).getCollege().getId());
         userManager.update(updateUser);
         return ResponseEntity.ok("Teacher updated successfully.");
     }
@@ -161,6 +163,7 @@ public class CollegeAdminController {
         if (!collegeService.existsById(request.getCollegeId())) {
             return ResponseEntity.badRequest().body("No college found with id " + request.getCollegeId());
         }
+
         requireSameCollege(request.getCollegeId());
 
         User newStudent = User.builder()
@@ -194,44 +197,31 @@ public class CollegeAdminController {
         }
         requireSameCollege(userManager.getUserById(id).getCollege().getId());
         userManager.deleteUserById(id);
-        return ResponseEntity.ok("Student deleted successfully.");
+        return ResponseEntity.ok(Map.of("message","Student deleted successfully."));
     }
 
 
     @PutMapping("/students/{id}")
     public ResponseEntity<?> updateStudent(@PathVariable Long id, @RequestBody CreateTeacherOrStudentRequest request) {
-        if (!userManager.userExists(id)) {
-            return ResponseEntity.badRequest().body("Student not found with id " + id);
-        }
-        UserDto updateUserDto = userManager.getUserById(id);
-        User updateUser = UserDto.toEntity(updateUserDto);
-        requireSameCollege(updateUser);
 
+        User updateUser = User.builder()
+                .id(id)
+                .name(request.getName())
+                .email(request.getEmail())
+                .password(request.getPassword())
+                .roles(roleService.getRoles(RoleType.ROLE_STUDENT))
+                .build();
 
-        if (request.getEmail() != null) {
-            updateUser.setEmail(request.getEmail());
-        }
-
-        if (request.getPassword() != null) {
-            updateUser.setPassword(request.getPassword());
-        }
-        if (request.getName() != null) {
-            updateUser.setName(request.getName());
-        }
-
-        if (request.getCollegeId() != null) {
-            updateUser.setCollege(collegeService.findById(request.getCollegeId()));
-        }
-        updateUser.setRoles(roleService.getRoles(RoleType.ROLE_STUDENT));
-        userManager.createUser(updateUser);
-        return ResponseEntity.ok("Student updated successfully.");
+        requireSameCollege(userManager.getUserById(id).getCollege().getId());
+        userManager.update(updateUser);
+        return ResponseEntity.ok(Map.of("message","Student updated successfully."));
     }
 
     // ACCOUNTANT MANAGEMENT
     @PostMapping("/accountants")
     public ResponseEntity<?> createAccountant(@RequestBody CreateTeacherOrStudentRequest request) {
         if (!collegeService.existsById(request.getCollegeId())) {
-            return ResponseEntity.badRequest().body("No college found with id " + request.getCollegeId());
+            throw new ResourceNotFoundException("No college found with id " + request.getCollegeId());
         }
         requireSameCollege(request.getCollegeId());
         User accountant = User.builder()
@@ -242,7 +232,7 @@ public class CollegeAdminController {
                 .college(collegeService.findById(request.getCollegeId()))
                 .build();
         userManager.createUser(accountant);
-        return ResponseEntity.ok("Accountant created successfully.");
+        return ResponseEntity.ok(Map.of("message","Accountant created successfully."));
     }
 
     @GetMapping("/accountants/{collegeId}")
@@ -254,28 +244,18 @@ public class CollegeAdminController {
 
     @PutMapping("/accountants/{id}")
     public ResponseEntity<?> updateAccountant(@PathVariable Long id, @RequestBody CreateTeacherOrStudentRequest request) {
-        if (!userManager.userExists(id)) {
-            return ResponseEntity.badRequest().body("Accountant not found with id " + id);
-        }
-        UserDto updateUserDto = userManager.getUserById(id);
-        User updateUser = UserDto.toEntity(updateUserDto);
-        requireSameCollege(updateUser);
 
-        if (request.getEmail() != null) {
-            updateUser.setEmail(request.getEmail());
-        }
-        if (request.getPassword() != null) {
-            updateUser.setPassword(request.getPassword());
-        }
-        if (request.getName() != null) {
-            updateUser.setName(request.getName());
-        }
-        if (request.getCollegeId() != null) {
-            updateUser.setCollege(collegeService.findById(request.getCollegeId()));
-        }
-        updateUser.setRoles(roleService.getRoles(RoleType.ROLE_ACCOUNTANT));
-        userManager.createUser(updateUser);
-        return ResponseEntity.ok("Accountant updated successfully.");
+        User updateUser = User.builder()
+                .id(id)
+                .name(request.getName())
+                .email(request.getEmail())
+                .password(request.getPassword())
+                .roles(roleService.getRoles(RoleType.ROLE_ACCOUNTANT))
+                .build();
+
+        requireSameCollege(userManager.getUserById(id).getCollege().getId());
+        userManager.update(updateUser);
+        return ResponseEntity.ok(Map.of("message","Accountant updated successfully."));
     }
 
     @DeleteMapping("/accountants/{id}")
@@ -287,8 +267,6 @@ public class CollegeAdminController {
         userManager.deleteUserById(id);
         return ResponseEntity.ok("Accountant deleted successfully.");
     }
-
-
 
     @PostMapping("/courses")
     public ResponseEntity<?> createCourse(@RequestBody CreateCourseRequest request) {

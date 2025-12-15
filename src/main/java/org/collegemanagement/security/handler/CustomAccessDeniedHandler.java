@@ -20,13 +20,15 @@ public class CustomAccessDeniedHandler implements AccessDeniedHandler {
         response.setStatus(HttpServletResponse.SC_FORBIDDEN);
         response.setContentType("application/json");
 
-        response.getWriter().write("""
-            {
-              "status": 403,
-              "error": "Forbidden",
-              "message": "You do not have permission to access this resource."
-            }
-        """);
+        response.getWriter().write(String.format(
+                """
+                            {
+                              "status": 403,
+                              "error": "Forbidden",
+                              "message": %s
+                            }
+                        """, ex != null ? ex.getMessage() : "You do not have permission to access this resource."
+        ));
     }
 }
 

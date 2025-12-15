@@ -20,12 +20,12 @@ public class CustomAuthenticationEntryPoint implements AuthenticationEntryPoint 
         response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
         response.setContentType("application/json");
 
-        response.getWriter().write("""
+        response.getWriter().write(String.format("""
             {
               "status": 401,
               "error": "Unauthorized",
-              "message": "Authentication is required to access this resource."
+              "message": %s
             }
-        """);
+        """, authException!=null?authException.getMessage():"Authentication is required to access this resource."));
     }
 }
