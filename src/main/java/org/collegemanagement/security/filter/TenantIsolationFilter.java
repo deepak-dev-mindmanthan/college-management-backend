@@ -6,6 +6,7 @@ import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import lombok.extern.slf4j.Slf4j;
 import org.collegemanagement.entity.user.User;
 import org.collegemanagement.security.tenant.TenantContext;
 import org.springframework.security.core.Authentication;
@@ -14,6 +15,7 @@ import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
 
+@Slf4j
 public class TenantIsolationFilter extends OncePerRequestFilter {
 
     @Override
@@ -22,7 +24,6 @@ public class TenantIsolationFilter extends OncePerRequestFilter {
             @Nullable HttpServletResponse response,
             @Nullable FilterChain filterChain
     ) throws ServletException, IOException {
-
         try {
             Authentication authentication =
                     SecurityContextHolder.getContext().getAuthentication();
@@ -30,7 +31,6 @@ public class TenantIsolationFilter extends OncePerRequestFilter {
             if (authentication != null
                     && authentication.isAuthenticated()
                     && authentication.getPrincipal() instanceof User user) {
-
                 // Super admin has no tenant
                 if (user.getCollege() != null) {
                     TenantContext.setTenantId(user.getCollege().getId());
