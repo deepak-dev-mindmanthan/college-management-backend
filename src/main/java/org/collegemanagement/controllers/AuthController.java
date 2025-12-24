@@ -3,6 +3,7 @@ package org.collegemanagement.controllers;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
+import jakarta.validation.Valid;
 import lombok.AllArgsConstructor;
 import org.collegemanagement.api.response.ApiResponse;
 import org.collegemanagement.dto.*;
@@ -22,7 +23,7 @@ public class AuthController {
     private final AuthService authService;
 
     @PostMapping("/register")
-    public ResponseEntity<ApiResponse<UserDto>> register(@RequestBody RegisterSuperAdminRequest registerSuperAdminRequest) {
+    public ResponseEntity<ApiResponse<UserDto>> register(@Valid @RequestBody RegisterSuperAdminRequest registerSuperAdminRequest) {
         return ResponseEntity.ok(ApiResponse.success(
                 authService.registerSuperAdmin(registerSuperAdminRequest),
                 "User registered successfully."
@@ -30,7 +31,7 @@ public class AuthController {
     }
 
     @PostMapping("/register-college")
-    public ResponseEntity<ApiResponse<UserDto>> registerCollegeTenant(@RequestBody RegisterCollegeRequest request) {
+    public ResponseEntity<ApiResponse<UserDto>> registerCollegeTenant(@Valid @RequestBody RegisterCollegeRequest request) {
         return ResponseEntity.ok(
                 ApiResponse.success(
                         authService.registerCollegeTenant(request),
