@@ -11,7 +11,6 @@ import org.springframework.stereotype.Component;
 
 import java.io.Serializable;
 import java.util.Objects;
-
 import org.collegemanagement.security.tenant.TenantContext;
 
 @Component
@@ -65,64 +64,3 @@ public class CollegeIsolationPermissionEvaluator implements PermissionEvaluator 
         return true;
     }
 }
-
-
-//@Component
-//public class CollegeIsolationPermissionEvaluator implements PermissionEvaluator {
-//
-//    @Override
-//    public boolean hasPermission(
-//            @Nullable Authentication authentication,
-//            @Nullable Object targetDomainObject,
-//            @Nullable Object permission
-//    ) {
-//        // Not used
-//        return true;
-//    }
-//
-//    @Override
-//    public boolean hasPermission(
-//            @Nullable Authentication authentication,
-//            @Nullable Serializable targetCollegeId,
-//            @Nullable String targetType,
-//            @Nullable Object permission
-//    ) {
-//        if (authentication == null || targetCollegeId == null) {
-//            throw new AccessDeniedException("CROSS_COLLEGE_ACCESS");
-//
-////            return false;
-//        }
-//
-//        // SUPER ADMIN → allow all
-//        if (authentication.getAuthorities().stream()
-//                .anyMatch(a -> "ROLE_SUPER_ADMIN".equals(a.getAuthority()))) {
-//            return true;
-//        }
-//
-//        Object principal = authentication.getPrincipal();
-//
-//        // JWT-based auth
-//        if (principal instanceof Jwt jwt) {
-//            Long requestedCollegeId = Long.valueOf(targetCollegeId.toString());
-//            Long userCollegeId = jwt.getClaim("collegeId");
-//
-//            if (!Objects.equals(userCollegeId, requestedCollegeId)) {
-//                throw new AccessDeniedException("CROSS_COLLEGE_ACCESS");
-//            }
-//            return true;
-//        }
-//
-//
-//        if (principal instanceof User user && user.getCollege() != null) {
-//            Long requestedCollegeId = Long.valueOf(targetCollegeId.toString());
-//
-//            if (!Objects.equals(user.getCollege().getId(), requestedCollegeId)) {
-//                throw new AccessDeniedException("CROSS_COLLEGE_ACCESS");
-//            }
-//            return true;
-//        }
-//
-//
-//        return false;
-//    }
-//}

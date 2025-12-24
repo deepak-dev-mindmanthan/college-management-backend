@@ -24,7 +24,6 @@ public class TenantIsolationFilter extends OncePerRequestFilter {
     ) throws ServletException, IOException {
 
         try {
-            System.out.println("Inside security filter chain....");
             Authentication authentication =
                     SecurityContextHolder.getContext().getAuthentication();
 
