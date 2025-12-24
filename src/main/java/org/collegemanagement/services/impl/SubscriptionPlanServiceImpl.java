@@ -1,6 +1,7 @@
 package org.collegemanagement.services.impl;
 
 
+
 import lombok.RequiredArgsConstructor;
 import org.collegemanagement.entity.subscription.SubscriptionPlan;
 import org.collegemanagement.enums.BillingCycle;
@@ -69,4 +70,3 @@ public class SubscriptionPlanServiceImpl
         return plan;
     }
 }
-

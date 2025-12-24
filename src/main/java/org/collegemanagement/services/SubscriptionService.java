@@ -1,5 +1,6 @@
 package org.collegemanagement.services;
 
+
 import org.collegemanagement.dto.SubscriptionRequest;
 import org.collegemanagement.dto.SubscriptionStatusResponse;
 import org.collegemanagement.entity.tenant.College;
@@ -13,4 +14,3 @@ public interface SubscriptionService {
     SubscriptionStatusResponse getStatus(College college);
 
 }
-

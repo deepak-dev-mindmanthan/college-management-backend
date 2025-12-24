@@ -1,5 +1,6 @@
 package org.collegemanagement.services.impl;
 
+
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.collegemanagement.dto.SubscriptionRequest;
@@ -89,5 +90,3 @@ public class SubscriptionServiceImpl implements SubscriptionService {
 
 
 }
-
-

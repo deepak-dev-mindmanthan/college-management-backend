@@ -56,6 +56,29 @@ public class TenantAccessGuard {
     }
 
     /**
+     * Get current tenant ID with validation.
+     * SUPER_ADMIN can access any tenant, but for others, tenant context must be set.
+     * 
+     * @return Current tenant ID
+     * @throws AccessDeniedException if tenant context is missing (except for SUPER_ADMIN)
+     */
+    public Long getCurrentTenantId() {
+        // SUPER ADMIN can work without tenant context
+        if (isSuperAdmin()) {
+            // For SUPER_ADMIN, return null or get from context if available
+            return TenantContext.getTenantId();
+        }
+
+        Long currentTenantId = TenantContext.getTenantId();
+
+        if (currentTenantId == null) {
+            throw new AccessDeniedException(SecurityErrorCode.TENANT_CONTEXT_MISSING.name());
+        }
+
+        return currentTenantId;
+    }
+
+    /**
      * Centralized SUPER_ADMIN check
      */
     private boolean isSuperAdmin() {
@@ -63,8 +86,6 @@ public class TenantAccessGuard {
 
         if (auth == null) {
             return false;
-        } else {
-            auth.getAuthorities();
         }
 
         return auth.getAuthorities().stream()

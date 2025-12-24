@@ -1,5 +1,6 @@
 package org.collegemanagement.repositories;
 
+
 import org.collegemanagement.entity.subscription.SubscriptionPlan;
 import org.collegemanagement.enums.BillingCycle;
 import org.collegemanagement.enums.SubscriptionPlanType;
