@@ -1,9 +1,10 @@
 package org.collegemanagement.exception;
 
-public class InvalidUserNameOrPasswordException extends RuntimeException {
+import org.collegemanagement.exception.base.BusinessException;
+import org.collegemanagement.exception.code.ErrorCode;
 
-    public InvalidUserNameOrPasswordException(String message) {
-        super(message);
+public class InvalidUserNameOrPasswordException extends BusinessException {
+    public InvalidUserNameOrPasswordException() {
+        super(ErrorCode.INVALID_CREDENTIALS);
     }
-
 }

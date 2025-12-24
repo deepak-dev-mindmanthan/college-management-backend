@@ -25,6 +25,7 @@ public class ApiResponse<T> {
 
     @Data
     @Builder
+    @JsonInclude(JsonInclude.Include.NON_NULL)
     public static class ErrorDetail {
         private String field;
         private String code;

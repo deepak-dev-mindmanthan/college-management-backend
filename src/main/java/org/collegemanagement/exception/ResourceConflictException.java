@@ -1,9 +1,11 @@
 package org.collegemanagement.exception;
 
 
-public class ResourceConflictException extends RuntimeException {
+import org.collegemanagement.exception.base.BusinessException;
+import org.collegemanagement.exception.code.ErrorCode;
 
+public class ResourceConflictException extends BusinessException {
     public ResourceConflictException(String message) {
-        super(message);
+        super(ErrorCode.RESOURCE_CONFLICT, message);
     }
 }
