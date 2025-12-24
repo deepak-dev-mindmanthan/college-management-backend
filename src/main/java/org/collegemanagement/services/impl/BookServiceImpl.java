@@ -1,7 +1,7 @@
 package org.collegemanagement.services.impl;
 
 import lombok.RequiredArgsConstructor;
-import org.collegemanagement.entity.Book;
+import org.collegemanagement.entity.library.LibraryBook;
 import org.collegemanagement.exception.ResourceNotFoundException;
 import org.collegemanagement.repositories.BookRepository;
 import org.collegemanagement.services.BookService;
@@ -18,14 +18,14 @@ public class BookServiceImpl implements BookService {
 
     @Transactional
     @Override
-    public Book create(Book book) {
-        return bookRepository.save(book);
+    public LibraryBook create(LibraryBook libraryBook) {
+        return bookRepository.save(libraryBook);
     }
 
     @Transactional
     @Override
-    public Book update(Book book) {
-        return bookRepository.save(book);
+    public LibraryBook update(LibraryBook libraryBook) {
+        return bookRepository.save(libraryBook);
     }
 
     @Transactional
@@ -35,12 +35,12 @@ public class BookServiceImpl implements BookService {
     }
 
     @Override
-    public Book findById(Long id) {
+    public LibraryBook findById(Long id) {
         return bookRepository.findById(id).orElseThrow(() -> new ResourceNotFoundException("Book not found with id: " + id));
     }
 
     @Override
-    public List<Book> findByCollege(Long collegeId) {
+    public List<LibraryBook> findByCollege(Long collegeId) {
         return bookRepository.findByCollegeId(collegeId);
     }
 }

@@ -68,7 +68,7 @@ public class KeyUtils {
 
         // If in production and missing → FAIL HARD (security)
         if (isProd()) {
-            throw new RuntimeException("❌ RSA key files missing in PRODUCTION environment.");
+            throw new RuntimeException("⚠ RSA key files missing in PRODUCTION environment.");
         }
 
         // Dev mode: auto-generate keys
@@ -90,7 +90,7 @@ public class KeyUtils {
             return new KeyPair(publicKey, privateKey);
 
         } catch (Exception e) {
-            throw new RuntimeException("❌ Failed to load RSA key files", e);
+            throw new RuntimeException("⚠ Failed to load RSA key files", e);
         }
     }
 

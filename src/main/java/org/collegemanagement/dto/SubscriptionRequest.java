@@ -6,7 +6,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import org.collegemanagement.enums.BillingCycle;
-import org.collegemanagement.enums.SubscriptionPlan;
+import org.collegemanagement.enums.SubscriptionPlanType;
 
 @Getter
 @Setter
@@ -14,7 +14,7 @@ import org.collegemanagement.enums.SubscriptionPlan;
 @AllArgsConstructor
 @Builder
 public class SubscriptionRequest {
-    private SubscriptionPlan plan;
+    private SubscriptionPlanType plan;
     private BillingCycle billingCycle;
 }
 

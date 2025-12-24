@@ -1,6 +1,6 @@
 package org.collegemanagement.controllers;
 
-import org.collegemanagement.entity.User;
+import org.collegemanagement.entity.user.User;
 import org.collegemanagement.dto.UserDto;
 import org.collegemanagement.services.UserManager;
 import org.springframework.http.ResponseEntity;

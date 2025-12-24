@@ -1,29 +1,18 @@
 package org.collegemanagement.dto;
 
 
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
-import org.collegemanagement.enums.SubscriptionPlan;
-import org.collegemanagement.enums.SubscriptionStatus;
-import org.collegemanagement.enums.CurrencyCode;
-
-import java.math.BigDecimal;
-import java.time.LocalDate;
+import lombok.*;
 
 @Getter
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
+@Builder
 public class Token {
-    private Long userId;
+    private String tokenType;
     private String accessToken;
     private String refreshToken;
-    private SubscriptionPlan subscriptionPlan;
-    private SubscriptionStatus subscriptionStatus;
-    private LocalDate subscriptionExpiresAt;
-    private BigDecimal subscriptionPriceAmount;
-    private CurrencyCode subscriptionCurrency;
+    private long accessTokenExpiresIn;
+    private long refreshTokenExpiresIn;
 
 }

@@ -2,15 +2,10 @@ package org.collegemanagement.controllers;
 
 import org.collegemanagement.dto.BookRequest;
 import org.collegemanagement.dto.IssueBookRequest;
-import org.collegemanagement.dto.ReturnBookRequest;
-import org.collegemanagement.entity.Book;
-import org.collegemanagement.entity.Loan;
-import org.collegemanagement.entity.User;
-import org.collegemanagement.enums.LoanStatus;
-import org.collegemanagement.enums.RoleType;
+import org.collegemanagement.entity.library.LibraryBook;
+import org.collegemanagement.entity.user.User;
 import org.collegemanagement.services.BookService;
 import org.collegemanagement.services.CollegeService;
-import org.collegemanagement.services.LoanService;
 import org.collegemanagement.services.UserManager;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.AccessDeniedException;
@@ -19,8 +14,6 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
-import java.time.LocalDate;
-import java.time.LocalDateTime;
 import java.util.List;
 
 @RestController
@@ -29,13 +22,11 @@ import java.util.List;
 public class LibraryController {
 
     private final BookService bookService;
-    private final LoanService loanService;
     private final CollegeService collegeService;
     private final UserManager userManager;
 
-    public LibraryController(BookService bookService, LoanService loanService, CollegeService collegeService, UserManager userManager) {
+    public LibraryController(BookService bookService,  CollegeService collegeService, UserManager userManager) {
         this.bookService = bookService;
-        this.loanService = loanService;
         this.collegeService = collegeService;
         this.userManager = userManager;
     }
@@ -78,12 +69,12 @@ public class LibraryController {
 
     // Books
     @PostMapping("/books")
-    public ResponseEntity<Book> createBook(@RequestBody BookRequest request) {
+    public ResponseEntity<LibraryBook> createBook(@RequestBody BookRequest request) {
         if (!collegeService.existsById(request.getCollegeId())) {
             return ResponseEntity.badRequest().build();
         }
         requireSameCollege(request.getCollegeId());
-        Book book = Book.builder()
+        LibraryBook libraryBook = LibraryBook.builder()
                 .title(request.getTitle())
                 .author(request.getAuthor())
                 .isbn(request.getIsbn())
@@ -91,12 +82,12 @@ public class LibraryController {
                 .availableCopies(request.getTotalCopies())
                 .college(collegeService.findById(request.getCollegeId()))
                 .build();
-        return ResponseEntity.ok(bookService.create(book));
+        return ResponseEntity.ok(bookService.create(libraryBook));
     }
 
     @PutMapping("/books/{id}")
-    public ResponseEntity<Book> updateBook(@PathVariable Long id, @RequestBody BookRequest request) {
-        Book existing = bookService.findById(id);
+    public ResponseEntity<LibraryBook> updateBook(@PathVariable Long id, @RequestBody BookRequest request) {
+        LibraryBook existing = bookService.findById(id);
         requireSameCollege(existing.getCollege().getId());
         if (request.getTitle() != null) existing.setTitle(request.getTitle());
         if (request.getAuthor() != null) existing.setAuthor(request.getAuthor());
@@ -111,14 +102,14 @@ public class LibraryController {
 
     @DeleteMapping("/books/{id}")
     public ResponseEntity<?> deleteBook(@PathVariable Long id) {
-        Book existing = bookService.findById(id);
+        LibraryBook existing = bookService.findById(id);
         requireSameCollege(existing.getCollege().getId());
         bookService.delete(id);
         return ResponseEntity.ok("Book deleted successfully.");
     }
 
     @GetMapping("/books")
-    public ResponseEntity<List<Book>> getBooks(@RequestParam Long collegeId) {
+    public ResponseEntity<List<LibraryBook>> getBooks(@RequestParam Long collegeId) {
         requireSameCollege(collegeId);
         return ResponseEntity.ok(bookService.findByCollege(collegeId));
     }
@@ -126,59 +117,13 @@ public class LibraryController {
     // Loans
     @PostMapping("/loans/issue")
     public ResponseEntity<?> issueBook(@RequestBody IssueBookRequest request) {
-        Book book = bookService.findById(request.getBookId());
-        User student = userManager.findById(request.getStudentId());
-        requireSameCollege(book.getCollege().getId());
-        requireSameCollege(student);
 
-        if (book.getAvailableCopies() <= 0) {
-            return ResponseEntity.badRequest().body("No available copies for this book.");
-        }
-
-        LocalDate due = request.getDueDate() != null ? request.getDueDate() : LocalDate.now().plusDays(14);
-        Loan loan = Loan.builder()
-                .book(book)
-                .student(student)
-                .issuedAt(LocalDateTime.now())
-                .dueDate(due)
-                .status(LoanStatus.ISSUED)
-                .build();
-        book.setAvailableCopies(book.getAvailableCopies() - 1);
-        bookService.update(book);
-        return ResponseEntity.ok(loanService.create(loan));
+        return ResponseEntity.ok(null);
     }
 
     @PutMapping("/loans/{id}/return")
     public ResponseEntity<?> returnBook(@PathVariable Long id) {
-        Loan loan = loanService.findById(id);
-        requireSameCollege(loan.getBook().getCollege().getId());
-        if (loan.getStatus() == LoanStatus.RETURNED) {
-            return ResponseEntity.badRequest().body("Loan already returned.");
-        }
-        loan.setStatus(LoanStatus.RETURNED);
-        loan.setReturnedAt(LocalDateTime.now());
-        Loan saved = loanService.update(loan);
-        Book book = loan.getBook();
-        book.setAvailableCopies(book.getAvailableCopies() + 1);
-        bookService.update(book);
-        return ResponseEntity.ok(saved);
-    }
-
-    @GetMapping("/loans/by-student")
-    public ResponseEntity<List<Loan>> getLoansByStudent(@RequestParam Long studentId) {
-        User student = userManager.findById(studentId);
-        requireSameCollege(student);
-        return ResponseEntity.ok(loanService.findByStudent(studentId));
-    }
-
-    @GetMapping("/loans/by-college")
-    public ResponseEntity<List<Loan>> getLoansByCollege(@RequestParam Long collegeId,
-                                                        @RequestParam(required = false) LoanStatus status) {
-        requireSameCollege(collegeId);
-        if (status != null) {
-            return ResponseEntity.ok(loanService.findByCollegeAndStatus(collegeId, status));
-        }
-        return ResponseEntity.ok(loanService.findByCollege(collegeId));
+        return ResponseEntity.ok(null);
     }
 }
 

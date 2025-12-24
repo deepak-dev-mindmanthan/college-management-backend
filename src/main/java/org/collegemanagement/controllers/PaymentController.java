@@ -3,8 +3,8 @@ package org.collegemanagement.controllers;
 import org.collegemanagement.dto.PaymentRequest;
 import org.collegemanagement.dto.SubscriptionDto;
 import org.collegemanagement.dto.SubscriptionRequest;
-import org.collegemanagement.entity.College;
-import org.collegemanagement.entity.User;
+import org.collegemanagement.entity.tenant.College;
+import org.collegemanagement.entity.user.User;
 import org.collegemanagement.exception.ResourceNotFoundException;
 import org.collegemanagement.services.CollegeService;
 import org.collegemanagement.services.SubscriptionService;
@@ -79,7 +79,7 @@ public class PaymentController {
         // TODO: implement payment provider integration; for now we assume payment success
         return ResponseEntity.ok(
                 SubscriptionDto.fromEntity(
-                        subscriptionService.createOrUpdateForCollege(college, subReq)
+                        subscriptionService.createSubscriptionForCollege(college, subReq)
                 )
         );
     }

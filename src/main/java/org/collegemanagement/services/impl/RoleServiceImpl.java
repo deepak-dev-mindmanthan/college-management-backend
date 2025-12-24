@@ -1,12 +1,11 @@
 package org.collegemanagement.services.impl;
 
-import org.collegemanagement.entity.Role;
+import org.collegemanagement.entity.user.Role;
 import org.collegemanagement.enums.RoleType;
 import org.collegemanagement.exception.ResourceNotFoundException;
 import org.collegemanagement.repositories.RoleRepository;
 import org.collegemanagement.services.RoleService;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 import java.util.*;
 
@@ -37,6 +36,6 @@ public class RoleServiceImpl implements RoleService {
 
     @Override
     public Role getRoleByName(RoleType roleType) {
-        return roleRepository.findRoleByName(roleType);
+        return roleRepository.findByName(roleType).orElseThrow();
     }
 }

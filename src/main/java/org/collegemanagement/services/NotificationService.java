@@ -1,6 +1,6 @@
 package org.collegemanagement.services;
 
-import org.collegemanagement.entity.Notification;
+import org.collegemanagement.entity.communication.Notification;
 
 import java.util.List;
 

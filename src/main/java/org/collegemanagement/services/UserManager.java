@@ -3,15 +3,14 @@ package org.collegemanagement.services;
 import java.text.MessageFormat;
 import java.util.List;
 import java.util.Optional;
-import java.util.Set;
 import java.util.stream.Collectors;
 
-import org.collegemanagement.entity.Role;
-import org.collegemanagement.entity.User;
+import org.collegemanagement.entity.user.Role;
+import org.collegemanagement.entity.user.User;
 import org.collegemanagement.dto.UserDto;
-import org.collegemanagement.exception.InvalidUserNameOrPasswordException;
 import org.collegemanagement.exception.ResourceConflictException;
 import org.collegemanagement.exception.ResourceNotFoundException;
+import org.collegemanagement.mapper.UserMapper;
 import org.collegemanagement.repositories.UserRepository;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
@@ -37,7 +36,6 @@ public class UserManager implements UserDetailsManager {
     @Transactional
     @Override
     public void createUser(UserDetails userDetails) {
-
         User user = (User) userDetails;
         user.setPassword(passwordEncoder.encode(user.getPassword()));
         if (userRepository.existsByEmail(user.getEmail())) {
@@ -45,6 +43,21 @@ public class UserManager implements UserDetailsManager {
         }
         userRepository.save(user);
     }
+
+
+    @Transactional
+    public UserDto createUser(User user) {
+        user.setPassword(passwordEncoder.encode(user.getPassword()));
+
+        if (userRepository.existsByEmail(user.getEmail())) {
+            throw new ResourceConflictException(
+                    "User already exists with email :" + user.getEmail()
+            );
+        }
+
+        return UserDto.fromEntity(userRepository.save(user));
+    }
+
 
     @Transactional
     public User update(User user) {
@@ -79,15 +92,12 @@ public class UserManager implements UserDetailsManager {
     }
 
 
-    public boolean verifyPassword(String email, String password) {
-        Optional<User> optionalUser = userRepository.findUserByEmail(email);
-        if (optionalUser.isEmpty()) {
-            throw new InvalidUserNameOrPasswordException("Invalid username or password.");
-        } else {
-            User user = optionalUser.get();
-            return passwordEncoder.matches(password, user.getPassword());
-        }
+    public boolean verifyPassword(String email, String rawPassword) {
+        return userRepository.findUserByEmail(email)
+                .map(user -> passwordEncoder.matches(rawPassword, user.getPassword()))
+                .orElse(false);
     }
+
 
     @Transactional
     @Override
@@ -135,6 +145,10 @@ public class UserManager implements UserDetailsManager {
         return userRepository.findById(id).orElseThrow(() -> new UsernameNotFoundException(MessageFormat.format("User not found with id {0}", id)));
     }
 
+    public User findByEmail(String email) {
+        return userRepository.findUserByEmail(email).orElseThrow(() -> new ResourceNotFoundException("User not found with email:" + email));
+    }
+
 
     @Transactional
     @Override
@@ -149,9 +163,7 @@ public class UserManager implements UserDetailsManager {
     }
 
     public UserDto getUserById(Long id) {
-        UserDto user = UserDto.fromEntity(userRepository.findById(id).orElseThrow());
-        user.getCollege().setUsers(null);
-        return user;
+        return UserDto.fromEntity(userRepository.findById(id).orElseThrow(() -> new ResourceNotFoundException("User not found with id: " + id)));
     }
 
     public boolean exitsByEmail(String email) {

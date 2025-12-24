@@ -2,43 +2,61 @@ package org.collegemanagement.dto;
 
 
 
+import com.fasterxml.jackson.annotation.JsonInclude;
 import lombok.Builder;
 import lombok.Data;
-import org.collegemanagement.entity.College;
-import org.collegemanagement.entity.Role;
-import org.collegemanagement.entity.User;
 
-import java.util.HashSet;
 import java.util.Set;
 
-@Builder
+import org.collegemanagement.enums.Status;
+
+import java.time.Instant;
+import java.time.LocalDateTime;
+
 @Data
+@Builder
+@JsonInclude(JsonInclude.Include.NON_NULL)
 public class UserDto {
-    private Long id;
+
+    private String uuid;
+
     private String name;
     private String email;
-    private Set<Role> roles;
-    private College college;
 
+    private Status status;
+    private Boolean emailVerified;
 
-    public static UserDto fromEntity(User user) {
+    private Instant lastLoginAt;
+
+    private Set<String> roles;        // ROLE_ADMIN, ROLE_TEACHER
+    private Long collegeId;
+    private String collegeName;
+
+    private LocalDateTime createdAt;
+    private LocalDateTime updatedAt;
+
+    // ---------- Mapping ----------
+
+    public static UserDto fromEntity(org.collegemanagement.entity.user.User user) {
         return UserDto.builder()
-                .id(user.getId())
+                .uuid(user.getUuid())
                 .name(user.getName())
                 .email(user.getEmail())
-                .college(user.getCollege())
-                .roles(new HashSet<>(user.getRoles()))
-                .build();
-    }
-
-    public static User toEntity(UserDto dto) {
-        return User.builder()
-                .id(dto.getId())
-                .name(dto.getName())
-                .email(dto.getEmail())
-                .college(dto.getCollege())
-                .roles(dto.getRoles())
+                .status(user.getStatus())
+                .emailVerified(user.getEmailVerified())
+                .lastLoginAt(user.getLastLoginAt())
+                .roles(
+                        user.getRoles() == null
+                                ? Set.of()
+                                : user.getRoles()
+                                .stream()
+                                .map(role -> role.getName().name())
+                                .collect(java.util.stream.Collectors.toSet())
+                )
+                .collegeId(user.getCollege() != null ? user.getCollege().getId() : null)
+                .collegeName(user.getCollege() != null ? user.getCollege().getName() : null)
+                .createdAt(user.getCreatedAt())
+                .updatedAt(user.getUpdatedAt())
                 .build();
     }
 }
-

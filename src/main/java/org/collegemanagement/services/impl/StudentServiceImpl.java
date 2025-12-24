@@ -16,6 +16,6 @@ public class StudentServiceImpl implements StudentService {
 
     @Override
     public long countByTeacherId(Long teacherId) {
-        return studentRepository.countByTeacherId(teacherId);
+        return 0;
     }
 }

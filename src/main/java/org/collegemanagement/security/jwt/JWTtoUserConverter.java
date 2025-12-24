@@ -6,9 +6,9 @@ import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import org.collegemanagement.entity.College;
-import org.collegemanagement.entity.Role;
-import org.collegemanagement.entity.User;
+import org.collegemanagement.entity.tenant.College;
+import org.collegemanagement.entity.user.Role;
+import org.collegemanagement.entity.user.User;
 import org.collegemanagement.enums.RoleType;
 import org.springframework.core.convert.converter.Converter;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;

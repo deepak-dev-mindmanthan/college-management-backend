@@ -1,7 +1,7 @@
 package org.collegemanagement.services;
 
 
-import org.collegemanagement.entity.Role;
+import org.collegemanagement.entity.user.Role;
 import org.collegemanagement.enums.RoleType;
 
 import java.util.Set;

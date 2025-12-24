@@ -1,8 +1,7 @@
 package org.collegemanagement.controllers;
 
 import org.collegemanagement.dto.FeeRequest;
-import org.collegemanagement.entity.Fee;
-import org.collegemanagement.entity.User;
+import org.collegemanagement.entity.user.User;
 import org.collegemanagement.enums.FeeStatus;
 import org.collegemanagement.services.FeeService;
 import org.collegemanagement.services.UserManager;
@@ -20,11 +19,9 @@ import java.util.List;
 @RequestMapping("/api/v1/accountant")
 public class AccountantController {
 
-    private final FeeService feeService;
     private final UserManager userManager;
 
-    public AccountantController(FeeService feeService, UserManager userManager) {
-        this.feeService = feeService;
+    public AccountantController( UserManager userManager) {
         this.userManager = userManager;
     }
 
@@ -66,47 +63,34 @@ public class AccountantController {
 
     @PostMapping("/fees")
     public ResponseEntity<?> createFee(@RequestBody FeeRequest request) {
-        User student = userManager.findById(request.getStudentId());
-        requireSameCollege(student);
-        Fee fee = Fee.builder()
-                .student(student)
-                .amount(request.getAmount())
-                .dueDate(request.getDueDate())
-                .status(request.getStatus())
-                .build();
 
-        return ResponseEntity.ok(feeService.save(fee));
+
+        return ResponseEntity.ok(null);
     }
 
     @GetMapping("/fees/by-student")
-    public ResponseEntity<List<Fee>> getFeesByStudent(@RequestParam Long studentId) {
-        User student = userManager.findById(studentId);
-        requireSameCollege(student);
-        return ResponseEntity.ok(feeService.findByStudentId(studentId));
+    public ResponseEntity<List<?>> getFeesByStudent(@RequestParam Long studentId) {
+
+        return ResponseEntity.ok(null);
     }
 
     @GetMapping("/fees/by-college")
-    public ResponseEntity<List<Fee>> getFeesByCollege(@RequestParam Long collegeId, @RequestParam(required = false) FeeStatus status) {
-        requireSameCollege(collegeId);
-        if (status != null) {
-            return ResponseEntity.ok(feeService.findByCollegeIdAndStatus(collegeId, status));
-        }
-        return ResponseEntity.ok(feeService.findByCollegeId(collegeId));
+    public ResponseEntity<List<?>> getFeesByCollege(@RequestParam Long collegeId, @RequestParam(required = false) FeeStatus status) {
+
+        return ResponseEntity.ok(null);
     }
 
     @PutMapping("/fees/{id}/status")
     public ResponseEntity<?> updateFeeStatus(@PathVariable Long id, @RequestParam FeeStatus status) {
-        Fee fee = feeService.findById(id);
-        requireSameCollege(fee.getStudent());
-        fee.setStatus(status);
-        return ResponseEntity.ok(feeService.save(fee));
+
+        return ResponseEntity.ok("");
     }
 
     @GetMapping("/fees/pending-total")
-    public ResponseEntity<Double> getPendingTotal(@RequestParam Long studentId) {
+    public ResponseEntity<?> getPendingTotal(@RequestParam Long studentId) {
         User student = userManager.findById(studentId);
         requireSameCollege(student);
-        return ResponseEntity.ok(feeService.getPendingFees(studentId));
+        return ResponseEntity.ok(null);
     }
 }
 

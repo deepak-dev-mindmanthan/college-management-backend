@@ -1,10 +1,11 @@
 package org.collegemanagement.services;
 
-import org.collegemanagement.dto.TenantSignUpRequest;
-import org.collegemanagement.dto.Token;
+import org.collegemanagement.dto.RegisterCollegeRequest;
+import org.collegemanagement.dto.UserDto;
+import org.springframework.security.core.Authentication;
 
 public interface CollegeRegistrationService {
 
-        public Token registerCollegeTenant(TenantSignUpRequest request);
+        UserDto registerCollegeTenant(RegisterCollegeRequest request);
 
 }

@@ -17,22 +17,18 @@ import java.util.Map;
 @RequestMapping("/api/v1/student")
 public class StudentController {
 
-    private final AttendanceService attendanceService;
-    private final FeeService feeService;
-    private final ExamResultService examResultService;
 
-    public StudentController(AttendanceService attendanceService, FeeService feeService, ExamResultService examResultService) {
-        this.attendanceService = attendanceService;
-        this.feeService = feeService;
-        this.examResultService = examResultService;
+
+    public StudentController() {
+
     }
 
     @GetMapping("/dashboard")
     public ResponseEntity<Map<String, Object>> getStudentDashboard(@RequestParam Long studentId) {
         Map<String, Object> dashboardData = new HashMap<>();
-        dashboardData.put("attendancePercentage", attendanceService.getAttendancePercentage(studentId));
-        dashboardData.put("pendingFees", feeService.getPendingFees(studentId));
-        dashboardData.put("examResults", examResultService.getStudentResults(studentId));
+//        dashboardData.put("attendancePercentage", attendanceService.getAttendancePercentage(studentId));
+//        dashboardData.put("pendingFees", feeService.getPendingFees(studentId));
+//        dashboardData.put("examResults", examResultService.getStudentResults(studentId));
 
         return ResponseEntity.ok(dashboardData);
     }

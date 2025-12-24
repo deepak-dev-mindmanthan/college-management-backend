@@ -1,6 +1,6 @@
 package org.collegemanagement.services;
 
-import org.collegemanagement.entity.Subject;
+import org.collegemanagement.entity.academic.Subject;
 
 import java.util.List;
 

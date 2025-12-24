@@ -1,6 +1,6 @@
 package org.collegemanagement.services.impl;
 
-import org.collegemanagement.entity.Exam;
+import org.collegemanagement.entity.exam.Exam;
 import org.collegemanagement.exception.ResourceNotFoundException;
 import org.collegemanagement.repositories.ExamRepository;
 import org.collegemanagement.services.ExamService;

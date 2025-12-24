@@ -2,5 +2,7 @@ package org.collegemanagement.enums;
 
 public enum FeeStatus {
     PENDING,
-    PAID
+    PAID,
+    PARTIALLY_PAID,
+    OVERDUE
 }

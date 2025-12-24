@@ -1,7 +1,7 @@
 package org.collegemanagement.databases;
 
 import lombok.RequiredArgsConstructor;
-import org.collegemanagement.entity.Role;
+import org.collegemanagement.entity.user.Role;
 import org.collegemanagement.enums.RoleType;
 import org.collegemanagement.repositories.RoleRepository;
 import org.jspecify.annotations.NullMarked;

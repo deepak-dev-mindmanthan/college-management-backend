@@ -1,9 +1,10 @@
 package org.collegemanagement.services.impl;
 
 import lombok.AllArgsConstructor;
-import org.collegemanagement.entity.College;
+import org.collegemanagement.entity.tenant.College;
 import org.collegemanagement.exception.ResourceNotFoundException;
 import org.collegemanagement.dto.CollegeDto;
+import org.collegemanagement.mapper.CollegeMapper;
 import org.collegemanagement.repositories.CollegeRepository;
 import org.collegemanagement.services.CollegeService;
 import org.springframework.stereotype.Service;
@@ -27,9 +28,8 @@ public class CollegeServiceImpl implements CollegeService {
 
     @Transactional
     @Override
-    public CollegeDto create(CollegeDto collegeDto) {
-        College college = CollegeDto.toEntity(collegeDto);
-        return CollegeDto.fromEntity(collegeRepository.save(college));
+    public CollegeDto create(College college) {
+        return CollegeMapper.toDto(collegeRepository.save(college));
     }
 
     @Override
@@ -49,7 +49,7 @@ public class CollegeServiceImpl implements CollegeService {
 
     @Override
     public List<CollegeDto> findAll() {
-        return collegeRepository.findAll().stream().map(CollegeDto::fromEntity).collect(Collectors.toList());
+        return collegeRepository.findAll().stream().map(CollegeMapper::toDto).collect(Collectors.toList());
     }
 
 
@@ -77,5 +77,32 @@ public class CollegeServiceImpl implements CollegeService {
     @Override
     public long count() {
         return collegeRepository.count();
+    }
+
+    @Override
+    public College findByUuid(String uuid) {
+        College college = collegeRepository.findByUuid(uuid)
+                .orElseThrow(() -> new ResourceNotFoundException("College not found"));;
+        return college;
+    }
+
+    @Override
+    public boolean existsByUuid(String uuid) {
+        return collegeRepository.existsByUuid(uuid);
+    }
+
+    @Override
+    public boolean existsByEmail(String email) {
+        return collegeRepository.existsCollegeByEmail(email);
+    }
+
+    @Override
+    public boolean existsByPhone(String phone) {
+        return collegeRepository.existsCollegeByPhone(phone);
+    }
+
+    @Override
+    public boolean exitsByShortCode(String shortCode) {
+        return collegeRepository.existsCollegeByShortCode(shortCode);
     }
 }

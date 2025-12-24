@@ -1,14 +1,14 @@
 package org.collegemanagement.services;
 
-import org.collegemanagement.entity.Book;
+import org.collegemanagement.entity.library.LibraryBook;
 
 import java.util.List;
 
 public interface BookService {
-    Book create(Book book);
-    Book update(Book book);
+    LibraryBook create(LibraryBook libraryBook);
+    LibraryBook update(LibraryBook libraryBook);
     void delete(Long id);
-    Book findById(Long id);
-    List<Book> findByCollege(Long collegeId);
+    LibraryBook findById(Long id);
+    List<LibraryBook> findByCollege(Long collegeId);
 }
 

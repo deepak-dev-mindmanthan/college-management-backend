@@ -1,8 +1,6 @@
 package org.collegemanagement.services;
 
-import org.collegemanagement.entity.Exam;
-
-import java.util.List;
+import org.collegemanagement.entity.exam.Exam;
 
 public interface ExamService {
     Exam createExam(Exam exam);

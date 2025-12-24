@@ -1,58 +1,79 @@
 package org.collegemanagement.dto;
 
-
-import lombok.*;
+import com.fasterxml.jackson.annotation.JsonView;
+import lombok.Builder;
+import lombok.Data;
 import org.collegemanagement.enums.Status;
-import org.collegemanagement.entity.College;
+import org.collegemanagement.view.Views;
 
+import java.time.LocalDateTime;
 import java.util.List;
-import java.util.stream.Collectors;
 
-@Getter
-@Setter
-@NoArgsConstructor
-@AllArgsConstructor
+@Data
 @Builder
 public class CollegeDto {
-    private Long id;
+
+    /* =====================
+       IDENTIFIERS
+       ===================== */
+
+    @JsonView(Views.Internal.class)
+    private Long id;                 // internal only
+
+    @JsonView(Views.Public.class)
+    private String uuid;             // public identifier
+
+    /* =====================
+       BASIC INFO
+       ===================== */
+
+    @JsonView(Views.Public.class)
     private String name;
+
+    @JsonView(Views.Public.class)
+    private String shortCode;
+
+    @JsonView(Views.Public.class)
+    private String logoUrl;
+
+    @JsonView(Views.Public.class)
     private String email;
+
+    @JsonView(Views.Public.class)
     private String phone;
+
+    @JsonView(Views.Public.class)
+    private String country;
+
+    @JsonView(Views.Public.class)
+    private String state;
+
+    @JsonView(Views.Public.class)
+    private String city;
+
+    @JsonView(Views.Public.class)
     private String address;
+
+    @JsonView(Views.Public.class)
     private Status status;
-    private List<UserDto> users;
-    private SubscriptionDto subscription;
 
-    // Convert from Entity to DTO
-    public static CollegeDto fromEntity(College college) {
-        return CollegeDto.builder()
-                .id(college.getId())
-                .name(college.getName())
-                .email(college.getEmail())
-                .phone(college.getPhone())
-                .address(college.getAddress())
-                .status(college.getStatus())
-                .subscription(SubscriptionDto.fromEntity(college.getSubscription()))
-                .users(college.getUsers() != null
-                        ? college.getUsers().stream().map(UserDto::fromEntity).collect(Collectors.toList())
-                        : null)
-                .build();
-    }
+    /* =====================
+       REAL RELATIONS (DTOs)
+       ===================== */
 
-    // Convert from DTO to Entity
-    public static College toEntity(CollegeDto dto) {
-        return College.builder()
-                .id(dto.getId())
-                .name(dto.getName())
-                .email(dto.getEmail())
-                .phone(dto.getPhone())
-                .address(dto.getAddress())
-                .status(dto.getStatus())
-                // Subscription is managed separately to avoid accidental duplicates
-                .subscription(null)
-                .users(dto.getUsers() != null
-                        ? dto.getUsers().stream().map(UserDto::toEntity).collect(Collectors.toList())
-                        : null)
-                .build();
-    }
+    @JsonView(Views.Public.class)
+    private List<DepartmentDto> departments;
+
+    @JsonView(Views.Public.class)
+    private List<AcademicYearDto> academicYears;
+
+    /* =====================
+       AUDIT
+       ===================== */
+
+    @JsonView(Views.Public.class)
+    private LocalDateTime createdAt;
+
+    @JsonView(Views.Public.class)
+    private LocalDateTime updatedAt;
 }

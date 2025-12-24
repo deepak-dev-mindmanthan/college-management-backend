@@ -1,7 +1,8 @@
 package org.collegemanagement.controllers;
 
+import jakarta.validation.Valid;
 import org.collegemanagement.dto.*;
-import org.collegemanagement.entity.College;
+import org.collegemanagement.entity.tenant.College;
 import org.collegemanagement.enums.RoleType;
 import org.collegemanagement.services.*;
 import org.springframework.http.ResponseEntity;
@@ -21,20 +22,18 @@ public class SuperAdminController {
     private final UserManager userManager;
     private final RoleService roleService;
     private final SubscriptionService subscriptionService;
-    private final PlanPriceService planPriceService;
     private final CollegeRegistrationService collegeRegistrationService;
 
-    public SuperAdminController(CollegeService collegeService, UserManager userManager, RoleService roleService, SubscriptionService subscriptionService, PlanPriceService planPriceService, CollegeRegistrationService collegeRegistrationService) {
+    public SuperAdminController(CollegeService collegeService, UserManager userManager, RoleService roleService, SubscriptionService subscriptionService, CollegeRegistrationService collegeRegistrationService) {
         this.collegeService = collegeService;
         this.userManager = userManager;
         this.roleService = roleService;
         this.subscriptionService = subscriptionService;
-        this.planPriceService = planPriceService;
         this.collegeRegistrationService = collegeRegistrationService;
     }
 
     @PostMapping("/college/create")
-    public ResponseEntity<?> createCollege(@RequestBody TenantSignUpRequest request) {
+    public ResponseEntity<?> createCollege(@Valid @RequestBody RegisterCollegeRequest request) {
         if (collegeService.existsByName(request.getCollegeName())) {
             return ResponseEntity.badRequest().body("College with this name already exists.");
         }
@@ -72,19 +71,20 @@ public class SuperAdminController {
                 .status(request.getStatus())
                 .build();
 
-        CollegeDto college = collegeService.create(collegeDto);
+//        CollegeDto college = collegeService.create();
         College collegeEntity = collegeService.findByEmail(collegeDto.getEmail());
         if (request.getSubscriptionPlan() != null || request.getBillingCycle() != null) {
-            SubscriptionDto subscription = SubscriptionDto.fromEntity(subscriptionService.createOrUpdateForCollege(
+            SubscriptionDto subscription = SubscriptionDto.fromEntity(subscriptionService.createSubscriptionForCollege(
                     collegeEntity,
                     SubscriptionRequest.builder()
                             .plan(request.getSubscriptionPlan())
                             .billingCycle(request.getBillingCycle())
                             .build()
             ));
-            college.setSubscription(subscription);
+//            college.setSubscription(subscription);
         }
-        return ResponseEntity.ok(college);
+//        return ResponseEntity.ok(college);
+        return null;
     }
 
 
@@ -99,13 +99,8 @@ public class SuperAdminController {
         if (request.getPlan() == null || request.getBillingCycle() == null || request.getAmount() == null) {
             return ResponseEntity.badRequest().body("plan, billingCycle and amount are required.");
         }
-        return ResponseEntity.ok(planPriceService.upsert(
-                request.getPlan(),
-                request.getBillingCycle(),
-                request.getAmount(),
-                request.getCurrency(),
-                request.isActive()
-        ));
+        //TODO:To be implemented
+        return null;
     }
 
     @GetMapping("/dashboard")

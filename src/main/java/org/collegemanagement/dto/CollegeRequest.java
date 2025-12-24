@@ -5,7 +5,7 @@ import lombok.Getter;
 import lombok.Setter;
 import org.collegemanagement.enums.Status;
 import org.collegemanagement.enums.BillingCycle;
-import org.collegemanagement.enums.SubscriptionPlan;
+import org.collegemanagement.enums.SubscriptionPlanType;
 
 @Getter
 @Setter
@@ -25,6 +25,6 @@ public class CollegeRequest {
     private String adminPassword;
 
     // Subscription configuration (optional - defaults applied when missing)
-    private SubscriptionPlan subscriptionPlan;
+    private SubscriptionPlanType subscriptionPlan;
     private BillingCycle billingCycle;
 }

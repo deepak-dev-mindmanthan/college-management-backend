@@ -1,145 +1,69 @@
 package org.collegemanagement.security.jwt;
 
 
-import java.text.MessageFormat;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
-import java.util.List;
 
-import org.collegemanagement.dto.Token;
-import org.collegemanagement.entity.Subscription;
-import org.collegemanagement.entity.User;
-import org.collegemanagement.enums.RoleType;
-import org.collegemanagement.services.SubscriptionService;
-import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.security.authentication.BadCredentialsException;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.oauth2.jwt.Jwt;
+import lombok.AllArgsConstructor;
+import org.collegemanagement.entity.user.User;
 import org.springframework.security.oauth2.jwt.JwtClaimsSet;
 import org.springframework.security.oauth2.jwt.JwtEncoder;
 import org.springframework.security.oauth2.jwt.JwtEncoderParameters;
 import org.springframework.stereotype.Component;
 
 @Component
+@AllArgsConstructor
 public class TokenGenerator {
 
-    final JwtEncoder tokenEncoder;
-    final SubscriptionService subscriptionService;
+    private final JwtEncoder jwtEncoder;
 
-    public TokenGenerator(JwtEncoder tokenEncoder,
-                          SubscriptionService subscriptionService) {
-        this.tokenEncoder = tokenEncoder;
-        this.subscriptionService = subscriptionService;
-    }
+    private static final long ACCESS_TOKEN_DAYS = 5;
+    private static final long REFRESH_TOKEN_DAYS = 30;
+    private static final String ISSUER = "myapp";
 
-    private String createAccessToken(User user, Subscription subscription) {
+    public String generateAccessToken(User user) {
         Instant now = Instant.now();
-        List<String> roles = user.getRoles().stream()
-                .map(role -> role.getName().name())
-                .toList();
 
-        JwtClaimsSet.Builder claimsBuilder = JwtClaimsSet.builder()
-                .issuer("myapp")
+        JwtClaimsSet claims = JwtClaimsSet.builder()
+                .issuer(ISSUER)
                 .issuedAt(now)
-                .expiresAt(now.plus(5, ChronoUnit.DAYS))
+                .expiresAt(now.plus(ACCESS_TOKEN_DAYS, ChronoUnit.DAYS))
                 .subject(String.valueOf(user.getId()))
-                .claim("roles", roles);
+                .claim("roles", user.getRoles()
+                        .stream()
+                        .map(r -> r.getName().name())
+                        .toList())
+                .claim("email", user.getEmail())
+                .claim("collegeId",
+                        user.getCollege() != null ? user.getCollege().getId():"")
+                .build();
 
-        if (subscription != null) {
-            claimsBuilder
-                    .claim("subscriptionPlan", subscription.getPlan().name())
-                    .claim("subscriptionStatus", subscription.getStatus().name())
-                    .claim("subscriptionExpiresAt", subscription.getExpiresAt().toString())
-                    .claim("subscriptionPriceAmount", subscription.getPriceAmount())
-                    .claim("subscriptionCurrency", subscription.getCurrency().name());
-        }
-        if (user.getCollege() != null) {
-            claimsBuilder.claim("collegeId", user.getCollege().getId());
-        }
-        if (user.getEmail() != null) {
-            claimsBuilder.claim("email", user.getEmail());
-        }
-
-        return tokenEncoder.encode(JwtEncoderParameters.from(claimsBuilder.build())).getTokenValue();
+        return jwtEncoder.encode(
+                JwtEncoderParameters.from(claims)
+        ).getTokenValue();
     }
 
-    private String createRefreshToken(User user, Subscription subscription) {
+    public String generateRefreshToken(User user) {
         Instant now = Instant.now();
-        List<String> roles = user.getRoles().stream()
-                .map(role -> role.getName().name())
-                .toList();
 
-        JwtClaimsSet.Builder claimsBuilder = JwtClaimsSet.builder()
-                .issuer("myApp")
+        JwtClaimsSet claims = JwtClaimsSet.builder()
+                .issuer(ISSUER)
                 .issuedAt(now)
-                .expiresAt(now.plus(30, ChronoUnit.DAYS))
+                .expiresAt(now.plus(REFRESH_TOKEN_DAYS, ChronoUnit.DAYS))
                 .subject(String.valueOf(user.getId()))
-                .claim("roles", roles);
+                .build();
 
-        if (subscription != null) {
-            claimsBuilder
-                    .claim("subscriptionPlan", subscription.getPlan().name())
-                    .claim("subscriptionStatus", subscription.getStatus().name())
-                    .claim("subscriptionExpiresAt", subscription.getExpiresAt().toString())
-                    .claim("subscriptionPriceAmount", subscription.getPriceAmount())
-                    .claim("subscriptionCurrency", subscription.getCurrency().name());
-        }
-        if (user.getCollege() != null) {
-            claimsBuilder.claim("collegeId", user.getCollege().getId());
-        }
-        if (user.getEmail() != null) {
-            claimsBuilder.claim("email", user.getEmail());
-        }
-
-        return tokenEncoder.encode(JwtEncoderParameters.from(claimsBuilder.build())).getTokenValue();
+        return jwtEncoder.encode(
+                JwtEncoderParameters.from(claims)
+        ).getTokenValue();
     }
 
-    public Token createToken(Authentication authentication) {
-        if (!(authentication.getPrincipal() instanceof User user)) {
-            throw new BadCredentialsException(
-                    MessageFormat.format("principal {0} is not of User type", authentication.getPrincipal().getClass())
-            );
-        }
-
-        Subscription subscription = null;
-        boolean isSuperAdmin =
-                (user.getRoles() != null && user.getRoles().stream().anyMatch(role -> role.getName() == RoleType.ROLE_SUPER_ADMIN))
-                        || authentication.getAuthorities().stream().anyMatch(a ->
-                        "ROLE_SUPER_ADMIN".equalsIgnoreCase(a.getAuthority()) || "SUPER_ADMIN".equalsIgnoreCase(a.getAuthority()))
-                        || user.getCollege() == null; // treat users without a college (e.g., super admins) as exempt
-        if (!isSuperAdmin) {
-            subscription = subscriptionService.ensureActiveSubscription(user);
-        }
-
-        Token tokenDTO = new Token();
-        tokenDTO.setUserId(user.getId());
-        tokenDTO.setAccessToken(createAccessToken(user, subscription));
-
-        String refreshToken;
-        if (authentication.getCredentials() instanceof Jwt jwt) {
-            Instant now = Instant.now();
-            Instant expiresAt = jwt.getExpiresAt();
-            Duration duration = Duration.between(now, expiresAt);
-            long daysUntilExpired = duration.toDays();
-            if (daysUntilExpired < 7) {
-                refreshToken = createRefreshToken(user, subscription);
-            } else {
-                refreshToken = jwt.getTokenValue();
-            }
-        } else {
-            refreshToken = createRefreshToken(user, subscription);
-        }
-        tokenDTO.setRefreshToken(refreshToken);
-        if (subscription != null) {
-            tokenDTO.setSubscriptionPlan(subscription.getPlan());
-            tokenDTO.setSubscriptionStatus(subscription.getStatus());
-            tokenDTO.setSubscriptionExpiresAt(subscription.getExpiresAt());
-            tokenDTO.setSubscriptionPriceAmount(subscription.getPriceAmount());
-            tokenDTO.setSubscriptionCurrency(subscription.getCurrency());
-        }
-
-        return tokenDTO;
+    public long getAccessTokenExpirySeconds() {
+        return Duration.ofDays(ACCESS_TOKEN_DAYS).toSeconds();
     }
 
+    public long getRefreshTokenExpirySeconds() {
+        return Duration.ofDays(REFRESH_TOKEN_DAYS).toSeconds();
+    }
 }

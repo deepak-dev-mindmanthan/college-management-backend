@@ -1,9 +1,8 @@
 package org.collegemanagement.services.impl;
 
 
-import org.collegemanagement.entity.Subject;
+import org.collegemanagement.entity.academic.Subject;
 import org.collegemanagement.exception.ResourceNotFoundException;
-import org.collegemanagement.repositories.CollegeRepository;
 import org.collegemanagement.repositories.SubjectRepository;
 import org.collegemanagement.services.SubjectService;
 import org.springframework.stereotype.Service;
@@ -21,7 +20,7 @@ public class SubjectServiceImpl  implements SubjectService {
 
     @Override
     public List<Subject> findByCourseId(long id) {
-        return subjectRepository.findByCourseId(id);
+        return subjectRepository.findSubjectById(id);
     }
 
     @Transactional
@@ -37,12 +36,12 @@ public class SubjectServiceImpl  implements SubjectService {
 
     @Override
     public long countByCollegeId(long collegeId) {
-        return subjectRepository.countByTeacherId(collegeId);
+        return 0;
     }
 
     @Override
     public long countSubjectsByCollegeId(Long collegeId) {
-        return subjectRepository.countSubjectsByCollegeId(collegeId);
+        return 0;
     }
 
 }

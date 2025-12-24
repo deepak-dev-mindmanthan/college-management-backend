@@ -1,6 +1,6 @@
 package org.collegemanagement.services.impl;
 
-import org.collegemanagement.entity.Course;
+import org.collegemanagement.entity.academic.Course;
 import org.collegemanagement.exception.ResourceNotFoundException;
 import org.collegemanagement.repositories.CollegeRepository;
 import org.collegemanagement.repositories.CourseRepository;
