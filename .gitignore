@@ -13,9 +13,7 @@ target/
 .springBeans
 .sts4-cache
 keys
-*.zip
-backup.zip
-
+backups
 ### IntelliJ IDEA ###
 .idea
 *.iws
