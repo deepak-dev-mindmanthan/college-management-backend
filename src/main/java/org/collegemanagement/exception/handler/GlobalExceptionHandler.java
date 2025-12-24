@@ -2,11 +2,15 @@ package org.collegemanagement.exception.handler;
 
 import lombok.extern.slf4j.Slf4j;
 import org.collegemanagement.api.response.ApiResponse;
+import org.collegemanagement.exception.InvalidUserNameOrPasswordException;
 import org.collegemanagement.exception.base.BusinessException;
 import org.collegemanagement.exception.code.ErrorCode;
 import org.collegemanagement.exception.factory.ApiErrorResponseFactory;
+import org.collegemanagement.security.errors.SecurityErrorCode;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.authentication.BadCredentialsException;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
@@ -77,4 +81,37 @@ public class GlobalExceptionHandler {
                 .status(ErrorCode.INTERNAL_SERVER_ERROR.getStatus())
                 .body(response);
     }
+
+    @ExceptionHandler(UsernameNotFoundException.class)
+    public ResponseEntity<ApiResponse<?>> handleUsernameNotFound(
+            UsernameNotFoundException ex) {
+
+        // Security best practice: do NOT reveal whether user exists
+        ApiResponse<?> response =
+                ApiErrorResponseFactory.from(
+                        SecurityErrorCode.INVALID_CREDENTIALS
+                );
+
+        return ResponseEntity
+                .status(SecurityErrorCode.INVALID_CREDENTIALS.getStatus())
+                .body(response);
+    }
+
+    @ExceptionHandler({
+            BadCredentialsException.class,
+            InvalidUserNameOrPasswordException.class
+    })
+    public ResponseEntity<ApiResponse<?>> handleBadCredentials(
+            BadCredentialsException ex) {
+
+        ApiResponse<?> response =
+                ApiErrorResponseFactory.from(
+                        SecurityErrorCode.INVALID_CREDENTIALS
+                );
+
+        return ResponseEntity
+                .status(SecurityErrorCode.INVALID_CREDENTIALS.getStatus())
+                .body(response);
+    }
+
 }

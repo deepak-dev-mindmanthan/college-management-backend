@@ -58,6 +58,11 @@ public class StaffProfile extends BaseEntity {
     @Column(nullable = false)
     private BigDecimal salary;
 
+    @Column(nullable = false, unique = true)
+    private String phone;
+
+    private String address;
+
     /**
      * Joining date
      */

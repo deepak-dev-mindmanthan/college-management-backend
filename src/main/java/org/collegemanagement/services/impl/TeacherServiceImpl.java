@@ -1,6 +1,7 @@
 package org.collegemanagement.services.impl;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.collegemanagement.dto.teacher.*;
 import org.collegemanagement.entity.academic.ClassRoom;
 import org.collegemanagement.entity.academic.ClassSubjectTeacher;
@@ -25,12 +26,14 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class TeacherServiceImpl implements TeacherService {
 
     private final TeacherRepository teacherRepository;
@@ -84,6 +87,8 @@ public class TeacherServiceImpl implements TeacherService {
                 .designation(request.getDesignation())
                 .salary(request.getSalary())
                 .joiningDate(request.getJoiningDate())
+                .phone(request.getPhone())
+                .address(request.getAddress())
                 .build();
 
         staffProfileRepository.save(staffProfile);
@@ -136,6 +141,12 @@ public class TeacherServiceImpl implements TeacherService {
             if (request.getJoiningDate() != null) {
                 staffProfile.setJoiningDate(request.getJoiningDate());
             }
+            if (request.getPhone() != null) {
+                staffProfile.setPhone(request.getPhone());
+            }
+            if (request.getAddress() != null) {
+                staffProfile.setAddress(request.getAddress());
+            }
             staffProfileRepository.save(staffProfile);
         } else if (request.getDesignation() != null || request.getSalary() != null || request.getJoiningDate() != null) {
             // Create staff profile if it doesn't exist but update request has staff fields
@@ -144,6 +155,8 @@ public class TeacherServiceImpl implements TeacherService {
                     .college(college)
                     .user(updatedTeacher)
                     .designation(request.getDesignation() != null ? request.getDesignation() : "Teacher")
+                    .phone(request.getPhone() != null ? request.getPhone() : null)
+                    .address(request.getAddress() != null ? request.getAddress() : null)
                     .salary(request.getSalary() != null ? request.getSalary() : java.math.BigDecimal.ZERO)
                     .joiningDate(request.getJoiningDate() != null ? request.getJoiningDate() : java.time.LocalDate.now())
                     .build();
@@ -181,7 +194,7 @@ public class TeacherServiceImpl implements TeacherService {
                 .findByTeacherIdAndCollegeId(teacher.getId(), collegeId);
 
         // Set teaching assignments to teacher entity for mapper
-        teacher.setTeachingAssignments(assignments.stream().collect(Collectors.toSet()));
+        teacher.setTeachingAssignments(new HashSet<>(assignments));
 
         StaffProfile staffProfile = staffProfileRepository.findByUserIdAndCollegeId(teacher.getId(), collegeId)
                 .orElse(null);

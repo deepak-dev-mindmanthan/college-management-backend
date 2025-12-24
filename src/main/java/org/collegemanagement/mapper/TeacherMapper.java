@@ -41,6 +41,8 @@ public final class TeacherMapper {
         if (staffProfile != null) {
             builder.designation(staffProfile.getDesignation())
                     .salary(staffProfile.getSalary())
+                    .phone(staffProfile.getPhone())
+                    .address(staffProfile.getAddress())
                     .joiningDate(staffProfile.getJoiningDate());
         }
 
