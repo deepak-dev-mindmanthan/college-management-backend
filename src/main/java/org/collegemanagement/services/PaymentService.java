@@ -54,5 +54,14 @@ public interface PaymentService {
      * Get payment summary statistics
      */
     PaymentSummary getPaymentSummary();
+
+    /**
+     * Initiate and process payment through gateway.
+     * Creates payment record and automatically processes it through the payment gateway.
+     * 
+     * @param request Payment creation request
+     * @return PaymentResponse with processed status
+     */
+    PaymentResponse initiatePayment(CreatePaymentRequest request);
 }
 

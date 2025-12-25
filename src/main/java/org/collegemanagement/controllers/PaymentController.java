@@ -61,6 +61,35 @@ public class PaymentController {
     }
 
     @Operation(
+            summary = "Initiate and process payment",
+            description = "Creates a payment record and automatically processes it through the payment gateway. " +
+                    "Requires COLLEGE_ADMIN or SUPER_ADMIN role."
+    )
+    @ApiResponses(value = {
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                    responseCode = "200",
+                    description = "Payment initiated and processed successfully",
+                    content = @Content(schema = @Schema(implementation = PaymentResponse.class))
+            ),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                    responseCode = "404",
+                    description = "Invoice not found"
+            ),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                    responseCode = "409",
+                    description = "Transaction ID already exists"
+            )
+    })
+    @PostMapping("/initiate")
+    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'COLLEGE_ADMIN')")
+    public ResponseEntity<ApiResponse<PaymentResponse>> initiatePayment(
+            @Valid @RequestBody CreatePaymentRequest request
+    ) {
+        PaymentResponse payment = paymentService.initiatePayment(request);
+        return ResponseEntity.ok(ApiResponse.success(payment, "Payment initiated and processed successfully"));
+    }
+
+    @Operation(
             summary = "Process payment",
             description = "Updates payment status (e.g., SUCCESS, FAILED). Requires COLLEGE_ADMIN or SUPER_ADMIN role."
     )

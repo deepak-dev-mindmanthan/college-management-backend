@@ -14,6 +14,7 @@ import org.collegemanagement.exception.ResourceNotFoundException;
 import org.collegemanagement.repositories.InvoiceRepository;
 import org.collegemanagement.repositories.PaymentRepository;
 import org.collegemanagement.security.tenant.TenantAccessGuard;
+import org.collegemanagement.services.PaymentGatewayService;
 import org.collegemanagement.services.PaymentService;
 import org.collegemanagement.services.PaymentSummary;
 import org.springframework.data.domain.Page;
@@ -34,6 +35,7 @@ public class PaymentServiceImpl implements PaymentService {
     private final PaymentRepository paymentRepository;
     private final InvoiceRepository invoiceRepository;
     private final TenantAccessGuard tenantAccessGuard;
+    private final PaymentGatewayService paymentGatewayService;
 
     @Override
     @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'COLLEGE_ADMIN')")
@@ -49,7 +51,7 @@ public class PaymentServiceImpl implements PaymentService {
             throw new ResourceConflictException("Payment with transaction ID already exists: " + request.getTransactionId());
         }
 
-        // Create payment
+        // Create payment record (status will be PENDING initially)
         Payment payment = Payment.builder()
                 .invoice(invoice)
                 .gateway(request.getGateway())
@@ -65,37 +67,165 @@ public class PaymentServiceImpl implements PaymentService {
 
     @Override
     @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'COLLEGE_ADMIN')")
+    public PaymentResponse initiatePayment(CreatePaymentRequest request) {
+        Long collegeId = tenantAccessGuard.getCurrentTenantId();
+
+        // Find invoice and validate college isolation
+        Invoice invoice = invoiceRepository.findByUuidAndCollegeId(request.getInvoiceUuid(), collegeId)
+                .orElseThrow(() -> new ResourceNotFoundException("Invoice not found with UUID: " + request.getInvoiceUuid()));
+
+        // Validate transaction ID uniqueness
+        if (paymentRepository.existsByTransactionId(request.getTransactionId())) {
+            throw new ResourceConflictException("Payment with transaction ID already exists: " + request.getTransactionId());
+        }
+
+        // Create payment record with PENDING status
+        Payment payment = Payment.builder()
+                .invoice(invoice)
+                .gateway(request.getGateway())
+                .transactionId(request.getTransactionId())
+                .amount(request.getAmount())
+                .status(PaymentStatus.PENDING)
+                .build();
+
+        payment = paymentRepository.save(payment);
+
+        // Process payment through gateway
+        // TODO: Integrate payment gateway
+        // This will call the actual payment gateway service which currently returns SUCCESS by default
+        PaymentStatus gatewayStatus = paymentGatewayService.processPayment(
+                payment,
+                request.getGateway(),
+                request.getAmount(),
+                request.getTransactionId()
+        );
+
+        // Update payment status based on gateway response
+        payment.setStatus(gatewayStatus);
+        payment = paymentRepository.save(payment);
+
+        // Payment Success Block:
+        // =======================
+        // Handle successful payment
+        if (gatewayStatus == PaymentStatus.SUCCESS) {
+            updateInvoiceOnPaymentSuccess(payment, invoice, collegeId);
+        }
+        // Payment Failure Block:
+        // ======================
+        // Handle failed payment
+        else if (gatewayStatus == PaymentStatus.FAILED) {
+            // TODO: Integrate payment gateway
+            // - Log failure reason
+            // - Send notification to user
+            // - Update any retry logic if applicable
+            log.warn("Payment failed for transaction: {}", request.getTransactionId());
+        }
+        // Payment Pending Block:
+        // ======================
+        // Handle pending payment (e.g., 3D Secure authentication required)
+        else if (gatewayStatus == PaymentStatus.PENDING) {
+            // TODO: Integrate payment gateway
+            // - Store gateway response for later verification
+            // - Set up webhook listener for status updates
+            // - Return appropriate response to client for further action
+            log.info("Payment pending for transaction: {}", request.getTransactionId());
+        }
+
+        return mapToResponse(payment);
+    }
+
+    @Override
+    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'COLLEGE_ADMIN')")
     public PaymentResponse processPayment(ProcessPaymentRequest request) {
         Long collegeId = tenantAccessGuard.getCurrentTenantId();
 
         Payment payment = paymentRepository.findByUuidAndCollegeId(request.getPaymentUuid(), collegeId)
                 .orElseThrow(() -> new ResourceNotFoundException("Payment not found with UUID: " + request.getPaymentUuid()));
 
+        // If status is provided in request, use it (manual update)
+        // Otherwise, verify with gateway
+        PaymentStatus newStatus = request.getStatus();
+        
+        if (newStatus == null) {
+            // TODO: Integrate payment gateway
+            // Verify payment status with gateway
+            newStatus = paymentGatewayService.verifyPaymentStatus(
+                    payment,
+                    payment.getGateway(),
+                    payment.getTransactionId()
+            );
+        }
+
         // Update payment status
-        payment.setStatus(request.getStatus());
+        payment.setStatus(newStatus);
 
-        // If payment is successful, update invoice status
-        if (request.getStatus() == PaymentStatus.SUCCESS) {
+        // Payment Success Block:
+        // ======================
+        // Handle successful payment
+        if (newStatus == PaymentStatus.SUCCESS) {
             Invoice invoice = payment.getInvoice();
-            // Check if invoice is fully paid
-            BigDecimal totalPaid = paymentRepository.findByInvoiceIdAndCollegeId(invoice.getId(), collegeId)
-                    .stream()
-                    .filter(p -> p.getStatus() == PaymentStatus.SUCCESS)
-                    .map(Payment::getAmount)
-                    .reduce(BigDecimal.ZERO, BigDecimal::add);
-
-            totalPaid = totalPaid.add(payment.getAmount());
-
-            if (totalPaid.compareTo(invoice.getAmount()) >= 0) {
-                invoice.setStatus(org.collegemanagement.enums.InvoiceStatus.PAID);
-                invoice.setPaidAt(java.time.Instant.now());
+            updateInvoiceOnPaymentSuccess(payment, invoice, collegeId);
+        }
+        // Payment Failure Block:
+        // ======================
+        // Handle failed payment
+        else if (newStatus == PaymentStatus.FAILED) {
+            // TODO: Integrate payment gateway
+            // - Log failure reason from request if provided
+            // - Send notification to user
+            // - Update any retry logic if applicable
+            if (request.getFailureReason() != null) {
+                log.warn("Payment failed for transaction: {}. Reason: {}", 
+                        payment.getTransactionId(), request.getFailureReason());
             }
-            invoiceRepository.save(invoice);
+        }
+        // Payment Pending Block:
+        // ======================
+        // Handle pending payment
+        else if (newStatus == PaymentStatus.PENDING) {
+            // TODO: Integrate payment gateway
+            // - Payment is still pending (e.g., waiting for 3D Secure)
+            // - Set up webhook listener for status updates
+            log.info("Payment still pending for transaction: {}", payment.getTransactionId());
         }
 
         payment = paymentRepository.save(payment);
 
         return mapToResponse(payment);
+    }
+
+    /**
+     * Helper method to update invoice status when payment is successful.
+     * 
+     * Payment Success Block:
+     * ======================
+     * This method handles the business logic when a payment succeeds:
+     * - Calculates total paid amount
+     * - Marks invoice as PAID if fully paid
+     * - Updates subscription status if applicable
+     */
+    private void updateInvoiceOnPaymentSuccess(Payment payment, Invoice invoice, Long collegeId) {
+        // Check if invoice is fully paid
+        BigDecimal totalPaid = paymentRepository.findByInvoiceIdAndCollegeId(invoice.getId(), collegeId)
+                .stream()
+                .filter(p -> p.getStatus() == PaymentStatus.SUCCESS)
+                .map(Payment::getAmount)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+        totalPaid = totalPaid.add(payment.getAmount());
+
+        if (totalPaid.compareTo(invoice.getAmount()) >= 0) {
+            invoice.setStatus(org.collegemanagement.enums.InvoiceStatus.PAID);
+            invoice.setPaidAt(java.time.Instant.now());
+            
+            // TODO: Integrate payment gateway
+            // - Activate subscription if payment is for subscription invoice
+            // - Send confirmation email to user
+            // - Update subscription status to ACTIVE
+            // - Trigger any post-payment workflows
+            
+            invoiceRepository.save(invoice);
+        }
     }
 
     @Override
