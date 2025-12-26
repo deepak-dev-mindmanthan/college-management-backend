@@ -18,5 +18,16 @@ public interface AcademicYearRepository extends JpaRepository<AcademicYear, Long
             AND ay.college.id = :collegeId
             """)
     Optional<AcademicYear> findByUuidAndCollegeId(@Param("uuid") String uuid, @Param("collegeId") Long collegeId);
+
+    /**
+     * Find active academic year by college ID
+     */
+    @Query("""
+            SELECT ay FROM AcademicYear ay
+            WHERE ay.college.id = :collegeId
+            AND ay.active = true
+            ORDER BY ay.startDate DESC
+            """)
+    Optional<AcademicYear> findActiveByCollegeId(@Param("collegeId") Long collegeId);
 }
 
