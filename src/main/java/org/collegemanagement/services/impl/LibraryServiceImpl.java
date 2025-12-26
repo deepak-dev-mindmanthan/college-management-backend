@@ -113,12 +113,12 @@ public class LibraryServiceImpl implements LibraryService {
         if (request.getTotalCopies() != null) {
             int currentIssuedCopies = book.getTotalCopies() - book.getAvailableCopies();
             int newTotalCopies = request.getTotalCopies();
-            
+
             if (newTotalCopies < currentIssuedCopies) {
-                throw new ResourceConflictException("Cannot set total copies to " + newTotalCopies + 
-                    ". There are " + currentIssuedCopies + " copies currently issued.");
+                throw new ResourceConflictException("Cannot set total copies to " + newTotalCopies +
+                        ". There are " + currentIssuedCopies + " copies currently issued.");
             }
-            
+
             book.setTotalCopies(newTotalCopies);
             book.setAvailableCopies(newTotalCopies - currentIssuedCopies);
         }
@@ -196,8 +196,8 @@ public class LibraryServiceImpl implements LibraryService {
                 .toList();
 
         if (!activeIssues.isEmpty()) {
-            throw new ResourceConflictException("Cannot delete book. There are " + activeIssues.size() + 
-                " active issues. Please return all books first.");
+            throw new ResourceConflictException("Cannot delete book. There are " + activeIssues.size() +
+                    " active issues. Please return all books first.");
         }
 
         libraryBookRepository.delete(book);
@@ -221,8 +221,12 @@ public class LibraryServiceImpl implements LibraryService {
         // Find user and validate tenant access
         User user = findUserByUuid(request.getUserUuid());
 
-        if (user.getCollege() == null || !user.getCollege().getId().equals(collegeId)) {
-            throw new ResourceConflictException("User does not belong to this college");
+        // Enforce tenant isolation using TenantAccessGuard
+        if (user.getCollege() != null) {
+            tenantAccessGuard.assertCurrentTenant(user.getCollege());
+        } else {
+            // Users without college are not allowed (except SUPER_ADMIN, but they shouldn't borrow books)
+            throw new ResourceConflictException("User does not belong to a college");
         }
 
         // Check if user already has an active issue for this book
@@ -332,17 +336,20 @@ public class LibraryServiceImpl implements LibraryService {
     public Page<LibraryIssueResponse> getIssuesByUser(String userUuid, Pageable pageable) {
         Long collegeId = tenantAccessGuard.getCurrentTenantId();
 
-        // Find user and validate
+        // Find user and validate tenant access
         User user = findUserByUuid(userUuid);
 
-        if (user.getCollege() == null || !user.getCollege().getId().equals(collegeId)) {
-            throw new ResourceConflictException("User does not belong to this college");
+        // Enforce tenant isolation using TenantAccessGuard
+        if (user.getCollege() != null) {
+            tenantAccessGuard.assertCurrentTenant(user.getCollege());
+        } else {
+            throw new ResourceConflictException("User does not belong to a college");
         }
 
         // Allow users to view only their own issues
         User currentUser = getCurrentUser();
-        if (!currentUser.getId().equals(user.getId()) && 
-            !isAdminOrTeacher(currentUser)) {
+        if (!currentUser.getId().equals(user.getId()) &&
+                !isAdminOrTeacher(currentUser)) {
             throw new org.springframework.security.access.AccessDeniedException("Access denied");
         }
 
@@ -356,17 +363,20 @@ public class LibraryServiceImpl implements LibraryService {
     public Page<LibraryIssueResponse> getActiveIssuesByUser(String userUuid, Pageable pageable) {
         Long collegeId = tenantAccessGuard.getCurrentTenantId();
 
-        // Find user and validate
+        // Find user and validate tenant access
         User user = findUserByUuid(userUuid);
 
-        if (user.getCollege() == null || !user.getCollege().getId().equals(collegeId)) {
-            throw new ResourceConflictException("User does not belong to this college");
+        // Enforce tenant isolation using TenantAccessGuard
+        if (user.getCollege() != null) {
+            tenantAccessGuard.assertCurrentTenant(user.getCollege());
+        } else {
+            throw new ResourceConflictException("User does not belong to a college");
         }
 
         // Allow users to view only their own issues
         User currentUser = getCurrentUser();
-        if (!currentUser.getId().equals(user.getId()) && 
-            !isAdminOrTeacher(currentUser)) {
+        if (!currentUser.getId().equals(user.getId()) &&
+                !isAdminOrTeacher(currentUser)) {
             throw new org.springframework.security.access.AccessDeniedException("Access denied");
         }
 
@@ -401,17 +411,20 @@ public class LibraryServiceImpl implements LibraryService {
     public Page<LibraryIssueResponse> getOverdueIssuesByUser(String userUuid, Pageable pageable) {
         Long collegeId = tenantAccessGuard.getCurrentTenantId();
 
-        // Find user and validate
+        // Find user and validate tenant access
         User user = findUserByUuid(userUuid);
 
-        if (user.getCollege() == null || !user.getCollege().getId().equals(collegeId)) {
-            throw new ResourceConflictException("User does not belong to this college");
+        // Enforce tenant isolation using TenantAccessGuard
+        if (user.getCollege() != null) {
+            tenantAccessGuard.assertCurrentTenant(user.getCollege());
+        } else {
+            throw new ResourceConflictException("User does not belong to a college");
         }
 
         // Allow users to view only their own issues
         User currentUser = getCurrentUser();
-        if (!currentUser.getId().equals(user.getId()) && 
-            !isAdminOrTeacher(currentUser)) {
+        if (!currentUser.getId().equals(user.getId()) &&
+                !isAdminOrTeacher(currentUser)) {
             throw new org.springframework.security.access.AccessDeniedException("Access denied");
         }
 
@@ -491,7 +504,7 @@ public class LibraryServiceImpl implements LibraryService {
         long issuedBooks = libraryIssueRepository.countByStatusAndCollegeId(LibraryIssueStatus.ISSUED, collegeId);
         // Count overdue books - get first page to get total count
         Page<LibraryIssue> overduePage = libraryIssueRepository.findOverdueIssuesByCollegeId(
-                LibraryIssueStatus.ISSUED, LocalDate.now(), collegeId, 
+                LibraryIssueStatus.ISSUED, LocalDate.now(), collegeId,
                 org.springframework.data.domain.PageRequest.of(0, 1));
         long overdueBooks = overduePage.getTotalElements();
         BigDecimal totalFines = libraryIssueRepository.sumFinesByCollegeId(collegeId);
@@ -528,8 +541,8 @@ public class LibraryServiceImpl implements LibraryService {
     private boolean isAdminOrTeacher(User user) {
         return user.getRoles().stream()
                 .anyMatch(role -> role.getName().name().equals("ROLE_SUPER_ADMIN") ||
-                                 role.getName().name().equals("ROLE_COLLEGE_ADMIN") ||
-                                 role.getName().name().equals("ROLE_TEACHER"));
+                        role.getName().name().equals("ROLE_COLLEGE_ADMIN") ||
+                        role.getName().name().equals("ROLE_TEACHER"));
     }
 
     private User findUserByUuid(String userUuid) {
