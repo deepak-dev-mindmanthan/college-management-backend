@@ -37,4 +37,14 @@ public interface UserRepository extends JpaRepository<User, Long> {
             WHERE u.uuid = :uuid
             """)
     Optional<User> findByUuid(@Param("uuid") String uuid);
+
+    /**
+     * Find user by UUID and college ID (college isolation)
+     */
+    @Query("""
+            SELECT u FROM User u
+            WHERE u.uuid = :uuid
+            AND u.college.id = :collegeId
+            """)
+    Optional<User> findByUuidAndCollegeId(@Param("uuid") String uuid, @Param("collegeId") Long collegeId);
 }

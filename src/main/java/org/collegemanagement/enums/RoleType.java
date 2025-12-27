@@ -15,6 +15,7 @@ public enum RoleType {
     ROLE_LIBRARIAN,
     ROLE_HR,
     ROLE_TRANSPORT_MANAGER,
+    ROLE_HOSTEL_MANAGER,
     ROLE_HOSTEL_WARDEN,
 
     // End users
