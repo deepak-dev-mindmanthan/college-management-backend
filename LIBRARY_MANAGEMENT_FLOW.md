@@ -1,18 +1,19 @@
 # Complete Library Management Flow Documentation
 
 ## Overview
-This document describes the complete API flow for Library Management in the college management system, including book management, issue/return operations, and user interactions for different roles (COLLEGE_ADMIN, TEACHER, STUDENT).
+This document describes the complete API flow for Library Management in the college management system, including librarian management, book management, issue/return operations, and user interactions for different roles (COLLEGE_ADMIN, LIBRARIAN, TEACHER, STUDENT).
 
 ---
 
 ## User Roles & Permissions
 
-| Role | Book Management | Issue Books | Return Books | View Own Books | View All Books | View Statistics |
-|------|----------------|-------------|--------------|----------------|----------------|-----------------|
-| **SUPER_ADMIN** | ✅ Full Access | ✅ Yes | ✅ Yes | ✅ Yes | ✅ Yes | ✅ Yes |
-| **COLLEGE_ADMIN** | ✅ Full Access | ✅ Yes | ✅ Yes | ✅ Yes | ✅ Yes | ✅ Yes |
-| **TEACHER** | ❌ No | ✅ Yes | ✅ Yes | ✅ Yes | ✅ Yes | ✅ Yes |
-| **STUDENT** | ❌ No | ❌ No | ❌ No | ✅ Yes | ✅ Yes (Read-only) | ❌ No |
+| Role | Librarian Management | Book Management | Issue Books | Return Books | View Own Books | View All Books | View Statistics |
+|------|---------------------|----------------|-------------|--------------|----------------|----------------|-----------------|
+| **SUPER_ADMIN** | ✅ Full Access | ✅ Full Access | ✅ Yes | ✅ Yes | ✅ Yes | ✅ Yes | ✅ Yes |
+| **COLLEGE_ADMIN** | ✅ Full Access | ✅ Full Access | ✅ Yes | ✅ Yes | ✅ Yes | ✅ Yes | ✅ Yes |
+| **LIBRARIAN** | ❌ No (View own only) | ✅ Full Access | ✅ Yes | ✅ Yes | ✅ Yes | ✅ Yes | ✅ Yes |
+| **TEACHER** | ❌ No | ❌ No | ✅ Yes | ✅ Yes | ✅ Yes | ✅ Yes | ✅ Yes |
+| **STUDENT** | ❌ No | ❌ No | ❌ No | ❌ No | ✅ Yes | ✅ Yes (Read-only) | ❌ No |
 
 ---
 
@@ -25,10 +26,19 @@ This document describes the complete API flow for Library Management in the coll
                               │
                               ▼
 ┌─────────────────────────────────────────────────────────────────┐
-│  Step 1: POST /api/v1/library/books                            │
+│  Step 1: POST /api/v1/librarians                               │
+│  - Create librarian accounts                                    │
+│  - Assign ROLE_LIBRARIAN                                        │
+│  - Setup staff profiles                                         │
+└─────────────────────────────────────────────────────────────────┘
+                              │
+                              ▼
+┌─────────────────────────────────────────────────────────────────┐
+│  Step 2: POST /api/v1/library/books                            │
 │  - Add books to library catalog                                │
 │  - Set total copies, category, ISBN                             │
 │  - Initially all copies available                               │
+│  - Can be done by ADMIN or LIBRARIAN                            │
 └─────────────────────────────────────────────────────────────────┘
                               │
                               ▼
@@ -38,7 +48,7 @@ This document describes the complete API flow for Library Management in the coll
                               │
                               ▼
 ┌─────────────────────────────────────────────────────────────────┐
-│  Step 2: GET /api/v1/library/books                             │
+│  Step 3: GET /api/v1/library/books                             │
 │  - Browse all books                                             │
 │  - Search by title/author/ISBN/category                         │
 │  - Filter by category or availability                           │
@@ -46,16 +56,17 @@ This document describes the complete API flow for Library Management in the coll
                               │
                               ▼
 ┌─────────────────────────────────────────────────────────────────┐
-│              ISSUE BOOK (ADMIN/TEACHER)                          │
+│        ISSUE BOOK (ADMIN/LIBRARIAN/TEACHER)                      │
 └─────────────────────────────────────────────────────────────────┘
                               │
                               ▼
 ┌─────────────────────────────────────────────────────────────────┐
-│  Step 3: POST /api/v1/library/issues                           │
+│  Step 4: POST /api/v1/library/issues                           │
 │  - Issue book to student/staff                                  │
 │  - Set due date                                                 │
 │  - Book availability decreases                                  │
 │  - Status: ISSUED                                               │
+│  - Librarian or Admin typically handles this                    │
 └─────────────────────────────────────────────────────────────────┘
                               │
                               ▼
@@ -64,34 +75,152 @@ This document describes the complete API flow for Library Management in the coll
 │  - User has book                                                │
 │  - Can view their borrowed books                                │
 │  - System tracks due date                                       │
+│  - Librarian can monitor all issues                             │
 └─────────────────────────────────────────────────────────────────┘
                               │
                               ▼
 ┌─────────────────────────────────────────────────────────────────┐
-│              RETURN BOOK (ADMIN/TEACHER)                         │
+│      RETURN BOOK (ADMIN/LIBRARIAN/TEACHER)                       │
 └─────────────────────────────────────────────────────────────────┘
                               │
                               ▼
 ┌─────────────────────────────────────────────────────────────────┐
-│  Step 4: POST /api/v1/library/issues/{uuid}/return             │
+│  Step 5: POST /api/v1/library/issues/{uuid}/return             │
 │  - Return book                                                  │
 │  - Auto-calculate fine if overdue                               │
 │  - Book availability increases                                  │
 │  - Status: ISSUED → RETURNED                                    │
+│  - Librarian handles returns and fine collection                │
 └─────────────────────────────────────────────────────────────────┘
                               │
                               ▼
 ┌─────────────────────────────────────────────────────────────────┐
-│              MONITORING & STATISTICS                             │
+│      MONITORING & STATISTICS (ADMIN/LIBRARIAN)                   │
 │  - View overdue books                                           │
 │  - Track fines                                                  │
 │  - Library summary statistics                                   │
+│  - Manage librarian accounts                                    │
 └─────────────────────────────────────────────────────────────────┘
 ```
 
 ---
 
 ## Detailed API Flows by User Role
+
+### **Role 0: COLLEGE_ADMIN - Librarian & Library Setup**
+
+#### **Flow 0.1: Create Librarian Account**
+
+**Step 1: Create Librarian**
+```http
+POST /api/v1/librarians
+Authorization: Bearer {adminAccessToken}
+Content-Type: application/json
+
+Request Body:
+{
+  "name": "Sarah Johnson",
+  "email": "sarah.johnson@college.edu",
+  "password": "SecurePass123!",
+  "designation": "Senior Librarian",
+  "salary": 45000.00,
+  "joiningDate": "2024-01-01",
+  "phone": "+1234567890",
+  "address": "123 Library St, City"
+}
+
+Response (200 OK):
+{
+  "success": true,
+  "status": 200,
+  "message": "Librarian created successfully",
+  "data": {
+    "uuid": "librarian-uuid-123",
+    "name": "Sarah Johnson",
+    "email": "sarah.johnson@college.edu",
+    "designation": "Senior Librarian",
+    "salary": 45000.00,
+    "joiningDate": "2024-01-01",
+    "phone": "+1234567890",
+    "address": "123 Library St, City",
+    "status": "ACTIVE",
+    "collegeId": 1,
+    "createdAt": "2024-01-15T10:00:00"
+  }
+}
+```
+
+**What Happens:**
+- ✅ User account created with `ROLE_LIBRARIAN`
+- ✅ Staff profile created with librarian details
+- ✅ Librarian can now access library management features
+- ✅ Email validated for uniqueness within college
+
+---
+
+**Step 2: View All Librarians**
+```http
+GET /api/v1/librarians?page=0&size=20
+Authorization: Bearer {adminAccessToken}
+
+Response:
+{
+  "success": true,
+  "data": {
+    "content": [
+      {
+        "uuid": "librarian-uuid-123",
+        "name": "Sarah Johnson",
+        "email": "sarah.johnson@college.edu",
+        "designation": "Senior Librarian",
+        "status": "ACTIVE"
+      },
+      ...
+    ],
+    "totalElements": 3
+  }
+}
+```
+
+---
+
+**Step 3: Search Librarians**
+```http
+GET /api/v1/librarians/search?q=sarah&page=0&size=20
+Authorization: Bearer {adminAccessToken}
+```
+
+---
+
+**Step 4: Update Librarian Information**
+```http
+PUT /api/v1/librarians/{librarianUuid}
+Authorization: Bearer {adminAccessToken}
+Content-Type: application/json
+
+Request Body:
+{
+  "designation": "Chief Librarian",
+  "salary": 50000.00,
+  "phone": "+1234567891"
+}
+```
+
+---
+
+**Step 5: Delete Librarian (if needed)**
+```http
+DELETE /api/v1/librarians/{librarianUuid}
+Authorization: Bearer {adminAccessToken}
+
+Response:
+{
+  "success": true,
+  "message": "Librarian deleted successfully"
+}
+```
+
+---
 
 ### **Role 1: COLLEGE_ADMIN - Library Management**
 
@@ -407,7 +536,230 @@ Response:
 
 ---
 
-### **Role 2: TEACHER - Issue & Return Books**
+### **Role 2: LIBRARIAN - Complete Library Operations**
+
+#### **Flow 2.1: Librarian Login & Access**
+
+**Step 1: Librarian Login**
+```http
+POST /api/v1/auth/login
+Content-Type: application/json
+
+Request Body:
+{
+  "email": "sarah.johnson@college.edu",
+  "password": "SecurePass123!"
+}
+
+Response:
+{
+  "success": true,
+  "data": {
+    "user": {
+      "uuid": "librarian-uuid-123",
+      "email": "sarah.johnson@college.edu",
+      "roles": ["ROLE_LIBRARIAN"],
+      "collegeId": 1
+    },
+    "auth": {
+      "accessToken": "eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9...",
+      "refreshToken": "..."
+    }
+  }
+}
+```
+
+---
+
+#### **Flow 2.2: Librarian Manages Books**
+
+**Step 1: Add New Books**
+```http
+POST /api/v1/library/books
+Authorization: Bearer {librarianAccessToken}
+Content-Type: application/json
+
+Request Body:
+{
+  "isbn": "978-0-123456-78-9",
+  "title": "Introduction to Computer Science",
+  "author": "John Smith",
+  "publisher": "Tech Publishers",
+  "category": "Science",
+  "totalCopies": 10
+}
+
+Response (200 OK):
+{
+  "success": true,
+  "message": "Book created successfully",
+  "data": {
+    "uuid": "book-uuid-123",
+    "title": "Introduction to Computer Science",
+    "availableCopies": 10,
+    ...
+  }
+}
+```
+
+**What Librarian Can Do:**
+- ✅ Create, update, delete books
+- ✅ Manage entire book catalog
+- ✅ Update book availability
+- ✅ Full book management access
+
+---
+
+#### **Flow 2.3: Librarian Issues & Returns Books**
+
+**Step 1: Issue Book to Student**
+```http
+POST /api/v1/library/issues
+Authorization: Bearer {librarianAccessToken}
+Content-Type: application/json
+
+Request Body:
+{
+  "bookUuid": "book-uuid-123",
+  "userUuid": "student-uuid-456",
+  "dueDate": "2024-02-15"
+}
+
+Response:
+{
+  "success": true,
+  "message": "Book issued successfully",
+  "data": {
+    "uuid": "issue-uuid-789",
+    "bookTitle": "Introduction to Computer Science",
+    "issuedToUserName": "John Doe",
+    "issuedByUserName": "Sarah Johnson",  // Librarian name
+    "dueDate": "2024-02-15",
+    "status": "ISSUED"
+  }
+}
+```
+
+---
+
+**Step 2: View All Active Issues**
+```http
+GET /api/v1/library/issues?status=ISSUED&page=0&size=20
+Authorization: Bearer {librarianAccessToken}
+```
+
+---
+
+**Step 3: View Overdue Books**
+```http
+GET /api/v1/library/issues/overdue?page=0&size=20
+Authorization: Bearer {librarianAccessToken}
+
+Response:
+{
+  "success": true,
+  "data": {
+    "content": [
+      {
+        "uuid": "issue-uuid-001",
+        "bookTitle": "Mathematics Fundamentals",
+        "issuedToUserName": "Alice Johnson",
+        "dueDate": "2024-01-10",  // Overdue
+        "status": "ISSUED"
+      }
+    ]
+  }
+}
+```
+
+---
+
+**Step 4: Return Book with Fine Collection**
+```http
+POST /api/v1/library/issues/{issueUuid}/return
+Authorization: Bearer {librarianAccessToken}
+Content-Type: application/json
+
+Request Body:
+{
+  "fineAmount": 50.00,  // Optional: override auto-calculated fine
+  "remarks": "Book returned with minor wear"
+}
+
+Response:
+{
+  "success": true,
+  "message": "Book returned successfully",
+  "data": {
+    "uuid": "issue-uuid-789",
+    "returnDate": "2024-02-20",
+    "fineAmount": 50.00,
+    "status": "RETURNED"
+  }
+}
+```
+
+---
+
+#### **Flow 2.4: Librarian Monitors Library**
+
+**Step 1: View Library Summary**
+```http
+GET /api/v1/library/summary
+Authorization: Bearer {librarianAccessToken}
+
+Response:
+{
+  "success": true,
+  "data": {
+    "totalBooks": 150,
+    "totalCopies": 500,
+    "availableCopies": 320,
+    "issuedBooks": 180,
+    "overdueBooks": 12,
+    "totalFines": 1500.00,
+    "pendingFines": 350.00
+  }
+}
+```
+
+---
+
+**Step 2: Update Issue Status (e.g., Mark as Overdue)**
+```http
+PUT /api/v1/library/issues/{issueUuid}/status?status=OVERDUE
+Authorization: Bearer {librarianAccessToken}
+
+Response:
+{
+  "success": true,
+  "data": {
+    "uuid": "issue-uuid-001",
+    "status": "OVERDUE",
+    "fineAmount": 50.00  // Auto-calculated
+  }
+}
+```
+
+---
+
+**Step 3: Search Books for Quick Access**
+```http
+GET /api/v1/library/books/search?q=computer&page=0&size=20
+Authorization: Bearer {librarianAccessToken}
+```
+
+---
+
+**Step 4: View Issues by Specific User**
+```http
+GET /api/v1/library/users/{userUuid}/issues?page=0&size=20
+Authorization: Bearer {librarianAccessToken}
+```
+
+---
+
+### **Role 3: TEACHER - Issue & Return Books**
 
 #### **Flow 2.1: Issue Book to Student**
 
@@ -468,7 +820,7 @@ Authorization: Bearer {teacherAccessToken}
 
 ---
 
-### **Role 3: STUDENT - View & Track Books**
+### **Role 4: STUDENT - View & Track Books**
 
 #### **Flow 3.1: Browse Library Catalog**
 
@@ -637,7 +989,79 @@ Response:
 
 ## Complete User Journey Examples
 
-### **Journey 1: Student Discovers and Tracks Books**
+### **Journey 1: Admin Sets Up Library System**
+
+```
+1. Admin logs in
+   POST /api/v1/auth/login
+
+2. Create librarian accounts
+   POST /api/v1/librarians
+   {
+     "name": "Sarah Johnson",
+     "email": "sarah.johnson@college.edu",
+     "password": "SecurePass123!",
+     "designation": "Senior Librarian",
+     "salary": 45000.00,
+     "joiningDate": "2024-01-01"
+   }
+
+3. Add books to library
+   POST /api/v1/library/books
+   {
+     "title": "New Book",
+     "author": "Author Name",
+     "totalCopies": 10
+   }
+
+4. Monitor library operations
+   GET /api/v1/library/summary
+```
+
+---
+
+### **Journey 2: Librarian Daily Operations**
+
+```
+1. Librarian logs in
+   POST /api/v1/auth/login
+
+2. View library summary dashboard
+   GET /api/v1/library/summary
+
+3. Check overdue books
+   GET /api/v1/library/issues/overdue
+
+4. Issue book to student
+   POST /api/v1/library/issues
+   {
+     "bookUuid": "...",
+     "userUuid": "...",
+     "dueDate": "2024-02-15"
+   }
+
+5. Search for available books
+   GET /api/v1/library/books/available?q=physics
+
+6. Return book with fine collection
+   POST /api/v1/library/issues/{issueUuid}/return
+
+7. Add new books to catalog
+   POST /api/v1/library/books
+
+8. Update book information
+   PUT /api/v1/library/books/{bookUuid}
+
+9. View all active issues
+   GET /api/v1/library/issues?status=ISSUED
+
+10. Monitor daily operations
+    GET /api/v1/library/summary
+```
+
+---
+
+### **Journey 3: Student Discovers and Tracks Books**
 
 ```
 1. Student logs in → Gets JWT token
@@ -667,7 +1091,7 @@ Response:
 
 ---
 
-### **Journey 2: Admin Manages Complete Book Lifecycle**
+### **Journey 4: Admin Manages Complete Book Lifecycle**
 
 ```
 1. Admin logs in
@@ -710,7 +1134,7 @@ Response:
 
 ---
 
-### **Journey 3: Teacher Issues and Returns Books**
+### **Journey 5: Teacher Issues and Returns Books**
 
 ```
 1. Teacher logs in
@@ -969,7 +1393,7 @@ async function getOverdueBooks(userUuid) {
 
 ---
 
-### **6. Library Dashboard (Admin)**
+### **6. Library Dashboard (Admin/Librarian)**
 
 ```javascript
 async function getLibrarySummary() {
@@ -981,6 +1405,102 @@ async function getLibrarySummary() {
   
   const { data } = await response.json();
   return data; // { totalBooks, totalCopies, availableCopies, issuedBooks, overdueBooks, totalFines, pendingFines }
+}
+```
+
+---
+
+### **7. Librarian Management (Admin Only)**
+
+```javascript
+// Create librarian
+async function createLibrarian(librarianData) {
+  const response = await fetch('/api/v1/librarians', {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${getAccessToken()}`,
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({
+      name: librarianData.name,
+      email: librarianData.email,
+      password: librarianData.password,
+      designation: librarianData.designation || 'Librarian',
+      salary: librarianData.salary,
+      joiningDate: librarianData.joiningDate, // Format: 'YYYY-MM-DD'
+      phone: librarianData.phone,
+      address: librarianData.address
+    })
+  });
+  
+  if (!response.ok) {
+    const error = await response.json();
+    throw new Error(error.message);
+  }
+  
+  return await response.json();
+}
+
+// Get all librarians
+async function getAllLibrarians(page = 0, size = 20) {
+  const response = await fetch(`/api/v1/librarians?page=${page}&size=${size}`, {
+    headers: {
+      'Authorization': `Bearer ${getAccessToken()}`
+    }
+  });
+  
+  const { data } = await response.json();
+  return data; // Contains content[], totalElements, totalPages
+}
+
+// Search librarians
+async function searchLibrarians(searchTerm, page = 0, size = 20) {
+  const response = await fetch(`/api/v1/librarians/search?q=${searchTerm}&page=${page}&size=${size}`, {
+    headers: {
+      'Authorization': `Bearer ${getAccessToken()}`
+    }
+  });
+  
+  const { data } = await response.json();
+  return data;
+}
+
+// Update librarian
+async function updateLibrarian(librarianUuid, updateData) {
+  const response = await fetch(`/api/v1/librarians/${librarianUuid}`, {
+    method: 'PUT',
+    headers: {
+      'Authorization': `Bearer ${getAccessToken()}`,
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify(updateData)
+  });
+  
+  return await response.json();
+}
+
+// Delete librarian
+async function deleteLibrarian(librarianUuid) {
+  const response = await fetch(`/api/v1/librarians/${librarianUuid}`, {
+    method: 'DELETE',
+    headers: {
+      'Authorization': `Bearer ${getAccessToken()}`
+    }
+  });
+  
+  return await response.json();
+}
+
+// Get librarian by UUID
+async function getLibrarian(librarianUuid) {
+  const response = await fetch(`/api/v1/librarians/${librarianUuid}`, {
+    headers: {
+      'Authorization': `Bearer ${getAccessToken()}`
+    }
+  });
+  
+  const { data } = await response.json();
+  return data;
 }
 ```
 
@@ -1021,6 +1541,47 @@ Due Date: [Date Picker - min: today]
 [Cancel] [Issue Book]
 ```
 
+### **3.1. Create Librarian Modal (Admin)**
+```
+Create Librarian
+────────────────
+Name: [Text Input]
+Email: [Email Input]
+Password: [Password Input]
+Designation: [Text Input] (e.g., "Senior Librarian")
+Salary: [Number Input]
+Joining Date: [Date Picker]
+Phone: [Text Input]
+Address: [Textarea]
+
+[Cancel] [Create Librarian]
+```
+
+### **3.2. Librarian List View (Admin)**
+```
+Librarians
+──────────
+┌─────────────────────────────────────┐
+│ [Search] [Add New Librarian] [+]    │
+└─────────────────────────────────────┘
+
+┌─────────────────────────────────────┐
+│ Sarah Johnson                       │
+│ Senior Librarian                    │
+│ sarah.johnson@college.edu           │
+│ Joined: Jan 1, 2024                 │
+│ [View] [Edit] [Delete]              │
+└─────────────────────────────────────┘
+
+┌─────────────────────────────────────┐
+│ John Doe                            │
+│ Librarian                           │
+│ john.doe@college.edu                │
+│ Joined: Dec 15, 2023                │
+│ [View] [Edit] [Delete]              │
+└─────────────────────────────────────┘
+```
+
 ### **4. My Books Dashboard (Student)**
 ```
 My Borrowed Books
@@ -1040,7 +1601,7 @@ My Borrowed Books
 └─────────────────────────────────────┘
 ```
 
-### **5. Library Statistics Dashboard (Admin)**
+### **6. Library Statistics Dashboard (Admin/Librarian)**
 ```
 Library Statistics
 ──────────────────
@@ -1061,7 +1622,7 @@ Pending Fines:      ₹350.00
 - ✅ **Role-Based Access:** Permissions enforced at service layer
 - ✅ **JWT Authentication:** All endpoints require valid token
 - ✅ **Tenant Context:** Automatically set from authenticated user's college
-- ✅ **User Validation:** Users can only view their own books (except admins/teachers)
+- ✅ **User Validation:** Users can only view their own books (except admins/librarians/teachers)
 
 ---
 
@@ -1070,7 +1631,7 @@ Pending Fines:      ₹350.00
 - **Fine Rate:** 10 currency units per day (configurable)
 - **Calculation:** `(returnDate - dueDate) × 10` if overdue
 - **Auto-calculation:** Automatic on return if no manual fine specified
-- **Manual Override:** Admin can set custom fine amount
+- **Manual Override:** Admin or Librarian can set custom fine amount
 
 ---
 
@@ -1111,40 +1672,138 @@ Pending Fines:      ₹350.00
 2. ✅ Try to access College B's books
 3. ✅ Verify 404 or empty results (tenant isolation)
 
+### **Test Case 5: Librarian Management**
+1. ✅ Admin creates librarian account
+2. ✅ Librarian logs in with ROLE_LIBRARIAN
+3. ✅ Librarian can manage books (create, update, delete)
+4. ✅ Librarian can issue and return books
+5. ✅ Librarian can view all issues and statistics
+6. ✅ Librarian cannot manage other librarians (only admin can)
+
 ---
 
 ## API Endpoint Summary
 
-| Endpoint | Method | Role | Purpose |
-|----------|--------|------|---------|
+### **Librarian Management Endpoints**
+
+| Endpoint | Method | Roles | Purpose |
+|----------|--------|-------|---------|
+| `/api/v1/librarians` | POST | Admin | Create librarian account |
+| `/api/v1/librarians` | GET | Admin | Get all librarians (paginated) |
+| `/api/v1/librarians/{uuid}` | GET | Admin, Librarian* | Get librarian by UUID |
+| `/api/v1/librarians/{uuid}` | PUT | Admin | Update librarian |
+| `/api/v1/librarians/{uuid}` | DELETE | Admin | Delete librarian |
+| `/api/v1/librarians/search` | GET | Admin | Search librarians |
+
+*Librarians can only view their own profile.
+
+---
+
+### **Library Book Management Endpoints**
+
+| Endpoint | Method | Roles | Purpose |
+|----------|--------|-------|---------|
 | `/api/v1/library/books` | GET | All | Get all books (paginated) |
-| `/api/v1/library/books` | POST | Admin | Create book |
+| `/api/v1/library/books` | POST | Admin, Librarian | Create book |
 | `/api/v1/library/books/{uuid}` | GET | All | Get book by UUID |
-| `/api/v1/library/books/{uuid}` | PUT | Admin | Update book |
-| `/api/v1/library/books/{uuid}` | DELETE | Admin | Delete book |
+| `/api/v1/library/books/{uuid}` | PUT | Admin, Librarian | Update book |
+| `/api/v1/library/books/{uuid}` | DELETE | Admin, Librarian | Delete book |
 | `/api/v1/library/books/search` | GET | All | Search books |
 | `/api/v1/library/books/category/{cat}` | GET | All | Get books by category |
 | `/api/v1/library/books/available` | GET | All | Get available books |
-| `/api/v1/library/issues` | POST | Admin/Teacher | Issue book |
-| `/api/v1/library/issues` | GET | Admin/Teacher | Get all issues |
+
+---
+
+### **Library Issue Management Endpoints**
+
+| Endpoint | Method | Roles | Purpose |
+|----------|--------|-------|---------|
+| `/api/v1/library/issues` | POST | Admin, Librarian, Teacher | Issue book |
+| `/api/v1/library/issues` | GET | Admin, Librarian, Teacher | Get all issues |
 | `/api/v1/library/issues/{uuid}` | GET | All | Get issue by UUID |
-| `/api/v1/library/issues/{uuid}/return` | POST | Admin/Teacher | Return book |
-| `/api/v1/library/issues/{uuid}/status` | PUT | Admin | Update issue status |
+| `/api/v1/library/issues/{uuid}/return` | POST | Admin, Librarian, Teacher | Return book |
+| `/api/v1/library/issues/{uuid}/status` | PUT | Admin, Librarian | Update issue status |
 | `/api/v1/library/issues/{uuid}/fine` | GET | All | Calculate fine |
-| `/api/v1/library/issues/status/{status}` | GET | Admin/Teacher | Get issues by status |
-| `/api/v1/library/issues/overdue` | GET | Admin/Teacher | Get overdue books |
+| `/api/v1/library/issues/status/{status}` | GET | Admin, Librarian, Teacher | Get issues by status |
+| `/api/v1/library/issues/overdue` | GET | Admin, Librarian, Teacher | Get overdue books |
 | `/api/v1/library/users/{uuid}/issues` | GET | All* | Get user's issues |
 | `/api/v1/library/users/{uuid}/issues/active` | GET | All* | Get active issues |
 | `/api/v1/library/users/{uuid}/issues/overdue` | GET | All* | Get overdue issues |
-| `/api/v1/library/summary` | GET | Admin/Teacher | Get library statistics |
 
-*All authenticated users can view their own issues; Admin/Teacher can view any user's issues.
+---
+
+### **Library Statistics Endpoints**
+
+| Endpoint | Method | Roles | Purpose |
+|----------|--------|-------|---------|
+| `/api/v1/library/summary` | GET | Admin, Librarian, Teacher | Get library statistics |
+
+---
+
+**Notes:**
+- **All authenticated users** can view their own issues
+- **Admin, Librarian, and Teacher** can view any user's issues
+- **All** includes: SUPER_ADMIN, COLLEGE_ADMIN, LIBRARIAN, TEACHER, STUDENT
+- **Admin** includes: SUPER_ADMIN, COLLEGE_ADMIN
+
+---
+
+## Complete Setup Flow Summary
+
+### **Initial Library Setup (Admin)**
+
+1. **Create Librarian Accounts**
+   ```
+   POST /api/v1/librarians
+   → Creates librarian with ROLE_LIBRARIAN
+   → Librarian can now manage library operations
+   ```
+
+2. **Add Books to Catalog**
+   ```
+   POST /api/v1/library/books
+   → Populate library with books
+   → Set total copies, categories, ISBNs
+   ```
+
+3. **Librarian Takes Over**
+   ```
+   → Librarian logs in
+   → Can manage all library operations
+   → Can issue/return books
+   → Can monitor statistics
+   ```
 
 ---
 
 ## Conclusion
 
-This document provides a complete guide for frontend developers to integrate the Library Management system. All endpoints are RESTful, follow consistent patterns, and include proper error handling and security measures.
+This document provides a complete guide for frontend developers to integrate the Library Management system with librarian management capabilities. All endpoints are RESTful, follow consistent patterns, and include proper error handling and security measures.
+
+### **Key Features:**
+- ✅ **Librarian Management:** Full CRUD operations for librarian accounts
+- ✅ **Book Management:** Complete book catalog management
+- ✅ **Issue/Return:** Comprehensive book borrowing system
+- ✅ **Fine Management:** Automatic fine calculation and collection
+- ✅ **Statistics & Reporting:** Library analytics and monitoring
+- ✅ **Multi-Role Support:** Admin, Librarian, Teacher, Student roles
+- ✅ **College Isolation:** Full tenant isolation for SaaS architecture
+
+### **Role Hierarchy:**
+```
+SUPER_ADMIN / COLLEGE_ADMIN
+    ↓
+  Manage Librarians
+    ↓
+  LIBRARIAN
+    ↓
+  Manage Books & Operations
+    ↓
+  TEACHER / STUDENT
+    ↓
+  Issue/Return Books (Teacher)
+  View Books (All)
+```
 
 For any questions or clarifications, refer to the API documentation or contact the backend team.
 
