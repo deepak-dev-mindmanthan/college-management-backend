@@ -12,7 +12,7 @@ import org.collegemanagement.exception.ResourceConflictException;
 import org.collegemanagement.exception.ResourceNotFoundException;
 import org.collegemanagement.mapper.HostelMapper;
 import org.collegemanagement.repositories.HostelRepository;
-import org.collegemanagement.repositories.UserRepository;
+import org.collegemanagement.repositories.HostelWardenRepository;
 import org.collegemanagement.security.tenant.TenantAccessGuard;
 import org.collegemanagement.services.CollegeService;
 import org.collegemanagement.services.HostelService;
@@ -31,7 +31,7 @@ import java.util.stream.Collectors;
 public class HostelServiceImpl implements HostelService {
 
     private final HostelRepository hostelRepository;
-    private final UserRepository userRepository;
+    private final HostelWardenRepository hostelWardenRepository;
     private final TenantAccessGuard tenantAccessGuard;
     private final CollegeService collegeService;
 
@@ -60,8 +60,8 @@ public class HostelServiceImpl implements HostelService {
 
         // Assign warden if provided
         if (request.getWardenUuid() != null && !request.getWardenUuid().isBlank()) {
-            User warden = userRepository.findByUuidAndCollegeId(request.getWardenUuid(), collegeId)
-                    .orElseThrow(() -> new ResourceNotFoundException("Warden not found with UUID: " + request.getWardenUuid()));
+            User warden = hostelWardenRepository.findHostelWardenByUuidAndCollegeId(request.getWardenUuid(), collegeId)
+                    .orElseThrow(() -> new ResourceNotFoundException("Hostel warden not found with UUID: " + request.getWardenUuid()));
             hostel.setWarden(warden);
         }
 
@@ -104,9 +104,9 @@ public class HostelServiceImpl implements HostelService {
                 // Remove warden
                 hostel.setWarden(null);
             } else {
-                // Assign new warden
-                User warden = userRepository.findByUuidAndCollegeId(request.getWardenUuid(), collegeId)
-                        .orElseThrow(() -> new ResourceNotFoundException("Warden not found with UUID: " + request.getWardenUuid()));
+                // Assign new warden - validate it's actually a hostel warden
+                User warden = hostelWardenRepository.findHostelWardenByUuidAndCollegeId(request.getWardenUuid(), collegeId)
+                        .orElseThrow(() -> new ResourceNotFoundException("Hostel warden not found with UUID: " + request.getWardenUuid()));
                 hostel.setWarden(warden);
             }
         }
