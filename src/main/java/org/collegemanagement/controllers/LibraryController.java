@@ -48,7 +48,7 @@ public class LibraryController {
             )
     })
     @PostMapping("/books")
-    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'COLLEGE_ADMIN')")
+    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'COLLEGE_ADMIN', 'LIBRARIAN')")
     public ResponseEntity<ApiResponse<BookResponse>> createBook(
             @Valid @RequestBody CreateBookRequest request
     ) {
@@ -61,7 +61,7 @@ public class LibraryController {
             description = "Updates book details. Requires COLLEGE_ADMIN or SUPER_ADMIN role."
     )
     @PutMapping("/books/{bookUuid}")
-    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'COLLEGE_ADMIN')")
+    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'COLLEGE_ADMIN', 'LIBRARIAN')")
     public ResponseEntity<ApiResponse<BookResponse>> updateBook(
             @Parameter(description = "UUID of the book to update")
             @PathVariable String bookUuid,
@@ -76,7 +76,7 @@ public class LibraryController {
             description = "Retrieves book information by UUID. Accessible by all authenticated users."
     )
     @GetMapping("/books/{bookUuid}")
-    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'COLLEGE_ADMIN', 'TEACHER', 'STUDENT')")
+    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'COLLEGE_ADMIN', 'LIBRARIAN', 'TEACHER', 'STUDENT')")
     public ResponseEntity<ApiResponse<BookResponse>> getBook(
             @Parameter(description = "UUID of the book")
             @PathVariable String bookUuid
@@ -90,7 +90,7 @@ public class LibraryController {
             description = "Retrieves a paginated list of all books in the library. Accessible by all authenticated users."
     )
     @GetMapping("/books")
-    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'COLLEGE_ADMIN', 'TEACHER', 'STUDENT')")
+    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'COLLEGE_ADMIN', 'LIBRARIAN', 'TEACHER', 'STUDENT')")
     public ResponseEntity<ApiResponse<Page<BookResponse>>> getAllBooks(
             @Parameter(description = "Page number (0-indexed)")
             @RequestParam(defaultValue = "0") int page,
@@ -111,7 +111,7 @@ public class LibraryController {
             description = "Searches books by title, author, ISBN, or category. Accessible by all authenticated users."
     )
     @GetMapping("/books/search")
-    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'COLLEGE_ADMIN', 'TEACHER', 'STUDENT')")
+    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'COLLEGE_ADMIN', 'LIBRARIAN', 'TEACHER', 'STUDENT')")
     public ResponseEntity<ApiResponse<Page<BookResponse>>> searchBooks(
             @Parameter(description = "Search term (title, author, ISBN, or category)")
             @RequestParam String q,
@@ -134,7 +134,7 @@ public class LibraryController {
             description = "Retrieves books filtered by category. Accessible by all authenticated users."
     )
     @GetMapping("/books/category/{category}")
-    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'COLLEGE_ADMIN', 'TEACHER', 'STUDENT')")
+    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'COLLEGE_ADMIN', 'LIBRARIAN', 'TEACHER', 'STUDENT')")
     public ResponseEntity<ApiResponse<Page<BookResponse>>> getBooksByCategory(
             @Parameter(description = "Book category")
             @PathVariable String category,
@@ -153,7 +153,7 @@ public class LibraryController {
             description = "Retrieves books that have available copies. Accessible by all authenticated users."
     )
     @GetMapping("/books/available")
-    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'COLLEGE_ADMIN', 'TEACHER', 'STUDENT')")
+    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'COLLEGE_ADMIN', 'LIBRARIAN', 'TEACHER', 'STUDENT')")
     public ResponseEntity<ApiResponse<Page<BookResponse>>> getAvailableBooks(
             @Parameter(description = "Page number (0-indexed)")
             @RequestParam(defaultValue = "0") int page,
@@ -170,7 +170,7 @@ public class LibraryController {
             description = "Deletes a book. Book must not have any active issues. Requires COLLEGE_ADMIN or SUPER_ADMIN role."
     )
     @DeleteMapping("/books/{bookUuid}")
-    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'COLLEGE_ADMIN')")
+    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'COLLEGE_ADMIN', 'LIBRARIAN')")
     public ResponseEntity<ApiResponse<Void>> deleteBook(
             @Parameter(description = "UUID of the book to delete")
             @PathVariable String bookUuid
@@ -186,7 +186,7 @@ public class LibraryController {
             description = "Issues a book to a user (student/staff). Requires COLLEGE_ADMIN, SUPER_ADMIN, or TEACHER role."
     )
     @PostMapping("/issues")
-    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'COLLEGE_ADMIN', 'TEACHER')")
+    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'COLLEGE_ADMIN', 'LIBRARIAN', 'TEACHER')")
     public ResponseEntity<ApiResponse<LibraryIssueResponse>> issueBook(
             @Valid @RequestBody IssueBookRequest request
     ) {
@@ -199,7 +199,7 @@ public class LibraryController {
             description = "Returns a borrowed book. Fine will be calculated automatically if overdue. Requires COLLEGE_ADMIN, SUPER_ADMIN, or TEACHER role."
     )
     @PostMapping("/issues/{issueUuid}/return")
-    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'COLLEGE_ADMIN', 'TEACHER')")
+    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'COLLEGE_ADMIN', 'LIBRARIAN', 'TEACHER')")
     public ResponseEntity<ApiResponse<LibraryIssueResponse>> returnBook(
             @Parameter(description = "UUID of the issue")
             @PathVariable String issueUuid,
@@ -219,7 +219,7 @@ public class LibraryController {
             description = "Retrieves issue information by UUID. Accessible by all authenticated users."
     )
     @GetMapping("/issues/{issueUuid}")
-    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'COLLEGE_ADMIN', 'TEACHER', 'STUDENT')")
+    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'COLLEGE_ADMIN', 'LIBRARIAN', 'TEACHER', 'STUDENT')")
     public ResponseEntity<ApiResponse<LibraryIssueResponse>> getIssue(
             @Parameter(description = "UUID of the issue")
             @PathVariable String issueUuid
@@ -233,7 +233,7 @@ public class LibraryController {
             description = "Retrieves a paginated list of all book issues. Requires COLLEGE_ADMIN, SUPER_ADMIN, or TEACHER role."
     )
     @GetMapping("/issues")
-    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'COLLEGE_ADMIN', 'TEACHER')")
+    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'COLLEGE_ADMIN', 'LIBRARIAN', 'TEACHER')")
     public ResponseEntity<ApiResponse<Page<LibraryIssueResponse>>> getAllIssues(
             @Parameter(description = "Page number (0-indexed)")
             @RequestParam(defaultValue = "0") int page,
@@ -254,7 +254,7 @@ public class LibraryController {
             description = "Retrieves issues filtered by status. Requires COLLEGE_ADMIN, SUPER_ADMIN, or TEACHER role."
     )
     @GetMapping("/issues/status/{status}")
-    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'COLLEGE_ADMIN', 'TEACHER')")
+    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'COLLEGE_ADMIN', 'LIBRARIAN', 'TEACHER')")
     public ResponseEntity<ApiResponse<Page<LibraryIssueResponse>>> getIssuesByStatus(
             @Parameter(description = "Issue status")
             @PathVariable LibraryIssueStatus status,
@@ -273,7 +273,7 @@ public class LibraryController {
             description = "Retrieves all book issues for a specific user. Users can only view their own issues."
     )
     @GetMapping("/users/{userUuid}/issues")
-    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'COLLEGE_ADMIN', 'TEACHER', 'STUDENT')")
+    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'COLLEGE_ADMIN', 'LIBRARIAN', 'TEACHER', 'STUDENT')")
     public ResponseEntity<ApiResponse<Page<LibraryIssueResponse>>> getIssuesByUser(
             @Parameter(description = "UUID of the user")
             @PathVariable String userUuid,
@@ -292,7 +292,7 @@ public class LibraryController {
             description = "Retrieves active (currently issued) books for a specific user. Users can only view their own issues."
     )
     @GetMapping("/users/{userUuid}/issues/active")
-    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'COLLEGE_ADMIN', 'TEACHER', 'STUDENT')")
+    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'COLLEGE_ADMIN', 'LIBRARIAN', 'TEACHER', 'STUDENT')")
     public ResponseEntity<ApiResponse<Page<LibraryIssueResponse>>> getActiveIssuesByUser(
             @Parameter(description = "UUID of the user")
             @PathVariable String userUuid,
@@ -311,7 +311,7 @@ public class LibraryController {
             description = "Retrieves all overdue book issues. Requires COLLEGE_ADMIN, SUPER_ADMIN, or TEACHER role."
     )
     @GetMapping("/issues/overdue")
-    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'COLLEGE_ADMIN', 'TEACHER')")
+    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'COLLEGE_ADMIN', 'LIBRARIAN', 'TEACHER')")
     public ResponseEntity<ApiResponse<Page<LibraryIssueResponse>>> getOverdueIssues(
             @Parameter(description = "Page number (0-indexed)")
             @RequestParam(defaultValue = "0") int page,
@@ -328,7 +328,7 @@ public class LibraryController {
             description = "Retrieves overdue books for a specific user. Users can only view their own overdue issues."
     )
     @GetMapping("/users/{userUuid}/issues/overdue")
-    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'COLLEGE_ADMIN', 'TEACHER', 'STUDENT')")
+    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'COLLEGE_ADMIN', 'LIBRARIAN', 'TEACHER', 'STUDENT')")
     public ResponseEntity<ApiResponse<Page<LibraryIssueResponse>>> getOverdueIssuesByUser(
             @Parameter(description = "UUID of the user")
             @PathVariable String userUuid,
@@ -344,10 +344,10 @@ public class LibraryController {
 
     @Operation(
             summary = "Update issue status",
-            description = "Updates the status of a book issue (e.g., mark as OVERDUE). Requires COLLEGE_ADMIN or SUPER_ADMIN role."
+            description = "Updates the status of a book issue (e.g., mark as OVERDUE). Requires COLLEGE_ADMIN, LIBRARIAN, or SUPER_ADMIN role."
     )
     @PutMapping("/issues/{issueUuid}/status")
-    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'COLLEGE_ADMIN')")
+    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'COLLEGE_ADMIN', 'LIBRARIAN')")
     public ResponseEntity<ApiResponse<LibraryIssueResponse>> updateIssueStatus(
             @Parameter(description = "UUID of the issue")
             @PathVariable String issueUuid,
@@ -363,7 +363,7 @@ public class LibraryController {
             description = "Calculates the fine amount for an overdue book issue. Accessible by all authenticated users."
     )
     @GetMapping("/issues/{issueUuid}/fine")
-    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'COLLEGE_ADMIN', 'TEACHER', 'STUDENT')")
+    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'COLLEGE_ADMIN', 'LIBRARIAN', 'TEACHER', 'STUDENT')")
     public ResponseEntity<ApiResponse<BigDecimal>> calculateFine(
             @Parameter(description = "UUID of the issue")
             @PathVariable String issueUuid
@@ -379,7 +379,7 @@ public class LibraryController {
             description = "Retrieves library summary statistics. Requires COLLEGE_ADMIN, SUPER_ADMIN, or TEACHER role."
     )
     @GetMapping("/summary")
-    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'COLLEGE_ADMIN', 'TEACHER')")
+    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'COLLEGE_ADMIN', 'LIBRARIAN', 'TEACHER')")
     public ResponseEntity<ApiResponse<LibrarySummary>> getLibrarySummary() {
         LibrarySummary summary = libraryService.getLibrarySummary();
         return ResponseEntity.ok(ApiResponse.success(summary, "Library summary retrieved successfully"));

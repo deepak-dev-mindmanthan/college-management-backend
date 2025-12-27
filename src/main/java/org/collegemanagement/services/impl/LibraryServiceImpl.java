@@ -48,7 +48,7 @@ public class LibraryServiceImpl implements LibraryService {
 
     @Override
     @Transactional
-    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'COLLEGE_ADMIN')")
+    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'COLLEGE_ADMIN', 'LIBRARIAN')")
     public BookResponse createBook(CreateBookRequest request) {
         Long collegeId = tenantAccessGuard.getCurrentTenantId();
 
@@ -81,7 +81,7 @@ public class LibraryServiceImpl implements LibraryService {
 
     @Override
     @Transactional
-    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'COLLEGE_ADMIN')")
+    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'COLLEGE_ADMIN', 'LIBRARIAN')")
     public BookResponse updateBook(String bookUuid, UpdateBookRequest request) {
         Long collegeId = tenantAccessGuard.getCurrentTenantId();
 
@@ -129,7 +129,7 @@ public class LibraryServiceImpl implements LibraryService {
     }
 
     @Override
-    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'COLLEGE_ADMIN', 'TEACHER', 'STUDENT')")
+    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'COLLEGE_ADMIN', 'LIBRARIAN', 'TEACHER', 'STUDENT')")
     public BookResponse getBookByUuid(String bookUuid) {
         Long collegeId = tenantAccessGuard.getCurrentTenantId();
 
@@ -140,7 +140,7 @@ public class LibraryServiceImpl implements LibraryService {
     }
 
     @Override
-    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'COLLEGE_ADMIN', 'TEACHER', 'STUDENT')")
+    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'COLLEGE_ADMIN', 'LIBRARIAN', 'TEACHER', 'STUDENT')")
     public Page<BookResponse> getAllBooks(Pageable pageable) {
         Long collegeId = tenantAccessGuard.getCurrentTenantId();
 
@@ -150,7 +150,7 @@ public class LibraryServiceImpl implements LibraryService {
     }
 
     @Override
-    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'COLLEGE_ADMIN', 'TEACHER', 'STUDENT')")
+    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'COLLEGE_ADMIN', 'LIBRARIAN', 'TEACHER', 'STUDENT')")
     public Page<BookResponse> searchBooks(String searchTerm, Pageable pageable) {
         Long collegeId = tenantAccessGuard.getCurrentTenantId();
 
@@ -160,7 +160,7 @@ public class LibraryServiceImpl implements LibraryService {
     }
 
     @Override
-    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'COLLEGE_ADMIN', 'TEACHER', 'STUDENT')")
+    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'COLLEGE_ADMIN', 'LIBRARIAN', 'TEACHER', 'STUDENT')")
     public Page<BookResponse> getBooksByCategory(String category, Pageable pageable) {
         Long collegeId = tenantAccessGuard.getCurrentTenantId();
 
@@ -170,7 +170,7 @@ public class LibraryServiceImpl implements LibraryService {
     }
 
     @Override
-    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'COLLEGE_ADMIN', 'TEACHER', 'STUDENT')")
+    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'COLLEGE_ADMIN', 'LIBRARIAN', 'TEACHER', 'STUDENT')")
     public Page<BookResponse> getAvailableBooks(Pageable pageable) {
         Long collegeId = tenantAccessGuard.getCurrentTenantId();
 
@@ -181,7 +181,7 @@ public class LibraryServiceImpl implements LibraryService {
 
     @Override
     @Transactional
-    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'COLLEGE_ADMIN')")
+    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'COLLEGE_ADMIN', 'LIBRARIAN')")
     public void deleteBook(String bookUuid) {
         Long collegeId = tenantAccessGuard.getCurrentTenantId();
 
@@ -205,7 +205,7 @@ public class LibraryServiceImpl implements LibraryService {
 
     @Override
     @Transactional
-    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'COLLEGE_ADMIN', 'TEACHER')")
+    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'COLLEGE_ADMIN', 'LIBRARIAN', 'TEACHER')")
     public LibraryIssueResponse issueBook(IssueBookRequest request) {
         Long collegeId = tenantAccessGuard.getCurrentTenantId();
 
@@ -263,7 +263,7 @@ public class LibraryServiceImpl implements LibraryService {
 
     @Override
     @Transactional
-    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'COLLEGE_ADMIN', 'TEACHER')")
+    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'COLLEGE_ADMIN', 'LIBRARIAN', 'TEACHER')")
     public LibraryIssueResponse returnBook(String issueUuid, ReturnBookRequest request) {
         Long collegeId = tenantAccessGuard.getCurrentTenantId();
 
@@ -301,7 +301,7 @@ public class LibraryServiceImpl implements LibraryService {
     }
 
     @Override
-    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'COLLEGE_ADMIN', 'TEACHER', 'STUDENT')")
+    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'COLLEGE_ADMIN', 'LIBRARIAN', 'TEACHER', 'STUDENT')")
     public LibraryIssueResponse getIssueByUuid(String issueUuid) {
         Long collegeId = tenantAccessGuard.getCurrentTenantId();
 
@@ -312,7 +312,7 @@ public class LibraryServiceImpl implements LibraryService {
     }
 
     @Override
-    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'COLLEGE_ADMIN', 'TEACHER')")
+    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'COLLEGE_ADMIN', 'LIBRARIAN', 'TEACHER')")
     public Page<LibraryIssueResponse> getAllIssues(Pageable pageable) {
         Long collegeId = tenantAccessGuard.getCurrentTenantId();
 
@@ -322,7 +322,7 @@ public class LibraryServiceImpl implements LibraryService {
     }
 
     @Override
-    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'COLLEGE_ADMIN', 'TEACHER')")
+    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'COLLEGE_ADMIN', 'LIBRARIAN', 'TEACHER')")
     public Page<LibraryIssueResponse> getIssuesByStatus(LibraryIssueStatus status, Pageable pageable) {
         Long collegeId = tenantAccessGuard.getCurrentTenantId();
 
@@ -332,7 +332,7 @@ public class LibraryServiceImpl implements LibraryService {
     }
 
     @Override
-    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'COLLEGE_ADMIN', 'TEACHER', 'STUDENT')")
+    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'COLLEGE_ADMIN', 'LIBRARIAN', 'TEACHER', 'STUDENT')")
     public Page<LibraryIssueResponse> getIssuesByUser(String userUuid, Pageable pageable) {
         Long collegeId = tenantAccessGuard.getCurrentTenantId();
 
@@ -346,10 +346,10 @@ public class LibraryServiceImpl implements LibraryService {
             throw new ResourceConflictException("User does not belong to a college");
         }
 
-        // Allow users to view only their own issues
+        // Allow users to view only their own issues (or if admin/teacher/librarian)
         User currentUser = getCurrentUser();
         if (!currentUser.getId().equals(user.getId()) &&
-                !isAdminOrTeacher(currentUser)) {
+                !isAdminOrTeacherOrLibrarian(currentUser)) {
             throw new org.springframework.security.access.AccessDeniedException("Access denied");
         }
 
@@ -359,7 +359,7 @@ public class LibraryServiceImpl implements LibraryService {
     }
 
     @Override
-    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'COLLEGE_ADMIN', 'TEACHER', 'STUDENT')")
+    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'COLLEGE_ADMIN', 'LIBRARIAN', 'TEACHER', 'STUDENT')")
     public Page<LibraryIssueResponse> getActiveIssuesByUser(String userUuid, Pageable pageable) {
         Long collegeId = tenantAccessGuard.getCurrentTenantId();
 
@@ -373,10 +373,10 @@ public class LibraryServiceImpl implements LibraryService {
             throw new ResourceConflictException("User does not belong to a college");
         }
 
-        // Allow users to view only their own issues
+        // Allow users to view only their own issues (or if admin/teacher/librarian)
         User currentUser = getCurrentUser();
         if (!currentUser.getId().equals(user.getId()) &&
-                !isAdminOrTeacher(currentUser)) {
+                !isAdminOrTeacherOrLibrarian(currentUser)) {
             throw new org.springframework.security.access.AccessDeniedException("Access denied");
         }
 
@@ -396,7 +396,7 @@ public class LibraryServiceImpl implements LibraryService {
     }
 
     @Override
-    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'COLLEGE_ADMIN', 'TEACHER')")
+    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'COLLEGE_ADMIN', 'LIBRARIAN', 'TEACHER')")
     public Page<LibraryIssueResponse> getOverdueIssues(Pageable pageable) {
         Long collegeId = tenantAccessGuard.getCurrentTenantId();
 
@@ -407,7 +407,7 @@ public class LibraryServiceImpl implements LibraryService {
     }
 
     @Override
-    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'COLLEGE_ADMIN', 'TEACHER', 'STUDENT')")
+    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'COLLEGE_ADMIN', 'LIBRARIAN', 'TEACHER', 'STUDENT')")
     public Page<LibraryIssueResponse> getOverdueIssuesByUser(String userUuid, Pageable pageable) {
         Long collegeId = tenantAccessGuard.getCurrentTenantId();
 
@@ -421,10 +421,10 @@ public class LibraryServiceImpl implements LibraryService {
             throw new ResourceConflictException("User does not belong to a college");
         }
 
-        // Allow users to view only their own issues
+        // Allow users to view only their own issues (or if admin/teacher/librarian)
         User currentUser = getCurrentUser();
         if (!currentUser.getId().equals(user.getId()) &&
-                !isAdminOrTeacher(currentUser)) {
+                !isAdminOrTeacherOrLibrarian(currentUser)) {
             throw new org.springframework.security.access.AccessDeniedException("Access denied");
         }
 
@@ -472,7 +472,7 @@ public class LibraryServiceImpl implements LibraryService {
     }
 
     @Override
-    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'COLLEGE_ADMIN', 'TEACHER', 'STUDENT')")
+    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'COLLEGE_ADMIN', 'LIBRARIAN', 'TEACHER', 'STUDENT')")
     public BigDecimal calculateFine(String issueUuid) {
         Long collegeId = tenantAccessGuard.getCurrentTenantId();
 
@@ -494,7 +494,7 @@ public class LibraryServiceImpl implements LibraryService {
     }
 
     @Override
-    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'COLLEGE_ADMIN', 'TEACHER')")
+    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'COLLEGE_ADMIN', 'LIBRARIAN', 'TEACHER')")
     public LibrarySummary getLibrarySummary() {
         Long collegeId = tenantAccessGuard.getCurrentTenantId();
 
@@ -538,11 +538,12 @@ public class LibraryServiceImpl implements LibraryService {
         throw new org.springframework.security.access.AccessDeniedException("User not authenticated");
     }
 
-    private boolean isAdminOrTeacher(User user) {
+    private boolean isAdminOrTeacherOrLibrarian(User user) {
         return user.getRoles().stream()
                 .anyMatch(role -> role.getName().name().equals("ROLE_SUPER_ADMIN") ||
-                        role.getName().name().equals("ROLE_COLLEGE_ADMIN") ||
-                        role.getName().name().equals("ROLE_TEACHER"));
+                                 role.getName().name().equals("ROLE_COLLEGE_ADMIN") ||
+                                 role.getName().name().equals("ROLE_TEACHER") ||
+                                 role.getName().name().equals("ROLE_LIBRARIAN"));
     }
 
     private User findUserByUuid(String userUuid) {
