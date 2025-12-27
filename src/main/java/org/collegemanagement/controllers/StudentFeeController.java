@@ -36,7 +36,7 @@ public class StudentFeeController {
 
     @Operation(
             summary = "Create fee structure",
-            description = "Creates a new fee structure for a class with fee components. Requires COLLEGE_ADMIN or SUPER_ADMIN role."
+            description = "Creates a new fee structure for a class with fee components. Requires COLLEGE_ADMIN, SUPER_ADMIN, or ACCOUNTANT role."
     )
     @ApiResponses(value = {
             @io.swagger.v3.oas.annotations.responses.ApiResponse(
@@ -50,7 +50,7 @@ public class StudentFeeController {
             )
     })
     @PostMapping("/structures")
-    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'COLLEGE_ADMIN')")
+    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'COLLEGE_ADMIN', 'ACCOUNTANT')")
     public ResponseEntity<ApiResponse<FeeStructureResponse>> createFeeStructure(
             @Valid @RequestBody CreateFeeStructureRequest request
     ) {
@@ -63,7 +63,7 @@ public class StudentFeeController {
             description = "Retrieves fee structure information by UUID. Accessible by all authenticated users."
     )
     @GetMapping("/structures/{feeStructureUuid}")
-    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'COLLEGE_ADMIN', 'TEACHER', 'STUDENT')")
+    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'COLLEGE_ADMIN', 'ACCOUNTANT', 'TEACHER', 'STUDENT')")
     public ResponseEntity<ApiResponse<FeeStructureResponse>> getFeeStructure(
             @Parameter(description = "UUID of the fee structure")
             @PathVariable String feeStructureUuid
@@ -77,7 +77,7 @@ public class StudentFeeController {
             description = "Retrieves fee structure for a specific class. Accessible by all authenticated users."
     )
     @GetMapping("/classes/{classUuid}/structure")
-    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'COLLEGE_ADMIN', 'TEACHER', 'STUDENT')")
+    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'COLLEGE_ADMIN', 'ACCOUNTANT', 'TEACHER', 'STUDENT')")
     public ResponseEntity<ApiResponse<FeeStructureResponse>> getFeeStructureByClass(
             @Parameter(description = "UUID of the class")
             @PathVariable String classUuid
@@ -88,10 +88,10 @@ public class StudentFeeController {
 
     @Operation(
             summary = "Update fee structure",
-            description = "Updates an existing fee structure. Requires COLLEGE_ADMIN or SUPER_ADMIN role."
+            description = "Updates an existing fee structure. Requires COLLEGE_ADMIN, SUPER_ADMIN, or ACCOUNTANT role."
     )
     @PutMapping("/structures/{feeStructureUuid}")
-    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'COLLEGE_ADMIN')")
+    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'COLLEGE_ADMIN', 'ACCOUNTANT')")
     public ResponseEntity<ApiResponse<FeeStructureResponse>> updateFeeStructure(
             @Parameter(description = "UUID of the fee structure")
             @PathVariable String feeStructureUuid,
@@ -117,10 +117,10 @@ public class StudentFeeController {
 
     @Operation(
             summary = "Get all fee structures",
-            description = "Retrieves a paginated list of all fee structures. Requires COLLEGE_ADMIN, SUPER_ADMIN, or TEACHER role."
+            description = "Retrieves a paginated list of all fee structures. Requires COLLEGE_ADMIN, SUPER_ADMIN, ACCOUNTANT, or TEACHER role."
     )
     @GetMapping("/structures")
-    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'COLLEGE_ADMIN', 'TEACHER')")
+    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'COLLEGE_ADMIN', 'ACCOUNTANT', 'TEACHER')")
     public ResponseEntity<ApiResponse<Page<FeeStructureResponse>>> getAllFeeStructures(
             @Parameter(description = "Page number (0-indexed)")
             @RequestParam(defaultValue = "0") int page,
@@ -141,7 +141,7 @@ public class StudentFeeController {
             description = "Retrieves all fee structures for a specific class. Accessible by all authenticated users."
     )
     @GetMapping("/classes/{classUuid}/structures")
-    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'COLLEGE_ADMIN', 'TEACHER', 'STUDENT')")
+    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'COLLEGE_ADMIN', 'ACCOUNTANT', 'TEACHER', 'STUDENT')")
     public ResponseEntity<ApiResponse<List<FeeStructureResponse>>> getFeeStructuresByClass(
             @Parameter(description = "UUID of the class")
             @PathVariable String classUuid
@@ -154,10 +154,10 @@ public class StudentFeeController {
 
     @Operation(
             summary = "Assign fee to student",
-            description = "Assigns a fee structure to a specific student. Requires COLLEGE_ADMIN or SUPER_ADMIN role."
+            description = "Assigns a fee structure to a specific student. Requires COLLEGE_ADMIN, SUPER_ADMIN, or ACCOUNTANT role."
     )
     @PostMapping("/assign")
-    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'COLLEGE_ADMIN')")
+    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'COLLEGE_ADMIN', 'ACCOUNTANT')")
     public ResponseEntity<ApiResponse<StudentFeeResponse>> assignFeeToStudent(
             @Valid @RequestBody AssignFeeToStudentRequest request
     ) {
@@ -167,10 +167,10 @@ public class StudentFeeController {
 
     @Operation(
             summary = "Assign fee to all students in a class",
-            description = "Assigns a fee structure to all active students in a class. Requires COLLEGE_ADMIN or SUPER_ADMIN role."
+            description = "Assigns a fee structure to all active students in a class. Requires COLLEGE_ADMIN, SUPER_ADMIN, or ACCOUNTANT role."
     )
     @PostMapping("/classes/{classUuid}/assign/{feeStructureUuid}")
-    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'COLLEGE_ADMIN')")
+    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'COLLEGE_ADMIN', 'ACCOUNTANT')")
     public ResponseEntity<ApiResponse<List<StudentFeeResponse>>> assignFeeToClassStudents(
             @Parameter(description = "UUID of the class")
             @PathVariable String classUuid,
@@ -186,7 +186,7 @@ public class StudentFeeController {
             description = "Retrieves student fee information by UUID. Accessible by all authenticated users."
     )
     @GetMapping("/student-fees/{studentFeeUuid}")
-    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'COLLEGE_ADMIN', 'TEACHER', 'STUDENT')")
+    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'COLLEGE_ADMIN', 'ACCOUNTANT', 'TEACHER', 'STUDENT')")
     public ResponseEntity<ApiResponse<StudentFeeResponse>> getStudentFee(
             @Parameter(description = "UUID of the student fee")
             @PathVariable String studentFeeUuid
@@ -200,7 +200,7 @@ public class StudentFeeController {
             description = "Retrieves a paginated list of all student fees for a specific student. Accessible by all authenticated users."
     )
     @GetMapping("/students/{studentUuid}/fees")
-    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'COLLEGE_ADMIN', 'TEACHER', 'STUDENT')")
+    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'COLLEGE_ADMIN', 'ACCOUNTANT', 'TEACHER', 'STUDENT')")
     public ResponseEntity<ApiResponse<Page<StudentFeeResponse>>> getStudentFeesByStudent(
             @Parameter(description = "UUID of the student")
             @PathVariable String studentUuid,
@@ -220,10 +220,10 @@ public class StudentFeeController {
 
     @Operation(
             summary = "Get all student fees by fee structure",
-            description = "Retrieves a paginated list of all student fees for a specific fee structure. Requires COLLEGE_ADMIN, SUPER_ADMIN, or TEACHER role."
+            description = "Retrieves a paginated list of all student fees for a specific fee structure. Requires COLLEGE_ADMIN, SUPER_ADMIN, ACCOUNTANT, or TEACHER role."
     )
     @GetMapping("/structures/{feeStructureUuid}/student-fees")
-    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'COLLEGE_ADMIN', 'TEACHER')")
+    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'COLLEGE_ADMIN', 'ACCOUNTANT', 'TEACHER')")
     public ResponseEntity<ApiResponse<Page<StudentFeeResponse>>> getStudentFeesByFeeStructure(
             @Parameter(description = "UUID of the fee structure")
             @PathVariable String feeStructureUuid,
@@ -239,10 +239,10 @@ public class StudentFeeController {
 
     @Operation(
             summary = "Get student fees by status",
-            description = "Retrieves a paginated list of student fees filtered by status. Requires COLLEGE_ADMIN, SUPER_ADMIN, or TEACHER role."
+            description = "Retrieves a paginated list of student fees filtered by status. Requires COLLEGE_ADMIN, SUPER_ADMIN, ACCOUNTANT, or TEACHER role."
     )
     @GetMapping("/student-fees/status/{status}")
-    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'COLLEGE_ADMIN', 'TEACHER')")
+    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'COLLEGE_ADMIN', 'ACCOUNTANT', 'TEACHER')")
     public ResponseEntity<ApiResponse<Page<StudentFeeResponse>>> getStudentFeesByStatus(
             @Parameter(description = "Fee status (PENDING, PAID, PARTIALLY_PAID, OVERDUE)")
             @PathVariable FeeStatus status,
@@ -258,10 +258,10 @@ public class StudentFeeController {
 
     @Operation(
             summary = "Get overdue student fees",
-            description = "Retrieves a paginated list of all overdue student fees. Requires COLLEGE_ADMIN, SUPER_ADMIN, or TEACHER role."
+            description = "Retrieves a paginated list of all overdue student fees. Requires COLLEGE_ADMIN, SUPER_ADMIN, ACCOUNTANT, or TEACHER role."
     )
     @GetMapping("/student-fees/overdue")
-    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'COLLEGE_ADMIN', 'TEACHER')")
+    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'COLLEGE_ADMIN', 'ACCOUNTANT', 'TEACHER')")
     public ResponseEntity<ApiResponse<Page<StudentFeeResponse>>> getOverdueStudentFees(
             @Parameter(description = "Page number (0-indexed)")
             @RequestParam(defaultValue = "0") int page,
@@ -275,10 +275,10 @@ public class StudentFeeController {
 
     @Operation(
             summary = "Get student fees by class",
-            description = "Retrieves a paginated list of all student fees for a specific class. Requires COLLEGE_ADMIN, SUPER_ADMIN, or TEACHER role."
+            description = "Retrieves a paginated list of all student fees for a specific class. Requires COLLEGE_ADMIN, SUPER_ADMIN, ACCOUNTANT, or TEACHER role."
     )
     @GetMapping("/classes/{classUuid}/student-fees")
-    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'COLLEGE_ADMIN', 'TEACHER')")
+    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'COLLEGE_ADMIN', 'ACCOUNTANT', 'TEACHER')")
     public ResponseEntity<ApiResponse<Page<StudentFeeResponse>>> getStudentFeesByClass(
             @Parameter(description = "UUID of the class")
             @PathVariable String classUuid,
@@ -296,10 +296,10 @@ public class StudentFeeController {
 
     @Operation(
             summary = "Record fee payment",
-            description = "Records a payment for a student fee. Updates the fee status automatically. Requires COLLEGE_ADMIN or SUPER_ADMIN role."
+            description = "Records a payment for a student fee. Updates the fee status automatically. Requires COLLEGE_ADMIN, SUPER_ADMIN, or ACCOUNTANT role."
     )
     @PostMapping("/payments")
-    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'COLLEGE_ADMIN')")
+    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'COLLEGE_ADMIN', 'ACCOUNTANT')")
     public ResponseEntity<ApiResponse<FeePaymentResponse>> recordFeePayment(
             @Valid @RequestBody CreateFeePaymentRequest request
     ) {
@@ -312,7 +312,7 @@ public class StudentFeeController {
             description = "Retrieves fee payment information by UUID. Accessible by all authenticated users."
     )
     @GetMapping("/payments/{paymentUuid}")
-    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'COLLEGE_ADMIN', 'TEACHER', 'STUDENT')")
+    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'COLLEGE_ADMIN', 'ACCOUNTANT', 'TEACHER', 'STUDENT')")
     public ResponseEntity<ApiResponse<FeePaymentResponse>> getFeePayment(
             @Parameter(description = "UUID of the fee payment")
             @PathVariable String paymentUuid
@@ -326,7 +326,7 @@ public class StudentFeeController {
             description = "Retrieves a paginated list of all payments for a specific student fee. Accessible by all authenticated users."
     )
     @GetMapping("/student-fees/{studentFeeUuid}/payments")
-    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'COLLEGE_ADMIN', 'TEACHER', 'STUDENT')")
+    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'COLLEGE_ADMIN', 'ACCOUNTANT', 'TEACHER', 'STUDENT')")
     public ResponseEntity<ApiResponse<Page<FeePaymentResponse>>> getFeePaymentsByStudentFee(
             @Parameter(description = "UUID of the student fee")
             @PathVariable String studentFeeUuid,
@@ -345,7 +345,7 @@ public class StudentFeeController {
             description = "Retrieves a paginated list of all payments for a specific student. Accessible by all authenticated users."
     )
     @GetMapping("/students/{studentUuid}/payments")
-    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'COLLEGE_ADMIN', 'TEACHER', 'STUDENT')")
+    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'COLLEGE_ADMIN', 'ACCOUNTANT', 'TEACHER', 'STUDENT')")
     public ResponseEntity<ApiResponse<Page<FeePaymentResponse>>> getFeePaymentsByStudent(
             @Parameter(description = "UUID of the student")
             @PathVariable String studentUuid,
@@ -361,10 +361,10 @@ public class StudentFeeController {
 
     @Operation(
             summary = "Get fee payments by date range",
-            description = "Retrieves a paginated list of all payments within a date range. Requires COLLEGE_ADMIN, SUPER_ADMIN, or TEACHER role."
+            description = "Retrieves a paginated list of all payments within a date range. Requires COLLEGE_ADMIN, SUPER_ADMIN, ACCOUNTANT, or TEACHER role."
     )
     @GetMapping("/payments/range")
-    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'COLLEGE_ADMIN', 'TEACHER')")
+    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'COLLEGE_ADMIN', 'ACCOUNTANT', 'TEACHER')")
     public ResponseEntity<ApiResponse<Page<FeePaymentResponse>>> getFeePaymentsByDateRange(
             @Parameter(description = "Start date (ISO 8601 format)")
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) Instant startDate,
@@ -387,7 +387,7 @@ public class StudentFeeController {
             description = "Retrieves a comprehensive fee summary for a specific student. Accessible by all authenticated users."
     )
     @GetMapping("/students/{studentUuid}/summary")
-    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'COLLEGE_ADMIN', 'TEACHER', 'STUDENT')")
+    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'COLLEGE_ADMIN', 'ACCOUNTANT', 'TEACHER', 'STUDENT')")
     public ResponseEntity<ApiResponse<StudentFeeSummaryResponse>> getStudentFeeSummary(
             @Parameter(description = "UUID of the student")
             @PathVariable String studentUuid
@@ -398,10 +398,10 @@ public class StudentFeeController {
 
     @Operation(
             summary = "Get college fee summary",
-            description = "Retrieves a comprehensive fee summary for the entire college. Requires COLLEGE_ADMIN or SUPER_ADMIN role."
+            description = "Retrieves a comprehensive fee summary for the entire college. Requires COLLEGE_ADMIN, SUPER_ADMIN, or ACCOUNTANT role."
     )
     @GetMapping("/summary/college")
-    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'COLLEGE_ADMIN')")
+    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'COLLEGE_ADMIN', 'ACCOUNTANT')")
     public ResponseEntity<ApiResponse<CollegeFeeSummaryResponse>> getCollegeFeeSummary() {
         CollegeFeeSummaryResponse summary = studentFeeService.getCollegeFeeSummary();
         return ResponseEntity.ok(ApiResponse.success(summary, "College fee summary retrieved successfully"));
@@ -409,10 +409,10 @@ public class StudentFeeController {
 
     @Operation(
             summary = "Get class fee summary",
-            description = "Retrieves a comprehensive fee summary for a specific class. Requires COLLEGE_ADMIN, SUPER_ADMIN, or TEACHER role."
+            description = "Retrieves a comprehensive fee summary for a specific class. Requires COLLEGE_ADMIN, SUPER_ADMIN, ACCOUNTANT, or TEACHER role."
     )
     @GetMapping("/classes/{classUuid}/summary")
-    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'COLLEGE_ADMIN', 'TEACHER')")
+    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'COLLEGE_ADMIN', 'ACCOUNTANT', 'TEACHER')")
     public ResponseEntity<ApiResponse<ClassFeeSummaryResponse>> getClassFeeSummary(
             @Parameter(description = "UUID of the class")
             @PathVariable String classUuid

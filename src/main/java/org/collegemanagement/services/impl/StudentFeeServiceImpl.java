@@ -51,7 +51,7 @@ public class StudentFeeServiceImpl implements StudentFeeService {
 
     @Override
     @Transactional
-    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'COLLEGE_ADMIN')")
+    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'COLLEGE_ADMIN', 'ACCOUNTANT')")
     public FeeStructureResponse createFeeStructure(CreateFeeStructureRequest request) {
         Long collegeId = tenantAccessGuard.getCurrentTenantId();
 
@@ -100,7 +100,7 @@ public class StudentFeeServiceImpl implements StudentFeeService {
     }
 
     @Override
-    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'COLLEGE_ADMIN', 'TEACHER', 'STUDENT')")
+    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'COLLEGE_ADMIN', 'ACCOUNTANT', 'TEACHER', 'STUDENT')")
     public FeeStructureResponse getFeeStructureByUuid(String feeStructureUuid) {
         Long collegeId = tenantAccessGuard.getCurrentTenantId();
 
@@ -111,7 +111,7 @@ public class StudentFeeServiceImpl implements StudentFeeService {
     }
 
     @Override
-    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'COLLEGE_ADMIN', 'TEACHER', 'STUDENT')")
+    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'COLLEGE_ADMIN', 'ACCOUNTANT', 'TEACHER', 'STUDENT')")
     public FeeStructureResponse getFeeStructureByClassUuid(String classUuid) {
         Long collegeId = tenantAccessGuard.getCurrentTenantId();
 
@@ -123,7 +123,7 @@ public class StudentFeeServiceImpl implements StudentFeeService {
 
     @Override
     @Transactional
-    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'COLLEGE_ADMIN')")
+    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'COLLEGE_ADMIN', 'ACCOUNTANT')")
     public FeeStructureResponse updateFeeStructure(String feeStructureUuid, UpdateFeeStructureRequest request) {
         Long collegeId = tenantAccessGuard.getCurrentTenantId();
 
@@ -177,7 +177,7 @@ public class StudentFeeServiceImpl implements StudentFeeService {
     }
 
     @Override
-    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'COLLEGE_ADMIN', 'TEACHER')")
+    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'COLLEGE_ADMIN', 'ACCOUNTANT', 'TEACHER')")
     public Page<FeeStructureResponse> getAllFeeStructures(Pageable pageable) {
         Long collegeId = tenantAccessGuard.getCurrentTenantId();
 
@@ -187,7 +187,7 @@ public class StudentFeeServiceImpl implements StudentFeeService {
     }
 
     @Override
-    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'COLLEGE_ADMIN', 'TEACHER', 'STUDENT')")
+    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'COLLEGE_ADMIN', 'ACCOUNTANT', 'TEACHER', 'STUDENT')")
     public List<FeeStructureResponse> getFeeStructuresByClassUuid(String classUuid) {
         Long collegeId = tenantAccessGuard.getCurrentTenantId();
 
@@ -206,7 +206,7 @@ public class StudentFeeServiceImpl implements StudentFeeService {
 
     @Override
     @Transactional
-    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'COLLEGE_ADMIN')")
+    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'COLLEGE_ADMIN', 'ACCOUNTANT')")
     public StudentFeeResponse assignFeeToStudent(AssignFeeToStudentRequest request) {
         Long collegeId = tenantAccessGuard.getCurrentTenantId();
 
@@ -242,7 +242,7 @@ public class StudentFeeServiceImpl implements StudentFeeService {
 
     @Override
     @Transactional
-    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'COLLEGE_ADMIN')")
+    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'COLLEGE_ADMIN', 'ACCOUNTANT')")
     public List<StudentFeeResponse> assignFeeToClassStudents(String classUuid, String feeStructureUuid) {
         Long collegeId = tenantAccessGuard.getCurrentTenantId();
 
@@ -288,7 +288,7 @@ public class StudentFeeServiceImpl implements StudentFeeService {
     }
 
     @Override
-    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'COLLEGE_ADMIN', 'TEACHER', 'STUDENT')")
+    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'COLLEGE_ADMIN', 'ACCOUNTANT', 'TEACHER', 'STUDENT')")
     public StudentFeeResponse getStudentFeeByUuid(String studentFeeUuid) {
         Long collegeId = tenantAccessGuard.getCurrentTenantId();
 
@@ -299,7 +299,7 @@ public class StudentFeeServiceImpl implements StudentFeeService {
     }
 
     @Override
-    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'COLLEGE_ADMIN', 'TEACHER', 'STUDENT')")
+    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'COLLEGE_ADMIN', 'ACCOUNTANT', 'TEACHER', 'STUDENT')")
     public Page<StudentFeeResponse> getStudentFeesByStudentUuid(String studentUuid, Pageable pageable) {
         Long collegeId = tenantAccessGuard.getCurrentTenantId();
 
@@ -313,7 +313,7 @@ public class StudentFeeServiceImpl implements StudentFeeService {
     }
 
     @Override
-    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'COLLEGE_ADMIN', 'TEACHER', 'STUDENT')")
+    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'COLLEGE_ADMIN', 'ACCOUNTANT', 'TEACHER', 'STUDENT')")
     public List<StudentFeeResponse> getAllStudentFeesByStudentUuid(String studentUuid) {
         Long collegeId = tenantAccessGuard.getCurrentTenantId();
 
@@ -327,7 +327,7 @@ public class StudentFeeServiceImpl implements StudentFeeService {
     }
 
     @Override
-    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'COLLEGE_ADMIN', 'TEACHER')")
+    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'COLLEGE_ADMIN', 'ACCOUNTANT', 'TEACHER')")
     public Page<StudentFeeResponse> getStudentFeesByFeeStructureUuid(String feeStructureUuid, Pageable pageable) {
         Long collegeId = tenantAccessGuard.getCurrentTenantId();
 
@@ -341,7 +341,7 @@ public class StudentFeeServiceImpl implements StudentFeeService {
     }
 
     @Override
-    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'COLLEGE_ADMIN', 'TEACHER')")
+    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'COLLEGE_ADMIN', 'ACCOUNTANT', 'TEACHER')")
     public Page<StudentFeeResponse> getStudentFeesByStatus(FeeStatus status, Pageable pageable) {
         Long collegeId = tenantAccessGuard.getCurrentTenantId();
 
@@ -351,7 +351,7 @@ public class StudentFeeServiceImpl implements StudentFeeService {
     }
 
     @Override
-    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'COLLEGE_ADMIN', 'TEACHER')")
+    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'COLLEGE_ADMIN', 'ACCOUNTANT', 'TEACHER')")
     public Page<StudentFeeResponse> getOverdueStudentFees(Pageable pageable) {
         Long collegeId = tenantAccessGuard.getCurrentTenantId();
 
@@ -361,7 +361,7 @@ public class StudentFeeServiceImpl implements StudentFeeService {
     }
 
     @Override
-    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'COLLEGE_ADMIN', 'TEACHER')")
+    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'COLLEGE_ADMIN', 'ACCOUNTANT', 'TEACHER')")
     public Page<StudentFeeResponse> getStudentFeesByClassUuid(String classUuid, Pageable pageable) {
         Long collegeId = tenantAccessGuard.getCurrentTenantId();
 
@@ -378,7 +378,7 @@ public class StudentFeeServiceImpl implements StudentFeeService {
 
     @Override
     @Transactional
-    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'COLLEGE_ADMIN')")
+    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'COLLEGE_ADMIN', 'ACCOUNTANT')")
     public FeePaymentResponse recordFeePayment(CreateFeePaymentRequest request) {
         Long collegeId = tenantAccessGuard.getCurrentTenantId();
 
@@ -430,7 +430,7 @@ public class StudentFeeServiceImpl implements StudentFeeService {
     }
 
     @Override
-    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'COLLEGE_ADMIN', 'TEACHER', 'STUDENT')")
+    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'COLLEGE_ADMIN', 'ACCOUNTANT', 'TEACHER', 'STUDENT')")
     public FeePaymentResponse getFeePaymentByUuid(String paymentUuid) {
         Long collegeId = tenantAccessGuard.getCurrentTenantId();
 
@@ -441,7 +441,7 @@ public class StudentFeeServiceImpl implements StudentFeeService {
     }
 
     @Override
-    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'COLLEGE_ADMIN', 'TEACHER', 'STUDENT')")
+    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'COLLEGE_ADMIN', 'ACCOUNTANT', 'TEACHER', 'STUDENT')")
     public Page<FeePaymentResponse> getFeePaymentsByStudentFeeUuid(String studentFeeUuid, Pageable pageable) {
         Long collegeId = tenantAccessGuard.getCurrentTenantId();
 
@@ -455,7 +455,7 @@ public class StudentFeeServiceImpl implements StudentFeeService {
     }
 
     @Override
-    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'COLLEGE_ADMIN', 'TEACHER', 'STUDENT')")
+    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'COLLEGE_ADMIN', 'ACCOUNTANT', 'TEACHER', 'STUDENT')")
     public List<FeePaymentResponse> getAllFeePaymentsByStudentFeeUuid(String studentFeeUuid) {
         Long collegeId = tenantAccessGuard.getCurrentTenantId();
 
@@ -469,7 +469,7 @@ public class StudentFeeServiceImpl implements StudentFeeService {
     }
 
     @Override
-    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'COLLEGE_ADMIN', 'TEACHER', 'STUDENT')")
+    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'COLLEGE_ADMIN', 'ACCOUNTANT', 'TEACHER', 'STUDENT')")
     public Page<FeePaymentResponse> getFeePaymentsByStudentUuid(String studentUuid, Pageable pageable) {
         Long collegeId = tenantAccessGuard.getCurrentTenantId();
 
@@ -483,7 +483,7 @@ public class StudentFeeServiceImpl implements StudentFeeService {
     }
 
     @Override
-    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'COLLEGE_ADMIN', 'TEACHER')")
+    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'COLLEGE_ADMIN', 'ACCOUNTANT', 'TEACHER')")
     public Page<FeePaymentResponse> getFeePaymentsByDateRange(Instant startDate, Instant endDate, Pageable pageable) {
         Long collegeId = tenantAccessGuard.getCurrentTenantId();
 
@@ -500,7 +500,7 @@ public class StudentFeeServiceImpl implements StudentFeeService {
     // ========== Summary and Reports ==========
 
     @Override
-    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'COLLEGE_ADMIN', 'TEACHER', 'STUDENT')")
+    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'COLLEGE_ADMIN', 'ACCOUNTANT', 'TEACHER', 'STUDENT')")
     public StudentFeeSummaryResponse getStudentFeeSummary(String studentUuid) {
         Long collegeId = tenantAccessGuard.getCurrentTenantId();
 
@@ -562,7 +562,7 @@ public class StudentFeeServiceImpl implements StudentFeeService {
     }
 
     @Override
-    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'COLLEGE_ADMIN')")
+    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'COLLEGE_ADMIN', 'ACCOUNTANT')")
     public CollegeFeeSummaryResponse getCollegeFeeSummary() {
         Long collegeId = tenantAccessGuard.getCurrentTenantId();
 
@@ -589,7 +589,7 @@ public class StudentFeeServiceImpl implements StudentFeeService {
     }
 
     @Override
-    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'COLLEGE_ADMIN', 'TEACHER')")
+    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'COLLEGE_ADMIN', 'ACCOUNTANT', 'TEACHER')")
     public ClassFeeSummaryResponse getClassFeeSummary(String classUuid) {
         Long collegeId = tenantAccessGuard.getCurrentTenantId();
 
