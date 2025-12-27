@@ -1,7 +1,7 @@
 # Complete Student Fees Management Flow Documentation
 
 ## Overview
-This document describes the complete API flow for Student Fees Management in the college management system, including fee structure creation, student fee assignment, payment processing, and comprehensive fee reporting for different roles (COLLEGE_ADMIN, TEACHER, STUDENT).
+This document describes the complete API flow for Student Fees Management in the college management system, including fee structure creation, student fee assignment, payment processing, and comprehensive fee reporting for different roles (COLLEGE_ADMIN, ACCOUNTANT, TEACHER, STUDENT).
 
 ---
 
@@ -11,6 +11,7 @@ This document describes the complete API flow for Student Fees Management in the
 |------|---------------------|---------------------|-------------|----------------|--------------|---------------|----------------|------------------|
 | **SUPER_ADMIN** | ✅ Yes | ✅ Yes | ✅ Yes | ✅ Yes | ✅ Yes | ✅ Yes | ✅ Yes | ✅ Yes |
 | **COLLEGE_ADMIN** | ✅ Yes | ✅ Yes | ✅ Yes | ✅ Yes | ✅ Yes | ✅ Yes | ✅ Yes | ✅ Yes |
+| **ACCOUNTANT** | ✅ Yes | ✅ Yes | ✅ Yes | ✅ Yes | ✅ Yes | ✅ Yes | ✅ Yes | ❌ No |
 | **TEACHER** | ❌ No | ❌ No | ❌ No | ❌ No | ✅ Yes | ✅ Yes (Read-only) | ✅ Yes | ❌ No |
 | **STUDENT** | ❌ No | ❌ No | ❌ No | ❌ No | ✅ Yes (Own only) | ❌ No | ✅ Yes (Own only) | ❌ No |
 
@@ -20,7 +21,7 @@ This document describes the complete API flow for Student Fees Management in the
 
 ```
 ┌─────────────────────────────────────────────────────────────────┐
-│         FEE STRUCTURE SETUP (COLLEGE_ADMIN)                      │
+│    FEE STRUCTURE SETUP (COLLEGE_ADMIN / ACCOUNTANT)              │
 └─────────────────────────────────────────────────────────────────┘
                               │
                               ▼
@@ -34,7 +35,7 @@ This document describes the complete API flow for Student Fees Management in the
                               │
                               ▼
 ┌─────────────────────────────────────────────────────────────────┐
-│         ASSIGN FEES TO STUDENTS (COLLEGE_ADMIN)                  │
+│    ASSIGN FEES TO STUDENTS (COLLEGE_ADMIN / ACCOUNTANT)          │
 └─────────────────────────────────────────────────────────────────┘
                               │
                               ▼
@@ -49,7 +50,7 @@ This document describes the complete API flow for Student Fees Management in the
                               │
                               ▼
 ┌─────────────────────────────────────────────────────────────────┐
-│         PAYMENT PROCESSING (COLLEGE_ADMIN)                       │
+│      PAYMENT PROCESSING (COLLEGE_ADMIN / ACCOUNTANT)             │
 └─────────────────────────────────────────────────────────────────┘
                               │
                               ▼
@@ -75,14 +76,14 @@ This document describes the complete API flow for Student Fees Management in the
 
 ## Detailed API Flows by User Role
 
-### **Role 1: COLLEGE_ADMIN - Fee Structure Management**
+### **Role 1: COLLEGE_ADMIN / ACCOUNTANT - Fee Structure Management**
 
 #### **Flow 1.1: Create Fee Structure**
 
 **Step 1: Create Fee Structure for a Class**
 ```http
 POST /api/v1/fees/structures
-Authorization: Bearer {adminAccessToken}
+Authorization: Bearer {adminAccessToken | accountantAccessToken}
 Content-Type: application/json
 
 Request Body:
@@ -161,6 +162,7 @@ Response (200 OK):
 - ✅ One fee structure per class (enforced by unique constraint)
 - ✅ Validates class exists and belongs to college
 - ✅ Components stored with individual amounts
+- ✅ Accessible by COLLEGE_ADMIN, SUPER_ADMIN, and ACCOUNTANT roles
 
 **Error Response (409 Conflict):**
 ```json
@@ -288,7 +290,7 @@ Response (200 OK):
 
 ---
 
-### **Role 2: COLLEGE_ADMIN - Student Fee Assignment**
+### **Role 2: COLLEGE_ADMIN / ACCOUNTANT - Student Fee Assignment**
 
 #### **Flow 2.1: Assign Fee to Individual Student**
 
@@ -389,14 +391,14 @@ Response (200 OK):
 
 ---
 
-### **Role 3: COLLEGE_ADMIN - Payment Processing**
+### **Role 3: COLLEGE_ADMIN / ACCOUNTANT - Payment Processing**
 
 #### **Flow 3.1: Record Fee Payment**
 
 **Record Payment for Student Fee**
 ```http
 POST /api/v1/fees/payments
-Authorization: Bearer {adminAccessToken}
+Authorization: Bearer {adminAccessToken | accountantAccessToken}
 Content-Type: application/json
 
 Request Body:
@@ -438,6 +440,7 @@ Response (200 OK):
   - If paidAmount < totalAmount → PARTIALLY_PAID
 - ✅ Validates payment amount doesn't exceed due amount
 - ✅ Validates transaction ID uniqueness (if provided)
+- ✅ Primary function for ACCOUNTANT role - recording payments is a core responsibility
 
 **Payment Status Flow:**
 ```
@@ -647,7 +650,7 @@ Response (200 OK):
 
 ---
 
-### **Role 5: COLLEGE_ADMIN - Fee Reports & Summaries**
+### **Role 5: COLLEGE_ADMIN / ACCOUNTANT - Fee Reports & Summaries**
 
 #### **Flow 5.1: College Fee Summary**
 
@@ -678,6 +681,7 @@ Response (200 OK):
 - ✅ Aggregates all fees across all classes
 - ✅ Provides college-wide financial overview
 - ✅ Useful for financial reporting and planning
+- ✅ Essential for ACCOUNTANT role for financial audits and reconciliation
 
 ---
 
@@ -770,10 +774,10 @@ Response (200 OK):
 
 ## Complete User Journey Examples
 
-### **Journey 1: Admin Sets Up Fees for New Academic Year**
+### **Journey 1: Admin/Accountant Sets Up Fees for New Academic Year**
 
 ```
-1. Admin logs in
+1. Admin/Accountant logs in
    POST /api/v1/auth/login
 
 2. Create fee structure for Grade 10
@@ -821,10 +825,10 @@ Response (200 OK):
 
 ---
 
-### **Journey 3: Admin Records Payment**
+### **Journey 3: Admin/Accountant Records Payment**
 
 ```
-1. Admin logs in
+1. Admin/Accountant logs in
    POST /api/v1/auth/login
 
 2. Search for student
@@ -852,10 +856,10 @@ Response (200 OK):
 
 ---
 
-### **Journey 4: Admin Generates Fee Reports**
+### **Journey 4: Admin/Accountant Generates Fee Reports**
 
 ```
-1. Admin logs in
+1. Admin/Accountant logs in
    POST /api/v1/auth/login
 
 2. View college-wide summary
@@ -873,6 +877,42 @@ Response (200 OK):
 
 6. Export data for reporting
    (Frontend can format the API responses into reports)
+```
+
+---
+
+### **Journey 5: Accountant Daily Operations**
+
+```
+1. Accountant logs in
+   POST /api/v1/auth/login
+
+2. View all overdue fees
+   GET /api/v1/fees/student-fees/overdue?page=0&size=20
+
+3. View pending payments to process
+   GET /api/v1/fees/student-fees/status/PENDING?page=0&size=20
+
+4. Record multiple payments throughout the day
+   POST /api/v1/fees/payments
+   {
+     "studentFeeUuid": "...",
+     "amount": 20000.00,
+     "paymentMode": "CASH",
+     "transactionId": "TXN001"
+   }
+   (Repeat for each payment received)
+
+5. View payment history for the day
+   GET /api/v1/fees/payments/range?startDate=2024-01-20T00:00:00Z&endDate=2024-01-20T23:59:59Z
+
+6. Generate daily collection report
+   GET /api/v1/fees/summary/college
+   (Extract payment data from summary)
+
+7. View student fee details for reconciliation
+   GET /api/v1/fees/students/{studentUuid}/fees
+   GET /api/v1/fees/students/{studentUuid}/payments
 ```
 
 ---
@@ -1139,7 +1179,7 @@ async function getOverdueFees(page = 0, size = 20) {
 
 ## UI/UX Recommendations
 
-### **1. Fee Structure Management Page (Admin)**
+### **1. Fee Structure Management Page (Admin/Accountant)**
 
 ```
 ┌──────────────────────────────────────────────────────────┐
@@ -1223,7 +1263,7 @@ async function getOverdueFees(page = 0, size = 20) {
 
 ---
 
-### **3. Payment Recording Page (Admin)**
+### **3. Payment Recording Page (Admin/Accountant)**
 
 ```
 ┌──────────────────────────────────────────────────────────┐
@@ -1263,10 +1303,11 @@ async function getOverdueFees(page = 0, size = 20) {
 - Transaction ID validation
 - Amount validation (cannot exceed due amount)
 - Success confirmation with updated status
+- Primary interface for ACCOUNTANT role for daily payment processing
 
 ---
 
-### **4. Fee Reports Dashboard (Admin)**
+### **4. Fee Reports Dashboard (Admin/Accountant)**
 
 ```
 ┌──────────────────────────────────────────────────────────┐
@@ -1306,6 +1347,7 @@ async function getOverdueFees(page = 0, size = 20) {
 - Class-wise comparison
 - Export options (PDF, Excel, CSV)
 - Date range filtering
+- Essential for ACCOUNTANT role for financial reporting and reconciliation
 
 ---
 
@@ -1391,12 +1433,13 @@ async function getOverdueFees(page = 0, size = 20) {
 ## Security & Isolation Notes
 
 - ✅ **College Isolation:** All queries automatically filter by `collegeId`
-- ✅ **Role-Based Access:** Permissions enforced at service layer
+- ✅ **Role-Based Access:** Permissions enforced at service layer with `@PreAuthorize` annotations
 - ✅ **JWT Authentication:** All endpoints require valid token
 - ✅ **Tenant Context:** Automatically set from authenticated user's college
 - ✅ **Student Validation:** Students can only view their own fees
 - ✅ **Payment Validation:** Payment amounts validated against due amounts
 - ✅ **Transaction ID Uniqueness:** Prevents duplicate payment records
+- ✅ **Accountant Role:** ACCOUNTANT has full access to fee management operations (create, update, assign, record payments, view summaries) except for fee structure deletion (admin-only)
 
 ---
 
@@ -1446,31 +1489,31 @@ OVERDUE
 
 | Endpoint | Method | Role | Purpose |
 |----------|--------|------|---------|
-| `/api/v1/fees/structures` | POST | Admin | Create fee structure |
+| `/api/v1/fees/structures` | POST | Admin/Accountant | Create fee structure |
 | `/api/v1/fees/structures/{uuid}` | GET | All | Get fee structure by UUID |
-| `/api/v1/fees/structures/{uuid}` | PUT | Admin | Update fee structure |
+| `/api/v1/fees/structures/{uuid}` | PUT | Admin/Accountant | Update fee structure |
 | `/api/v1/fees/structures/{uuid}` | DELETE | Admin | Delete fee structure |
-| `/api/v1/fees/structures` | GET | Admin/Teacher | Get all fee structures |
+| `/api/v1/fees/structures` | GET | Admin/Accountant/Teacher | Get all fee structures |
 | `/api/v1/fees/classes/{uuid}/structure` | GET | All | Get fee structure by class |
 | `/api/v1/fees/classes/{uuid}/structures` | GET | All | Get all fee structures for class |
-| `/api/v1/fees/assign` | POST | Admin | Assign fee to student |
-| `/api/v1/fees/classes/{uuid}/assign/{structure}` | POST | Admin | Bulk assign to class |
+| `/api/v1/fees/assign` | POST | Admin/Accountant | Assign fee to student |
+| `/api/v1/fees/classes/{uuid}/assign/{structure}` | POST | Admin/Accountant | Bulk assign to class |
 | `/api/v1/fees/student-fees/{uuid}` | GET | All | Get student fee by UUID |
 | `/api/v1/fees/students/{uuid}/fees` | GET | All* | Get student's fees |
-| `/api/v1/fees/structures/{uuid}/student-fees` | GET | Admin/Teacher | Get fees by structure |
-| `/api/v1/fees/student-fees/status/{status}` | GET | Admin/Teacher | Get fees by status |
-| `/api/v1/fees/student-fees/overdue` | GET | Admin/Teacher | Get overdue fees |
-| `/api/v1/fees/classes/{uuid}/student-fees` | GET | Admin/Teacher | Get fees by class |
-| `/api/v1/fees/payments` | POST | Admin | Record fee payment |
+| `/api/v1/fees/structures/{uuid}/student-fees` | GET | Admin/Accountant/Teacher | Get fees by structure |
+| `/api/v1/fees/student-fees/status/{status}` | GET | Admin/Accountant/Teacher | Get fees by status |
+| `/api/v1/fees/student-fees/overdue` | GET | Admin/Accountant/Teacher | Get overdue fees |
+| `/api/v1/fees/classes/{uuid}/student-fees` | GET | Admin/Accountant/Teacher | Get fees by class |
+| `/api/v1/fees/payments` | POST | Admin/Accountant | Record fee payment |
 | `/api/v1/fees/payments/{uuid}` | GET | All | Get payment by UUID |
 | `/api/v1/fees/student-fees/{uuid}/payments` | GET | All* | Get payments for fee |
 | `/api/v1/fees/students/{uuid}/payments` | GET | All* | Get student's payments |
-| `/api/v1/fees/payments/range` | GET | Admin/Teacher | Get payments by date range |
+| `/api/v1/fees/payments/range` | GET | Admin/Accountant/Teacher | Get payments by date range |
 | `/api/v1/fees/students/{uuid}/summary` | GET | All* | Get student fee summary |
-| `/api/v1/fees/summary/college` | GET | Admin | Get college fee summary |
-| `/api/v1/fees/classes/{uuid}/summary` | GET | Admin/Teacher | Get class fee summary |
+| `/api/v1/fees/summary/college` | GET | Admin/Accountant | Get college fee summary |
+| `/api/v1/fees/classes/{uuid}/summary` | GET | Admin/Accountant/Teacher | Get class fee summary |
 
-*All authenticated users can view their own fees/payments; Admin/Teacher can view any student's fees/payments.
+*All authenticated users can view their own fees/payments; Admin/Accountant/Teacher can view any student's fees/payments.
 
 ---
 
