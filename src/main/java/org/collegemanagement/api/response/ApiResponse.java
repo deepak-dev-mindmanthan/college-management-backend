@@ -62,8 +62,8 @@ public class ApiResponse<T> {
                 .build();
     }
 
-    public static ApiResponse<?> error(int status, String message, List<ErrorDetail> errors) {
-        return ApiResponse.builder()
+    public static <T> ApiResponse<T> error(int status, String message, List<ErrorDetail> errors) {
+        return ApiResponse.<T>builder()
                 .success(false)
                 .status(status)
                 .message(message)

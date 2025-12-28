@@ -14,8 +14,10 @@ import org.collegemanagement.exception.ResourceConflictException;
 import org.collegemanagement.exception.ResourceNotFoundException;
 import org.collegemanagement.repositories.CollegeRepository;
 import org.collegemanagement.repositories.InvoiceRepository;
+import org.collegemanagement.repositories.SubscriptionHistoryRepository;
 import org.collegemanagement.repositories.SubscriptionRepository;
 import org.collegemanagement.security.tenant.TenantAccessGuard;
+import org.collegemanagement.services.EmailService;
 import org.collegemanagement.services.SubscriptionPlanService;
 import org.collegemanagement.services.SubscriptionService;
 import org.springframework.data.domain.Page;
@@ -37,7 +39,9 @@ public class SubscriptionServiceImpl implements SubscriptionService {
     private final SubscriptionPlanService subscriptionPlanService;
     private final CollegeRepository collegeRepository;
     private final InvoiceRepository invoiceRepository;
+    private final SubscriptionHistoryRepository subscriptionHistoryRepository;
     private final TenantAccessGuard tenantAccessGuard;
+    private final EmailService emailService;
 
     @Override
     @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'COLLEGE_ADMIN')")
@@ -60,6 +64,12 @@ public class SubscriptionServiceImpl implements SubscriptionService {
         // Calculate subscription dates
         LocalDate startsAt = LocalDate.now();
         LocalDate expiresAt = calculateExpiryDate(startsAt, request.getBillingCycle());
+        
+        // Calculate grace period if plan has grace period days
+        LocalDate gracePeriodEndsAt = null;
+        if (plan.getGracePeriodDays() != null && plan.getGracePeriodDays() > 0) {
+            gracePeriodEndsAt = expiresAt.plusDays(plan.getGracePeriodDays());
+        }
 
         // Create subscription
         Subscription subscription = Subscription.builder()
@@ -68,9 +78,18 @@ public class SubscriptionServiceImpl implements SubscriptionService {
                 .status(SubscriptionStatus.PENDING)
                 .startsAt(startsAt)
                 .expiresAt(expiresAt)
+                .gracePeriodEndsAt(gracePeriodEndsAt)
                 .build();
 
         subscription = subscriptionRepository.save(subscription);
+        
+        // Update college's subscription reference
+        college.setSubscription(subscription);
+        collegeRepository.save(college);
+        
+        // Log subscription history
+        logSubscriptionHistory(subscription, SubscriptionStatus.NONE, SubscriptionStatus.PENDING, 
+                "Subscription created", null);
 
         return mapToResponse(subscription);
     }
@@ -254,8 +273,25 @@ public class SubscriptionServiceImpl implements SubscriptionService {
         Subscription subscription = subscriptionRepository.findByUuidAndCollegeId(subscriptionUuid, collegeId)
                 .orElseThrow(() -> new ResourceNotFoundException("Subscription not found with UUID: " + subscriptionUuid));
 
+        SubscriptionStatus previousStatus = subscription.getStatus();
         subscription.setStatus(SubscriptionStatus.ACTIVE);
         subscription = subscriptionRepository.save(subscription);
+        
+        // Log subscription history
+        logSubscriptionHistory(subscription, previousStatus, SubscriptionStatus.ACTIVE, 
+                "Subscription activated", getCurrentUserEmail());
+        
+        // Send activation email
+        try {
+            emailService.sendSubscriptionActivatedEmail(
+                    subscription.getCollege().getEmail(),
+                    subscription.getCollege().getName(),
+                    subscription.getPlan().getCode().name(),
+                    subscription.getExpiresAt()
+            );
+        } catch (Exception e) {
+            log.warn("Failed to send subscription activation email: {}", e.getMessage());
+        }
 
         return mapToResponse(subscription);
     }
@@ -285,6 +321,38 @@ public class SubscriptionServiceImpl implements SubscriptionService {
             case QUARTERLY -> startDate.plusMonths(3);
             case YEARLY -> startDate.plusYears(1);
         };
+    }
+
+    private void logSubscriptionHistory(Subscription subscription, SubscriptionStatus previousStatus, 
+                                      SubscriptionStatus newStatus, String reason, String changedBy) {
+        try {
+            org.collegemanagement.entity.subscription.SubscriptionHistory history = 
+                    org.collegemanagement.entity.subscription.SubscriptionHistory.builder()
+                    .subscription(subscription)
+                    .previousStatus(previousStatus)
+                    .newStatus(newStatus)
+                    .changeReason(reason)
+                    .changedBy(changedBy != null ? changedBy : "SYSTEM")
+                    .build();
+            
+            subscriptionHistoryRepository.save(history);
+        } catch (Exception e) {
+            log.warn("Failed to log subscription history: {}", e.getMessage());
+            // Don't fail the operation if history logging fails
+        }
+    }
+
+    private String getCurrentUserEmail() {
+        try {
+            org.springframework.security.core.Authentication auth = 
+                    org.springframework.security.core.context.SecurityContextHolder.getContext().getAuthentication();
+            if (auth != null && auth.getPrincipal() instanceof org.collegemanagement.entity.user.User user) {
+                return user.getEmail();
+            }
+        } catch (Exception e) {
+            log.debug("Could not get current user email: {}", e.getMessage());
+        }
+        return "SYSTEM";
     }
 
     private SubscriptionResponse mapToResponse(Subscription subscription) {

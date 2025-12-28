@@ -17,6 +17,8 @@ import org.collegemanagement.security.tenant.TenantAccessGuard;
 import org.collegemanagement.services.PaymentGatewayService;
 import org.collegemanagement.services.PaymentService;
 import org.collegemanagement.services.PaymentSummary;
+import org.collegemanagement.services.SubscriptionService;
+import org.collegemanagement.services.EmailService;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -36,6 +38,8 @@ public class PaymentServiceImpl implements PaymentService {
     private final InvoiceRepository invoiceRepository;
     private final TenantAccessGuard tenantAccessGuard;
     private final PaymentGatewayService paymentGatewayService;
+    private final SubscriptionService subscriptionService;
+    private final EmailService emailService;
 
     @Override
     @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'COLLEGE_ADMIN')")
@@ -178,6 +182,19 @@ public class PaymentServiceImpl implements PaymentService {
                 log.warn("Payment failed for transaction: {}. Reason: {}", 
                         payment.getTransactionId(), request.getFailureReason());
             }
+            
+            // Send payment failure email
+            try {
+                Invoice invoice = payment.getInvoice();
+                emailService.sendPaymentFailureEmail(
+                        invoice.getCollege().getEmail(),
+                        invoice.getCollege().getName(),
+                        invoice.getInvoiceNumber(),
+                        request.getFailureReason() != null ? request.getFailureReason() : "Payment processing failed"
+                );
+            } catch (Exception e) {
+                log.warn("Failed to send payment failure email: {}", e.getMessage());
+            }
         }
         // Payment Pending Block:
         // ======================
@@ -202,7 +219,8 @@ public class PaymentServiceImpl implements PaymentService {
      * This method handles the business logic when a payment succeeds:
      * - Calculates total paid amount
      * - Marks invoice as PAID if fully paid
-     * - Updates subscription status if applicable
+     * - Automatically activates subscription if payment is for subscription invoice
+     * - Sends confirmation email
      */
     private void updateInvoiceOnPaymentSuccess(Payment payment, Invoice invoice, Long collegeId) {
         // Check if invoice is fully paid
@@ -217,14 +235,51 @@ public class PaymentServiceImpl implements PaymentService {
         if (totalPaid.compareTo(invoice.getAmount()) >= 0) {
             invoice.setStatus(org.collegemanagement.enums.InvoiceStatus.PAID);
             invoice.setPaidAt(java.time.Instant.now());
+            invoiceRepository.save(invoice);
+            
+            // Payment Success Block - Automatic Subscription Activation:
+            // ===========================================================
+            // Automatically activate subscription if payment is for subscription invoice
+            try {
+                org.collegemanagement.entity.subscription.Subscription subscription = invoice.getSubscription();
+                if (subscription != null && subscription.getStatus() == org.collegemanagement.enums.SubscriptionStatus.PENDING) {
+                    log.info("Auto-activating subscription {} after successful payment", subscription.getUuid());
+                    subscriptionService.activateSubscription(subscription.getUuid());
+                    
+                    // Send activation email notification
+                    try {
+                        emailService.sendSubscriptionActivatedEmail(
+                                invoice.getCollege().getEmail(),
+                                invoice.getCollege().getName(),
+                                subscription.getPlan().getCode().name(),
+                                subscription.getExpiresAt()
+                        );
+                    } catch (Exception e) {
+                        log.warn("Failed to send subscription activation email: {}", e.getMessage());
+                    }
+                }
+            } catch (Exception e) {
+                log.error("Failed to auto-activate subscription after payment: {}", e.getMessage());
+                // Don't fail the payment process if activation fails
+            }
+            
+            // Send payment confirmation email
+            try {
+                emailService.sendPaymentConfirmationEmail(
+                        invoice.getCollege().getEmail(),
+                        invoice.getCollege().getName(),
+                        invoice.getInvoiceNumber(),
+                        payment.getAmount(),
+                        payment.getTransactionId()
+                );
+            } catch (Exception e) {
+                log.warn("Failed to send payment confirmation email: {}", e.getMessage());
+            }
             
             // TODO: Integrate payment gateway
-            // - Activate subscription if payment is for subscription invoice
-            // - Send confirmation email to user
-            // - Update subscription status to ACTIVE
-            // - Trigger any post-payment workflows
-            
-            invoiceRepository.save(invoice);
+            // - Additional gateway-specific post-payment workflows can be added here
+            // - Gateway webhook processing
+            // - Third-party integrations
         }
     }
 

@@ -2,6 +2,7 @@ package org.collegemanagement.config;
 
 
 import lombok.extern.slf4j.Slf4j;
+import org.collegemanagement.security.filter.SubscriptionAccessFilter;
 import org.collegemanagement.security.filter.TenantIsolationFilter;
 import org.collegemanagement.security.handler.CustomAccessDeniedHandler;
 import org.collegemanagement.security.handler.CustomAuthenticationEntryPoint;
@@ -24,6 +25,7 @@ import org.springframework.security.oauth2.server.resource.authentication.JwtAut
 import org.springframework.security.oauth2.server.resource.authentication.JwtGrantedAuthoritiesConverter;
 import org.springframework.security.oauth2.server.resource.web.authentication.BearerTokenAuthenticationFilter;
 import org.springframework.security.provisioning.UserDetailsManager;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.security.web.SecurityFilterChain;
 
 @Configuration
@@ -38,6 +40,8 @@ public class WebSecurity {
 
     final PasswordEncoder passwordEncoder;
     final UserDetailsManager userDetailsManager;
+    @Lazy
+    final SubscriptionAccessFilter subscriptionAccessFilter;
     CustomAuthenticationEntryPoint customAuthenticationEntryPoint;
     CustomAccessDeniedHandler customAccessDeniedHandler;
 
@@ -45,6 +49,7 @@ public class WebSecurity {
                        JwtDecoder jwtRefreshTokenDecoder,
                        PasswordEncoder passwordEncoder,
                        UserDetailsManager userDetailsManager,
+                       SubscriptionAccessFilter subscriptionAccessFilter,
                        CustomAuthenticationEntryPoint customAuthenticationEntryPoint,
                        CustomAccessDeniedHandler customAccessDeniedHandler
     ) {
@@ -53,6 +58,7 @@ public class WebSecurity {
         this.jwtRefreshTokenDecoder = jwtRefreshTokenDecoder;
         this.passwordEncoder = passwordEncoder;
         this.userDetailsManager = userDetailsManager;
+        this.subscriptionAccessFilter = subscriptionAccessFilter;
         this.customAuthenticationEntryPoint = customAuthenticationEntryPoint;
         this.customAccessDeniedHandler = customAccessDeniedHandler;
     }
@@ -77,10 +83,15 @@ public class WebSecurity {
                                 .jwt((jwt) -> jwt.jwtAuthenticationConverter(jwtToUserConverter))
                 )
                 .sessionManagement((session) -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-                // ⭐ ADD THIS LINE
+                // Tenant isolation filter - sets tenant context
                 .addFilterAfter(
                         tenantIsolationFilter(),
                         BearerTokenAuthenticationFilter.class
+                )
+                // Subscription access filter - checks subscription status
+                .addFilterAfter(
+                        subscriptionAccessFilter,
+                        TenantIsolationFilter.class
                 );
 
 

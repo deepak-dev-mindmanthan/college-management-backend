@@ -115,6 +115,17 @@ public interface SubscriptionRepository extends JpaRepository<Subscription, Long
     Page<Subscription> findAllSubscriptions(Pageable pageable);
 
     /**
+     * Find subscriptions expiring soon across all colleges (for scheduled jobs)
+     */
+    @Query("""
+            SELECT s FROM Subscription s
+            WHERE s.status = 'ACTIVE'
+            AND s.expiresAt BETWEEN :currentDate AND :expiryDate
+            ORDER BY s.expiresAt ASC
+            """)
+    List<Subscription> findExpiringSoon(@Param("currentDate") LocalDate currentDate, @Param("expiryDate") LocalDate expiryDate);
+
+    /**
      * Find subscriptions by status (for super admin)
      */
     @Query("""

@@ -13,6 +13,7 @@ import org.collegemanagement.repositories.InvoiceRepository;
 import org.collegemanagement.repositories.PaymentRepository;
 import org.collegemanagement.repositories.SubscriptionRepository;
 import org.collegemanagement.security.tenant.TenantAccessGuard;
+import org.collegemanagement.services.EmailService;
 import org.collegemanagement.services.InvoiceService;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -36,6 +37,7 @@ public class InvoiceServiceImpl implements InvoiceService {
     private final SubscriptionRepository subscriptionRepository;
     private final PaymentRepository paymentRepository;
     private final TenantAccessGuard tenantAccessGuard;
+    private final EmailService emailService;
 
     @Override
     @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'COLLEGE_ADMIN')")
@@ -74,6 +76,20 @@ public class InvoiceServiceImpl implements InvoiceService {
                 .build();
 
         invoice = invoiceRepository.save(invoice);
+
+        // Send invoice generated email notification
+        try {
+            emailService.sendInvoiceGeneratedEmail(
+                    subscription.getCollege().getEmail(),
+                    subscription.getCollege().getName(),
+                    invoiceNumber,
+                    invoice.getAmount(),
+                    invoice.getDueDate()
+            );
+        } catch (Exception e) {
+            log.warn("Failed to send invoice generated email: {}", e.getMessage());
+            // Don't fail invoice generation if email fails
+        }
 
         return mapToResponse(invoice, collegeId);
     }

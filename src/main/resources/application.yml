@@ -11,6 +11,24 @@ spring:
   jpa:
     hibernate:
       ddl-auto: update
+  mail:
+    host: smtp.gmail.com
+    port: 587
+    username: dummy-email@example.com
+    password: dummy-password
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
+          connectiontimeout: 5000
+          timeout: 5000
+          writetimeout: 5000
+        from:
+          name: College Management System
+    # TODO: Replace with actual SMTP credentials
+    # For production, use environment variables or secure configuration
 
 
 

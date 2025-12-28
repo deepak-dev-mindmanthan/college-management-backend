@@ -54,6 +54,11 @@ public class Subscription extends BaseEntity {
     @Column(name = "expires_at", nullable = false)
     private LocalDate expiresAt;
 
+    /**
+     * Grace period end date (if subscription has grace period after expiry)
+     */
+    @Column(name = "grace_period_ends_at")
+    private LocalDate gracePeriodEndsAt;
 
     @OneToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(
@@ -80,19 +85,47 @@ public class Subscription extends BaseEntity {
 
 
     public boolean isActive() {
-        return status == SubscriptionStatus.ACTIVE
-                && !expiresAt.isBefore(LocalDate.now());
+        LocalDate now = LocalDate.now();
+        // Active if status is ACTIVE and not expired (or within grace period)
+        if (status == SubscriptionStatus.ACTIVE) {
+            if (!expiresAt.isBefore(now)) {
+                return true; // Not expired yet
+            }
+            // Check grace period
+            if (gracePeriodEndsAt != null && !gracePeriodEndsAt.isBefore(now)) {
+                return true; // Within grace period
+            }
+        }
+        return false;
     }
 
     public boolean isExpired() {
-        return expiresAt.isBefore(LocalDate.now());
+        LocalDate now = LocalDate.now();
+        if (expiresAt.isBefore(now)) {
+            // Check if still in grace period
+            if (gracePeriodEndsAt != null && !gracePeriodEndsAt.isBefore(now)) {
+                return false; // Still in grace period
+            }
+            return true; // Expired and grace period passed
+        }
+        return false;
     }
 
     /**
-     * Access allowed ONLY when active
+     * Check if subscription is in grace period
+     */
+    public boolean isInGracePeriod() {
+        LocalDate now = LocalDate.now();
+        return expiresAt.isBefore(now) 
+                && gracePeriodEndsAt != null 
+                && !gracePeriodEndsAt.isBefore(now);
+    }
+
+    /**
+     * Access allowed when active or in grace period
      */
     public boolean isUsable() {
-        return isActive();
+        return isActive() || isInGracePeriod();
     }
 
 }
