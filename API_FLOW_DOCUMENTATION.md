@@ -1,589 +1,1076 @@
 # Complete API Flow: College Registration → Payment → Dashboard
-
-## Overview
-This document describes the complete API flow from college registration through payment processing to accessing the college admin dashboard.
+## Production-Ready Frontend Integration Guide
 
 ---
 
-## Flow Diagram
+## 📋 Table of Contents
+
+1. [Overview](#overview)
+2. [Complete User Journey](#complete-user-journey)
+3. [Frontend Integration Guide](#frontend-integration-guide)
+4. [Payment Gateway Integration (Razorpay)](#payment-gateway-integration-razorpay)
+5. [API Endpoints Reference](#api-endpoints-reference)
+6. [Error Handling & Edge Cases](#error-handling--edge-cases)
+7. [Subscription Management Flows](#subscription-management-flows)
+8. [Email Notifications](#email-notifications)
+9. [Security & Access Control](#security--access-control)
+
+---
+
+## Overview
+
+This document describes the complete API flow from college registration through payment processing to accessing the college admin dashboard, with detailed frontend integration instructions and user interaction flows.
+
+### Key Features
+
+✅ **Automatic Subscription Activation** - Subscription activates automatically after successful payment  
+✅ **Payment Gateway Integration** - Ready for Razorpay integration (currently simulated)  
+✅ **Webhook Support** - Payment gateway webhooks for status updates  
+✅ **Email Notifications** - Automated emails for all subscription/payment events  
+✅ **Subscription Renewal** - Automated renewal reminders and invoice generation  
+✅ **Grace Period** - Configurable grace period after subscription expiry  
+✅ **Access Control** - Subscription-based API access filtering  
+
+---
+
+## Complete User Journey
+
+### Flow Diagram
 
 ```
 ┌─────────────────────────────────────────────────────────────────┐
 │                    COLLEGE REGISTRATION                          │
+│  User fills registration form → POST /api/v1/auth/register-college│
 └─────────────────────────────────────────────────────────────────┘
                               │
                               ▼
 ┌─────────────────────────────────────────────────────────────────┐
-│  Step 1: POST /api/v1/auth/register-college                    │
-│  - Creates College entity                                      │
-│  - Creates College Admin user                                  │
-│  - Returns UserDto with college info                           │
+│  Step 1: Registration Success                                  │
+│  - College entity created                                       │
+│  - College Admin user created                                   │
+│  - Redirect to login page                                       │
 └─────────────────────────────────────────────────────────────────┘
                               │
                               ▼
 ┌─────────────────────────────────────────────────────────────────┐
-│  Step 2: POST /api/v1/auth/login                               │
-│  - Authenticates College Admin                                 │
-│  - Returns JWT tokens (access + refresh)                       │
+│  Step 2: Login                                                 │
+│  POST /api/v1/auth/login                                       │
+│  - Returns JWT tokens                                          │
 │  - Returns subscription status (NONE initially)                │
+│  - Frontend checks: canAccessCoreApis = false                  │
+│  - Redirect to subscription selection page                     │
 └─────────────────────────────────────────────────────────────────┘
                               │
                               ▼
 ┌─────────────────────────────────────────────────────────────────┐
-│  Step 3: GET /api/v1/subscription-plans                        │
-│  - Fetches available subscription plans                        │
-│  - Shows plan types (STARTER, STANDARD, PREMIUM)               │
-│  - Shows billing cycles (MONTHLY, QUARTERLY, YEARLY)          │
-│  - Shows pricing information                                   │
+│  Step 3: View Subscription Plans                               │
+│  GET /api/v1/subscription-plans                                │
+│  - Display plans with pricing                                  │
+│  - User selects plan and billing cycle                         │
 └─────────────────────────────────────────────────────────────────┘
                               │
                               ▼
 ┌─────────────────────────────────────────────────────────────────┐
-│  Step 4: POST /api/v1/subscriptions                            │
-│  - Creates subscription with selected plan                     │
-│  - Status: PENDING (waiting for payment)                        │
-│  - Calculates expiry date based on billing cycle               │
-│  - Returns SubscriptionResponse                                │
+│  Step 4: Create Subscription                                   │
+│  POST /api/v1/subscriptions                                    │
+│  - Subscription created (status: PENDING)                      │
+│  - Auto-generate invoice                                       │
+│  - Redirect to payment page                                    │
 └─────────────────────────────────────────────────────────────────┘
                               │
                               ▼
 ┌─────────────────────────────────────────────────────────────────┐
-│  Step 5: POST /api/v1/invoices/generate/{subscriptionUuid}      │
-│  - Generates invoice for subscription                          │
-│  - Invoice number: INV-YYYYMMDD-XXXXX                          │
-│  - Amount: Based on subscription plan price                    │
-│  - Status: UNPAID                                               │
-│  - Due date: 7 days from generation                            │
-│  - Returns InvoiceResponse                                      │
+│  Step 5: Payment Processing                                    │
+│  Frontend: Initialize Razorpay Checkout                        │
+│  Backend: POST /api/v1/payments/initiate                       │
+│  - Payment processed through gateway                           │
+│  - Invoice marked as PAID                                      │
+│  - Subscription AUTO-ACTIVATED (status: ACTIVE)                │
+│  - Email notifications sent                                    │
 └─────────────────────────────────────────────────────────────────┘
                               │
                               ▼
 ┌─────────────────────────────────────────────────────────────────┐
-│  Step 6: POST /api/v1/payments/initiate                        │
-│  - Creates payment record                                       │
-│  - Processes payment through gateway (default: SUCCESS)         │
-│  - Updates payment status                                       │
-│  - Returns PaymentResponse                                      │
-└─────────────────────────────────────────────────────────────────┘
-                              │
-                              ▼
-┌─────────────────────────────────────────────────────────────────┐
-│  Step 7: Automatic Payment Processing                          │
-│  - PaymentGatewayService.processPayment()                      │
-│  - Default: Returns SUCCESS (for now)                          │
-│  - TODO: Integrate actual gateway (Razorpay/Stripe)            │
-│  - Updates invoice status to PAID if fully paid                │
-└─────────────────────────────────────────────────────────────────┘
-                              │
-                              ▼
-┌─────────────────────────────────────────────────────────────────┐
-│  Step 8: PUT /api/v1/subscriptions/{uuid}/activate             │
-│  - Activates subscription                                       │
-│  - Status: PENDING → ACTIVE                                     │
-│  - Subscription becomes usable                                 │
-└─────────────────────────────────────────────────────────────────┘
-                              │
-                              ▼
-┌─────────────────────────────────────────────────────────────────┐
-│  Step 9: Dashboard Access                                      │
-│  - All protected endpoints now accessible                      │
-│  - Subscription check in login response                         │
-│  - canAccessCoreApis: true                                     │
+│  Step 6: Dashboard Access                                      │
+│  - User redirected to dashboard                                │
+│  - All core APIs now accessible                                │
+│  - Subscription status: ACTIVE                                 │
 └─────────────────────────────────────────────────────────────────┘
 ```
 
 ---
 
-## Detailed API Flow
+## Frontend Integration Guide
 
-### **Phase 1: College Registration**
+### 1. Registration Flow
 
-#### **1.1 Register College**
-```http
-POST /api/v1/auth/register-college
-Content-Type: application/json
-Authorization: Not required (public endpoint)
+#### **1.1 Registration Form UI**
 
-Request Body:
-{
-  "collegeName": "ABC College",
-  "collegeEmail": "admin@abccollege.edu",
-  "collegePhone": "+1234567890",
-  "collegeShortCode": "ABC",
-  "country": "USA",
-  "adminName": "John Doe",
-  "adminEmail": "john@abccollege.edu",
-  "password": "SecurePass123!"
-}
+**Frontend Components:**
+- Registration form with fields:
+  - College Name
+  - College Email
+  - College Phone
+  - College Short Code
+  - Country
+  - Admin Name
+  - Admin Email
+  - Password
+  - Confirm Password
 
-Response:
-{
-  "success": true,
-  "status": 200,
-  "message": "College registered successfully.",
-  "data": {
-    "uuid": "user-uuid-here",
-    "email": "john@abccollege.edu",
-    "name": "John Doe",
-    "collegeId": 1,
-    "roles": ["ROLE_COLLEGE_ADMIN"]
+**API Call:**
+```javascript
+// Registration API call
+const registerCollege = async (formData) => {
+  const response = await fetch('/api/v1/auth/register-college', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      collegeName: formData.collegeName,
+      collegeEmail: formData.collegeEmail,
+      collegePhone: formData.collegePhone,
+      collegeShortCode: formData.collegeShortCode,
+      country: formData.country,
+      adminName: formData.adminName,
+      adminEmail: formData.adminEmail,
+      password: formData.password
+    })
+  });
+  
+  const result = await response.json();
+  
+  if (result.success) {
+    // Show success message
+    // Redirect to login page
+    router.push('/login');
+  } else {
+    // Show error message
+    showError(result.message);
   }
-}
+};
 ```
 
-**What Happens:**
-- ✅ Creates `College` entity in database
-- ✅ Creates `User` entity with `ROLE_COLLEGE_ADMIN` role
-- ✅ Links user to college (tenant isolation)
-- ✅ Returns user information
-
-**Database State:**
-- `colleges` table: 1 new record
-- `users` table: 1 new record (college admin)
-- `subscriptions` table: No subscription yet
+**User Experience:**
+1. User fills registration form
+2. Click "Register" button
+3. Show loading spinner
+4. On success: Show success toast → Redirect to login page
+5. On error: Show error message → Keep form visible
 
 ---
 
-### **Phase 2: Authentication**
+### 2. Login Flow
 
-#### **2.1 Login**
-```http
-POST /api/v1/auth/login
-Content-Type: application/json
-Authorization: Not required (public endpoint)
+#### **2.1 Login Form UI**
 
-Request Body:
-{
-  "email": "john@abccollege.edu",
-  "password": "SecurePass123!"
-}
+**Frontend Components:**
+- Login form with email and password
+- "Forgot Password" link (if implemented)
+- "Remember Me" checkbox (optional)
 
-Response:
-{
-  "success": true,
-  "status": 200,
-  "message": "Login successfully.",
-  "data": {
-    "user": {
-      "uuid": "user-uuid-here",
-      "email": "john@abccollege.edu",
-      "roles": ["ROLE_COLLEGE_ADMIN"],
-      "collegeId": 1
+**API Call:**
+```javascript
+// Login API call
+const login = async (email, password) => {
+  const response = await fetch('/api/v1/auth/login', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
     },
-    "subscription": {
-      "plan": "NONE",
-      "expiresAt": null,
-      "canAccessCoreApis": false
+    body: JSON.stringify({ email, password })
+  });
+  
+  const result = await response.json();
+  
+  if (result.success) {
+    const { user, subscription, auth } = result.data;
+    
+    // Store tokens
+    localStorage.setItem('accessToken', auth.accessToken);
+    localStorage.setItem('refreshToken', auth.refreshToken);
+    
+    // Store user info
+    localStorage.setItem('user', JSON.stringify(user));
+    
+    // Check subscription status
+    if (subscription.canAccessCoreApis) {
+      // Redirect to dashboard
+      router.push('/dashboard');
+    } else {
+      // Redirect to subscription selection
+      router.push('/subscription/select');
+    }
+  } else {
+    showError(result.message);
+  }
+};
+```
+
+**User Experience:**
+1. User enters email and password
+2. Click "Login" button
+3. Show loading spinner
+4. On success:
+   - If `canAccessCoreApis = true` → Redirect to dashboard
+   - If `canAccessCoreApis = false` → Redirect to subscription page
+5. On error: Show error message
+
+---
+
+### 3. Subscription Selection Flow
+
+#### **3.1 Subscription Plans Page**
+
+**Frontend Components:**
+- Plan cards displaying:
+  - Plan type (STARTER, STANDARD, PREMIUM)
+  - Billing cycle options (MONTHLY, QUARTERLY, YEARLY)
+  - Price
+  - Features/limits
+  - "Select Plan" button
+
+**API Call:**
+```javascript
+// Fetch subscription plans
+const fetchPlans = async () => {
+  const token = localStorage.getItem('accessToken');
+  
+  const response = await fetch('/api/v1/subscription-plans', {
+    method: 'GET',
+    headers: {
+      'Authorization': `Bearer ${token}`,
+      'Content-Type': 'application/json',
+    }
+  });
+  
+  const result = await response.json();
+  
+  if (result.success) {
+    // Group plans by type
+    const plansByType = groupPlansByType(result.data);
+    return plansByType;
+  }
+};
+
+// Create subscription
+const createSubscription = async (planType, billingCycle) => {
+  const token = localStorage.getItem('accessToken');
+  
+  const response = await fetch('/api/v1/subscriptions', {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${token}`,
+      'Content-Type': 'application/json',
     },
-    "auth": {
-      "tokenType": "Bearer",
-      "accessToken": "eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9...",
-      "refreshToken": "eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9...",
-      "accessTokenExpiresIn": 3600,
-      "refreshTokenExpiresIn": 86400
+    body: JSON.stringify({
+      planType,
+      billingCycle
+    })
+  });
+  
+  const result = await response.json();
+  
+  if (result.success) {
+    const subscription = result.data;
+    
+    // Auto-generate invoice
+    await generateInvoice(subscription.uuid);
+    
+    // Redirect to payment page
+    router.push(`/payment?subscription=${subscription.uuid}`);
+  }
+};
+```
+
+**User Experience:**
+1. Display plan cards with pricing
+2. User selects plan type and billing cycle
+3. Click "Subscribe" button
+4. Show loading spinner
+5. On success: Auto-generate invoice → Redirect to payment page
+6. On error: Show error message
+
+---
+
+### 4. Payment Flow
+
+#### **4.1 Payment Page UI**
+
+**Frontend Components:**
+- Invoice summary card:
+  - Invoice number
+  - Amount
+  - Due date
+  - Plan details
+- Payment gateway selection (Razorpay)
+- "Pay Now" button
+
+**API Call - Generate Invoice:**
+```javascript
+// Generate invoice for subscription
+const generateInvoice = async (subscriptionUuid) => {
+  const token = localStorage.getItem('accessToken');
+  
+  const response = await fetch(`/api/v1/invoices/generate/${subscriptionUuid}`, {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${token}`,
+      'Content-Type': 'application/json',
+    }
+  });
+  
+  const result = await response.json();
+  
+  if (result.success) {
+    return result.data; // Invoice details
+  }
+};
+```
+
+**API Call - Razorpay Integration:**
+```javascript
+// Initialize Razorpay payment
+const initiateRazorpayPayment = async (invoice) => {
+  // Step 1: Create Razorpay order
+  const razorpayResponse = await fetch('https://api.razorpay.com/v1/orders', {
+    method: 'POST',
+    headers: {
+      'Authorization': `Basic ${btoa(RAZORPAY_KEY_ID + ':' + RAZORPAY_KEY_SECRET)}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      amount: invoice.amount * 100, // Convert to paise
+      currency: 'INR',
+      receipt: invoice.invoiceNumber,
+      payment_capture: 1
+    })
+  });
+  
+  const order = await razorpayResponse.json();
+  
+  // Step 2: Open Razorpay Checkout
+  const options = {
+    key: RAZORPAY_KEY_ID,
+    amount: invoice.amount * 100,
+    currency: 'INR',
+    name: 'College Management System',
+    description: `Subscription Payment - ${invoice.planName}`,
+    order_id: order.id,
+    handler: async function(response) {
+      // Payment successful
+      await processPaymentSuccess(response, invoice);
+    },
+    prefill: {
+      email: user.email,
+      name: user.name
+    },
+    theme: {
+      color: '#3399cc'
+    },
+    modal: {
+      ondismiss: function() {
+        // User closed the payment modal
+        showError('Payment cancelled');
+      }
+    }
+  };
+  
+  const razorpay = new Razorpay(options);
+  razorpay.open();
+};
+
+// Process payment success
+const processPaymentSuccess = async (razorpayResponse, invoice) => {
+  const token = localStorage.getItem('accessToken');
+  
+  // Call backend to record payment
+  const response = await fetch('/api/v1/payments/initiate', {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${token}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      invoiceUuid: invoice.uuid,
+      gateway: 'RAZORPAY',
+      transactionId: razorpayResponse.razorpay_payment_id,
+      amount: invoice.amount
+    })
+  });
+  
+  const result = await response.json();
+  
+  if (result.success) {
+    const payment = result.data;
+    
+    // Check payment status
+    if (payment.status === 'SUCCESS') {
+      // Payment successful - subscription auto-activated
+      showSuccess('Payment successful! Subscription activated.');
+      
+      // Wait a moment, then redirect to dashboard
+      setTimeout(() => {
+        router.push('/dashboard');
+      }, 2000);
+    } else {
+      showError('Payment processing failed. Please contact support.');
     }
   }
-}
+};
 ```
 
-**What Happens:**
-- ✅ Validates credentials
-- ✅ Generates JWT tokens (access + refresh)
-- ✅ Checks subscription status (NONE initially)
-- ✅ Returns subscription summary with `canAccessCoreApis: false`
-
-**Note:** Without active subscription, core APIs may be restricted.
+**User Experience:**
+1. Display invoice summary
+2. User clicks "Pay Now" button
+3. Razorpay checkout modal opens
+4. User completes payment in Razorpay modal
+5. On success:
+   - Show success message
+   - Subscription automatically activated
+   - Redirect to dashboard after 2 seconds
+6. On failure:
+   - Show error message
+   - Allow retry payment
 
 ---
 
-### **Phase 3: Subscription Selection**
+### 5. Dashboard Access
 
-#### **3.1 Get Available Plans**
-```http
-GET /api/v1/subscription-plans
-Authorization: Bearer {accessToken}
+#### **5.1 Dashboard UI**
 
-Response:
+**Frontend Components:**
+- Subscription status card:
+  - Current plan
+  - Expiry date
+  - Days remaining
+  - Status (ACTIVE/EXPIRED)
+- Quick stats
+- Navigation menu
+
+**API Call - Check Subscription:**
+```javascript
+// Get current subscription
+const getCurrentSubscription = async () => {
+  const token = localStorage.getItem('accessToken');
+  
+  const response = await fetch('/api/v1/subscriptions/current', {
+    method: 'GET',
+    headers: {
+      'Authorization': `Bearer ${token}`,
+      'Content-Type': 'application/json',
+    }
+  });
+  
+  const result = await response.json();
+  
+  if (result.success) {
+    const subscription = result.data;
+    
+    // Check if subscription is active
+    if (subscription.isActive) {
+      // Show dashboard
+      return subscription;
+    } else {
+      // Redirect to subscription page
+      router.push('/subscription/expired');
+    }
+  }
+};
+```
+
+**User Experience:**
+1. User lands on dashboard
+2. Display subscription status
+3. If active: Show full dashboard
+4. If expired: Show warning banner → Redirect to renewal page
+
+---
+
+## Payment Gateway Integration (Razorpay)
+
+### Integration Steps
+
+#### **Step 1: Add Razorpay SDK**
+
+```html
+<!-- Add to HTML head -->
+<script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+```
+
+#### **Step 2: Configure Razorpay Keys**
+
+```javascript
+// config/razorpay.js
+export const RAZORPAY_CONFIG = {
+  keyId: process.env.REACT_APP_RAZORPAY_KEY_ID,
+  keySecret: process.env.REACT_APP_RAZORPAY_KEY_SECRET, // Only for server-side
+};
+```
+
+#### **Step 3: Payment Flow**
+
+```javascript
+// Complete payment flow
+const handlePayment = async (invoice) => {
+  try {
+    // 1. Create Razorpay order (server-side recommended)
+    const orderResponse = await fetch('/api/v1/payments/create-razorpay-order', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        amount: invoice.amount,
+        currency: 'INR',
+        receipt: invoice.invoiceNumber
+      })
+    });
+    
+    const order = await orderResponse.json();
+    
+    // 2. Open Razorpay Checkout
+    const options = {
+      key: RAZORPAY_CONFIG.keyId,
+      amount: order.amount,
+      currency: order.currency,
+      name: 'College Management System',
+      description: `Subscription Payment - ${invoice.planName}`,
+      order_id: order.id,
+      handler: async function(response) {
+        // Payment successful
+        await verifyAndRecordPayment(response, invoice);
+      },
+      prefill: {
+        email: user.email,
+        name: user.name
+      },
+      theme: {
+        color: '#3399cc'
+      }
+    };
+    
+    const razorpay = new Razorpay(options);
+    razorpay.open();
+    
+  } catch (error) {
+    showError('Payment initialization failed');
+  }
+};
+
+// Verify and record payment
+const verifyAndRecordPayment = async (razorpayResponse, invoice) => {
+  try {
+    // Call backend to verify and record payment
+    const response = await fetch('/api/v1/payments/initiate', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        invoiceUuid: invoice.uuid,
+        gateway: 'RAZORPAY',
+        transactionId: razorpayResponse.razorpay_payment_id,
+        amount: invoice.amount,
+        razorpayOrderId: razorpayResponse.razorpay_order_id,
+        razorpaySignature: razorpayResponse.razorpay_signature
+      })
+    });
+    
+    const result = await response.json();
+    
+    if (result.success && result.data.status === 'SUCCESS') {
+      showSuccess('Payment successful! Subscription activated.');
+      router.push('/dashboard');
+    } else {
+      showError('Payment verification failed');
+    }
+  } catch (error) {
+    showError('Payment processing failed');
+  }
+};
+```
+
+### Webhook Handling
+
+**Backend Webhook Endpoint:**
+```
+POST /api/v1/payments/webhooks/razorpay
+```
+
+**Frontend: No action needed** - Webhooks are handled server-side automatically.
+
+**What happens:**
+1. Razorpay sends webhook to backend
+2. Backend verifies webhook signature
+3. Backend updates payment status
+4. Backend activates subscription if payment successful
+5. Backend sends email notifications
+
+---
+
+## API Endpoints Reference
+
+### Authentication Endpoints
+
+| Method | Endpoint | Description | Auth Required |
+|--------|----------|-------------|---------------|
+| POST | `/api/v1/auth/register-college` | Register new college | No |
+| POST | `/api/v1/auth/login` | Login user | No |
+| POST | `/api/v1/auth/refresh` | Refresh access token | No |
+
+### Subscription Plan Endpoints
+
+| Method | Endpoint | Description | Auth Required |
+|--------|----------|-------------|---------------|
+| GET | `/api/v1/subscription-plans` | Get all active plans | Yes |
+| GET | `/api/v1/subscription-plans/{id}` | Get plan by ID | Yes |
+| POST | `/api/v1/subscription-plans` | Create plan (SUPER_ADMIN) | Yes |
+| PUT | `/api/v1/subscription-plans/{id}` | Update plan (SUPER_ADMIN) | Yes |
+
+### Subscription Endpoints
+
+| Method | Endpoint | Description | Auth Required |
+|--------|----------|-------------|---------------|
+| POST | `/api/v1/subscriptions` | Create subscription | Yes |
+| GET | `/api/v1/subscriptions/current` | Get current subscription | Yes |
+| GET | `/api/v1/subscriptions/{uuid}` | Get subscription by UUID | Yes |
+| PUT | `/api/v1/subscriptions/{uuid}` | Update subscription | Yes |
+| PUT | `/api/v1/subscriptions/{uuid}/activate` | Activate subscription | Yes |
+| PUT | `/api/v1/subscriptions/{uuid}/cancel` | Cancel subscription | Yes |
+| POST | `/api/v1/subscriptions/{uuid}/renew` | Renew subscription | Yes |
+
+### Invoice Endpoints
+
+| Method | Endpoint | Description | Auth Required |
+|--------|----------|-------------|---------------|
+| POST | `/api/v1/invoices/generate/{subscriptionUuid}` | Generate invoice | Yes |
+| GET | `/api/v1/invoices` | Get all invoices | Yes |
+| GET | `/api/v1/invoices/{uuid}` | Get invoice by UUID | Yes |
+| GET | `/api/v1/invoices/unpaid` | Get unpaid invoices | Yes |
+| GET | `/api/v1/invoices/overdue` | Get overdue invoices | Yes |
+| GET | `/api/v1/invoices/subscription/{subscriptionUuid}` | Get invoices by subscription | Yes |
+
+### Payment Endpoints
+
+| Method | Endpoint | Description | Auth Required |
+|--------|----------|-------------|---------------|
+| POST | `/api/v1/payments/initiate` | Initiate and process payment | Yes |
+| POST | `/api/v1/payments` | Create payment record | Yes |
+| GET | `/api/v1/payments` | Get all payments | Yes |
+| GET | `/api/v1/payments/{uuid}` | Get payment by UUID | Yes |
+| GET | `/api/v1/payments/invoice/{invoiceUuid}` | Get payments by invoice | Yes |
+| GET | `/api/v1/payments/summary` | Get payment summary | Yes |
+
+### Webhook Endpoints
+
+| Method | Endpoint | Description | Auth Required |
+|--------|----------|-------------|---------------|
+| POST | `/api/v1/payments/webhooks/razorpay` | Razorpay webhook | No |
+| POST | `/api/v1/payments/webhooks/stripe` | Stripe webhook | No |
+
+---
+
+## Error Handling & Edge Cases
+
+### Common Error Scenarios
+
+#### **1. Registration Errors**
+
+```javascript
+// Handle registration errors
+try {
+  await registerCollege(formData);
+} catch (error) {
+  if (error.status === 409) {
+    showError('College or email already exists');
+  } else if (error.status === 400) {
+    showError('Invalid form data. Please check all fields.');
+  } else {
+    showError('Registration failed. Please try again.');
+  }
+}
+```
+
+#### **2. Payment Errors**
+
+```javascript
+// Handle payment errors
+const handlePaymentError = (error) => {
+  if (error.code === 'PAYMENT_CANCELLED') {
+    showWarning('Payment was cancelled. You can try again.');
+  } else if (error.code === 'PAYMENT_FAILED') {
+    showError('Payment failed. Please check your payment method.');
+    // Allow retry
+  } else if (error.code === 'NETWORK_ERROR') {
+    showError('Network error. Please check your connection and try again.');
+  } else {
+    showError('Payment processing error. Please contact support.');
+  }
+};
+```
+
+#### **3. Subscription Expired**
+
+```javascript
+// Handle expired subscription
+const checkSubscriptionStatus = async () => {
+  const subscription = await getCurrentSubscription();
+  
+  if (subscription.isExpired) {
+    if (subscription.isInGracePeriod) {
+      showWarning(`Subscription expired. Grace period ends in ${daysRemaining} days.`);
+      // Show renewal prompt
+    } else {
+      showError('Subscription expired. Please renew to continue.');
+      router.push('/subscription/renew');
+    }
+  }
+};
+```
+
+### Error Response Format
+
+```json
 {
-  "success": true,
-  "status": 200,
-  "message": "Active plans retrieved successfully",
-  "data": [
+  "success": false,
+  "status": 400,
+  "message": "Error message",
+  "errors": [
     {
-      "id": 1,
-      "planType": "STARTER",
-      "billingCycle": "MONTHLY",
-      "price": 99.00,
-      "currency": "USD",
-      "active": true
-    },
-    {
-      "id": 2,
-      "planType": "STARTER",
-      "billingCycle": "YEARLY",
-      "price": 999.00,
-      "currency": "USD",
-      "active": true
-    },
-    {
-      "id": 3,
-      "planType": "STANDARD",
-      "billingCycle": "MONTHLY",
-      "price": 199.00,
-      "currency": "USD",
-      "active": true
-    },
-    {
-      "id": 4,
-      "planType": "PREMIUM",
-      "billingCycle": "MONTHLY",
-      "price": 299.00,
-      "currency": "USD",
-      "active": true
+      "field": "email",
+      "code": "INVALID_EMAIL",
+      "message": "Invalid email format"
     }
   ]
 }
 ```
 
-**What Happens:**
-- ✅ Returns all active subscription plans
-- ✅ Shows pricing for different plan types and billing cycles
-- ✅ User can select a plan
-
 ---
 
-#### **3.2 Create Subscription**
-```http
-POST /api/v1/subscriptions
-Authorization: Bearer {accessToken}
-Content-Type: application/json
+## Subscription Management Flows
 
-Request Body:
-{
-  "planType": "STANDARD",
-  "billingCycle": "MONTHLY"
-}
+### 1. Subscription Renewal
 
-Response:
-{
-  "success": true,
-  "status": 200,
-  "message": "Subscription created successfully",
-  "data": {
-    "uuid": "subscription-uuid-here",
-    "planType": "STANDARD",
-    "billingCycle": "MONTHLY",
-    "price": 199.00,
-    "currency": "USD",
-    "status": "PENDING",
-    "startsAt": "2024-01-15",
-    "expiresAt": "2024-02-15",
-    "collegeId": 1,
-    "collegeName": "ABC College",
-    "invoiceCount": 0,
-    "isActive": false,
-    "isExpired": false,
-    "daysRemaining": 0
-  }
-}
-```
+**User Journey:**
+1. User receives renewal reminder email (7 days before expiry)
+2. User clicks "Renew Now" in email or dashboard
+3. Frontend shows renewal page with current plan details
+4. User confirms renewal
+5. New invoice generated automatically
+6. User completes payment
+7. Subscription renewed and extended
 
-**What Happens:**
-- ✅ Creates `Subscription` entity
-- ✅ Links to selected plan
-- ✅ Sets status to `PENDING` (waiting for payment)
-- ✅ Calculates `startsAt` (today) and `expiresAt` (based on billing cycle)
-- ✅ Links to college (tenant isolation)
-
-**Database State:**
-- `subscriptions` table: 1 new record (status: PENDING)
-
----
-
-### **Phase 4: Invoice Generation**
-
-#### **4.1 Generate Invoice**
-```http
-POST /api/v1/invoices/generate/{subscriptionUuid}
-Authorization: Bearer {accessToken}
-
-Response:
-{
-  "success": true,
-  "status": 200,
-  "message": "Invoice generated successfully",
-  "data": {
-    "uuid": "invoice-uuid-here",
-    "invoiceNumber": "INV-20240115-A1B2C3D4",
-    "subscriptionUuid": "subscription-uuid-here",
-    "planName": "STANDARD",
-    "billingCycle": "MONTHLY",
-    "amount": 199.00,
-    "currency": "USD",
-    "status": "UNPAID",
-    "dueDate": "2024-01-22",
-    "periodStart": "2024-01-15",
-    "periodEnd": "2024-02-15",
-    "paymentCount": 0,
-    "totalPaidAmount": 0.00
-  }
-}
-```
-
-**What Happens:**
-- ✅ Generates unique invoice number (INV-YYYYMMDD-XXXXX)
-- ✅ Sets invoice amount = subscription plan price
-- ✅ Sets status to `UNPAID`
-- ✅ Sets due date (7 days from generation)
-- ✅ Links invoice to subscription
-
-**Database State:**
-- `invoices` table: 1 new record (status: UNPAID)
-
----
-
-### **Phase 5: Payment Processing**
-
-#### **5.1 Initiate Payment**
-```http
-POST /api/v1/payments/initiate
-Authorization: Bearer {accessToken}
-Content-Type: application/json
-
-Request Body:
-{
-  "invoiceUuid": "invoice-uuid-here",
-  "gateway": "RAZORPAY",
-  "transactionId": "txn_1234567890",
-  "amount": 199.00
-}
-
-Response:
-{
-  "success": true,
-  "status": 200,
-  "message": "Payment initiated and processed successfully",
-  "data": {
-    "uuid": "payment-uuid-here",
-    "invoiceUuid": "invoice-uuid-here",
-    "invoiceNumber": "INV-20240115-A1B2C3D4",
-    "gateway": "RAZORPAY",
-    "transactionId": "txn_1234567890",
-    "amount": 199.00,
-    "status": "SUCCESS",
-    "paymentDate": "2024-01-15T10:30:00Z"
-  }
-}
-```
-
-**What Happens:**
-1. ✅ Creates `Payment` record (status: PENDING initially)
-2. ✅ Calls `PaymentGatewayService.processPayment()`
-   - **Current:** Returns `SUCCESS` by default
-   - **Future:** Will call actual gateway API (Razorpay/Stripe)
-3. ✅ Updates payment status to `SUCCESS`
-4. ✅ Checks if invoice is fully paid
-5. ✅ Updates invoice status to `PAID` if fully paid
-6. ✅ Sets `paidAt` timestamp on invoice
-
-**Database State:**
-- `payments` table: 1 new record (status: SUCCESS)
-- `invoices` table: Status updated to PAID
-
----
-
-### **Phase 6: Subscription Activation**
-
-#### **6.1 Activate Subscription**
-```http
-PUT /api/v1/subscriptions/{subscriptionUuid}/activate
-Authorization: Bearer {accessToken}
-
-Response:
-{
-  "success": true,
-  "status": 200,
-  "message": "Subscription activated successfully",
-  "data": {
-    "uuid": "subscription-uuid-here",
-    "planType": "STANDARD",
-    "billingCycle": "MONTHLY",
-    "price": 199.00,
-    "currency": "USD",
-    "status": "ACTIVE",
-    "startsAt": "2024-01-15",
-    "expiresAt": "2024-02-15",
-    "collegeId": 1,
-    "collegeName": "ABC College",
-    "invoiceCount": 1,
-    "isActive": true,
-    "isExpired": false,
-    "daysRemaining": 31
-  }
-}
-```
-
-**What Happens:**
-- ✅ Updates subscription status: `PENDING` → `ACTIVE`
-- ✅ Subscription becomes usable
-- ✅ College can now access all core APIs
-
-**Database State:**
-- `subscriptions` table: Status updated to ACTIVE
-
----
-
-### **Phase 7: Dashboard Access**
-
-#### **7.1 Login (After Subscription Activation)**
-```http
-POST /api/v1/auth/login
-Content-Type: application/json
-
-Request Body:
-{
-  "email": "john@abccollege.edu",
-  "password": "SecurePass123!"
-}
-
-Response:
-{
-  "success": true,
-  "status": 200,
-  "message": "Login successfully.",
-  "data": {
-    "user": {
-      "uuid": "user-uuid-here",
-      "email": "john@abccollege.edu",
-      "roles": ["ROLE_COLLEGE_ADMIN"],
-      "collegeId": 1
+**API Flow:**
+```javascript
+// Renew subscription
+const renewSubscription = async (subscriptionUuid, planType, billingCycle) => {
+  const token = localStorage.getItem('accessToken');
+  
+  const response = await fetch(`/api/v1/subscriptions/${subscriptionUuid}/renew`, {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${token}`,
+      'Content-Type': 'application/json',
     },
-    "subscription": {
-      "plan": "STANDARD",
-      "expiresAt": "2024-02-15",
-      "canAccessCoreApis": true  ← Now true!
+    body: JSON.stringify({
+      planType,
+      billingCycle
+    })
+  });
+  
+  const result = await response.json();
+  
+  if (result.success) {
+    // Auto-generate invoice
+    await generateInvoice(result.data.uuid);
+    // Redirect to payment
+    router.push(`/payment?subscription=${result.data.uuid}`);
+  }
+};
+```
+
+### 2. Subscription Upgrade/Downgrade
+
+**User Journey:**
+1. User navigates to subscription settings
+2. User selects new plan
+3. Frontend calculates prorated amount
+4. User confirms upgrade/downgrade
+5. New invoice generated
+6. User completes payment
+7. Subscription updated
+
+**API Flow:**
+```javascript
+// Update subscription plan
+const updateSubscription = async (subscriptionUuid, newPlanType, newBillingCycle) => {
+  const token = localStorage.getItem('accessToken');
+  
+  const response = await fetch(`/api/v1/subscriptions/${subscriptionUuid}`, {
+    method: 'PUT',
+    headers: {
+      'Authorization': `Bearer ${token}`,
+      'Content-Type': 'application/json',
     },
-    "auth": {
-      "tokenType": "Bearer",
-      "accessToken": "eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9...",
-      "refreshToken": "eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9...",
-      "accessTokenExpiresIn": 3600,
-      "refreshTokenExpiresIn": 86400
+    body: JSON.stringify({
+      planType: newPlanType,
+      billingCycle: newBillingCycle
+    })
+  });
+  
+  const result = await response.json();
+  
+  if (result.success) {
+    // Generate invoice for difference
+    await generateInvoice(result.data.uuid);
+    // Redirect to payment
+    router.push(`/payment?subscription=${result.data.uuid}`);
+  }
+};
+```
+
+### 3. Subscription Cancellation
+
+**User Journey:**
+1. User navigates to subscription settings
+2. User clicks "Cancel Subscription"
+3. Frontend shows confirmation dialog
+4. User confirms cancellation
+5. Subscription status changed to CANCELLED
+6. Access revoked at end of billing period
+
+**API Flow:**
+```javascript
+// Cancel subscription
+const cancelSubscription = async (subscriptionUuid) => {
+  const confirmed = await showConfirmDialog(
+    'Are you sure you want to cancel your subscription?'
+  );
+  
+  if (!confirmed) return;
+  
+  const token = localStorage.getItem('accessToken');
+  
+  const response = await fetch(`/api/v1/subscriptions/${subscriptionUuid}/cancel`, {
+    method: 'PUT',
+    headers: {
+      'Authorization': `Bearer ${token}`,
+      'Content-Type': 'application/json',
     }
+  });
+  
+  const result = await response.json();
+  
+  if (result.success) {
+    showSuccess('Subscription cancelled. Access will continue until end of billing period.');
   }
-}
+};
 ```
-
-**What Happens:**
-- ✅ Subscription check returns active subscription
-- ✅ `canAccessCoreApis: true` - Full access granted
-- ✅ All protected endpoints now accessible
 
 ---
 
-#### **7.2 Access Dashboard Endpoints**
+## Email Notifications
 
-Now the college admin can access all protected endpoints:
+### Email Events
 
-```http
-# Get all teachers
-GET /api/v1/teachers
-Authorization: Bearer {accessToken}
+The system automatically sends emails for the following events:
 
-# Get all students
-GET /api/v1/students
-Authorization: Bearer {accessToken}
+1. **Invoice Generated**
+   - Sent when invoice is created
+   - Contains: Invoice number, amount, due date
+   - Action: "Pay Now" button
 
-# Get subscription details
-GET /api/v1/subscriptions/current
-Authorization: Bearer {accessToken}
+2. **Payment Success**
+   - Sent when payment is successful
+   - Contains: Transaction ID, amount, invoice number
+   - Action: "View Invoice" button
 
-# Get payment history
-GET /api/v1/payments
-Authorization: Bearer {accessToken}
+3. **Payment Failure**
+   - Sent when payment fails
+   - Contains: Failure reason, invoice number
+   - Action: "Retry Payment" button
 
-# Get invoice history
-GET /api/v1/invoices
-Authorization: Bearer {accessToken}
+4. **Subscription Activated**
+   - Sent when subscription is activated
+   - Contains: Plan type, expiry date
+   - Action: "Go to Dashboard" button
+
+5. **Subscription Expiring Soon**
+   - Sent 7 days before expiry
+   - Contains: Days remaining, expiry date
+   - Action: "Renew Now" button
+
+6. **Subscription Expired**
+   - Sent when subscription expires
+   - Contains: Expired date, renewal instructions
+   - Action: "Renew Subscription" button
+
+### Email Template Structure
+
+```html
+<!-- Example: Payment Success Email -->
+<div class="email-container">
+  <h1>Payment Successful</h1>
+  <p>Dear {{collegeName}},</p>
+  <p>Your payment has been successfully processed.</p>
+  <div class="payment-details">
+    <p><strong>Invoice Number:</strong> {{invoiceNumber}}</p>
+    <p><strong>Amount:</strong> {{amount}} {{currency}}</p>
+    <p><strong>Transaction ID:</strong> {{transactionId}}</p>
+  </div>
+  <a href="{{dashboardUrl}}" class="button">Go to Dashboard</a>
+</div>
+```
+
+---
+
+## Security & Access Control
+
+### Subscription-Based Access Control
+
+**How it works:**
+1. `SubscriptionAccessFilter` checks subscription status on every API request
+2. If subscription is not active → Returns `403 Forbidden`
+3. Frontend should handle 403 errors gracefully
+
+**Frontend Implementation:**
+```javascript
+// API interceptor to handle subscription errors
+axios.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    if (error.response?.status === 403) {
+      const errorCode = error.response.data.message;
+      
+      if (errorCode === 'SUBSCRIPTION_EXPIRED') {
+        // Redirect to subscription page
+        router.push('/subscription/expired');
+        showError('Your subscription has expired. Please renew to continue.');
+      } else {
+        showError('Access denied. Please check your subscription status.');
+      }
+    }
+    
+    return Promise.reject(error);
+  }
+);
+```
+
+### Token Management
+
+```javascript
+// Token refresh interceptor
+axios.interceptors.response.use(
+  (response) => response,
+  async (error) => {
+    const originalRequest = error.config;
+    
+    if (error.response?.status === 401 && !originalRequest._retry) {
+      originalRequest._retry = true;
+      
+      try {
+        const refreshToken = localStorage.getItem('refreshToken');
+        const response = await axios.post('/api/v1/auth/refresh', {
+          refreshToken
+        });
+        
+        const { accessToken } = response.data.data.auth;
+        localStorage.setItem('accessToken', accessToken);
+        
+        originalRequest.headers.Authorization = `Bearer ${accessToken}`;
+        return axios(originalRequest);
+      } catch (refreshError) {
+        // Refresh failed - logout user
+        localStorage.clear();
+        router.push('/login');
+        return Promise.reject(refreshError);
+      }
+    }
+    
+    return Promise.reject(error);
+  }
+);
 ```
 
 ---
 
 ## Complete Flow Summary
 
-| Step | Endpoint | Purpose | Status Change |
-|------|----------|---------|---------------|
-| 1 | `POST /api/v1/auth/register-college` | Register college & admin | College created, Admin created |
-| 2 | `POST /api/v1/auth/login` | Authenticate | JWT tokens issued |
-| 3 | `GET /api/v1/subscription-plans` | View plans | - |
-| 4 | `POST /api/v1/subscriptions` | Create subscription | Subscription: PENDING |
-| 5 | `POST /api/v1/invoices/generate/{uuid}` | Generate invoice | Invoice: UNPAID |
-| 6 | `POST /api/v1/payments/initiate` | Process payment | Payment: SUCCESS, Invoice: PAID |
-| 7 | `PUT /api/v1/subscriptions/{uuid}/activate` | Activate subscription | Subscription: ACTIVE |
-| 8 | `POST /api/v1/auth/login` | Re-login | `canAccessCoreApis: true` |
-| 9 | Various GET endpoints | Access dashboard | Full access granted |
+| Step | Frontend Action | API Endpoint | Backend Action | User Sees |
+|------|----------------|--------------|----------------|-----------|
+| 1 | User fills registration form | `POST /api/v1/auth/register-college` | Create college & admin | Success message → Login page |
+| 2 | User logs in | `POST /api/v1/auth/login` | Authenticate & return tokens | Dashboard or subscription page |
+| 3 | User views plans | `GET /api/v1/subscription-plans` | Return active plans | Plan selection page |
+| 4 | User selects plan | `POST /api/v1/subscriptions` | Create subscription (PENDING) | Payment page |
+| 5 | Invoice auto-generated | `POST /api/v1/invoices/generate/{uuid}` | Generate invoice (UNPAID) | Invoice details |
+| 6 | User pays via Razorpay | `POST /api/v1/payments/initiate` | Process payment → Auto-activate subscription | Success → Dashboard |
+| 7 | User accesses dashboard | `GET /api/v1/subscriptions/current` | Check subscription status | Full dashboard access |
 
 ---
 
-## Important Notes
+## Production Checklist
 
-### **Payment Gateway Integration**
-- Currently, all payments default to `SUCCESS` status
-- `DefaultPaymentGatewayService` is a placeholder
-- TODO: Replace with actual gateway integration (Razorpay/Stripe)
-- See `PaymentGatewayService` interface for integration points
+### Frontend Checklist
 
-### **Subscription Status Flow**
-```
-NONE → PENDING → ACTIVE → EXPIRED/CANCELLED
-  ↑       ↑        ↑
-  │       │        └─ After payment + activation
-  │       └─ After subscription creation
-  └─ Initial state (no subscription)
-```
+- [ ] Razorpay SDK integrated
+- [ ] Payment flow tested
+- [ ] Error handling implemented
+- [ ] Token refresh mechanism
+- [ ] Subscription status checks
+- [ ] Email notification handling
+- [ ] Webhook status updates (polling if needed)
+- [ ] Loading states for all async operations
+- [ ] Success/error toast notifications
+- [ ] Responsive design for mobile
 
-### **Invoice Status Flow**
-```
-UNPAID → PAID → (FAILED if payment fails)
-  ↑       ↑
-  │       └─ After successful payment
-  └─ After invoice generation
-```
+### Backend Checklist
 
-### **Payment Status Flow**
-```
-PENDING → SUCCESS (or FAILED)
-  ↑         ↑
-  │         └─ After gateway processing
-  └─ After payment creation
-```
+- [ ] Razorpay integration completed
+- [ ] Webhook signature verification
+- [ ] Email service configured
+- [ ] Scheduled jobs for renewal reminders
+- [ ] Grace period logic tested
+- [ ] Subscription access filter tested
+- [ ] Error responses standardized
+- [ ] Logging implemented
+- [ ] Security headers configured
 
 ---
 
-## Security & Isolation
+## Support & Troubleshooting
 
-- ✅ **College Isolation:** All queries filter by `collegeId` (tenant isolation)
-- ✅ **Role-Based Access:** `COLLEGE_ADMIN` and `SUPER_ADMIN` roles enforced
-- ✅ **JWT Authentication:** All protected endpoints require valid JWT token
-- ✅ **Tenant Context:** Automatically set from authenticated user's college
+### Common Issues
 
----
+**Issue: Payment succeeds but subscription not activated**
+- **Solution:** Check webhook logs, verify webhook endpoint is accessible
+- **Check:** Payment status in database, invoice status
 
-## Error Handling
+**Issue: User can't access dashboard after payment**
+- **Solution:** Check subscription status, verify `canAccessCoreApis` in login response
+- **Check:** SubscriptionAccessFilter logs, subscription expiry date
 
-Common error scenarios:
-- **409 Conflict:** College/email already exists during registration
-- **404 Not Found:** Subscription/invoice/payment not found
-- **403 Forbidden:** Access denied (wrong college or insufficient role)
-- **400 Bad Request:** Invalid request data or validation errors
+**Issue: Email notifications not received**
+- **Solution:** Check email service configuration, verify SMTP credentials
+- **Check:** Email service logs, spam folder
 
 ---
 
 ## Future Enhancements
 
-1. **Automatic Subscription Activation:** After payment success, automatically activate subscription
-2. **Trial Period:** Add trial subscription option
-3. **Payment Webhooks:** Handle gateway webhooks for status updates
-4. **Email Notifications:** Send emails for invoice generation, payment success/failure
-5. **Subscription Renewal:** Automatic renewal before expiry
+1. **Trial Periods** - Free trial subscriptions
+2. **Prorated Billing** - Calculate prorated amounts for upgrades/downgrades
+3. **Multiple Payment Methods** - Support for multiple gateways
+4. **Subscription Analytics** - Usage tracking and analytics
+5. **Auto-Renewal** - Automatic subscription renewal
+6. **Discount Codes** - Promotional codes and discounts
+7. **Invoice PDF Generation** - Downloadable invoice PDFs
+8. **Payment Retry** - Automatic payment retry for failed payments
 
+---
+
+**Last Updated:** December 2024  
+**Version:** 2.0 (Production Ready)
