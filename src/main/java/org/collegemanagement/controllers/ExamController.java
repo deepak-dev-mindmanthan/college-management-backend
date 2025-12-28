@@ -335,6 +335,21 @@ public class ExamController {
         return ResponseEntity.ok(ApiResponse.success(subjects, "Exam subjects retrieved successfully"));
     }
 
+    @Operation(
+            summary = "Assign teacher to exam subject",
+            description = "Assigns or reassigns a teacher to evaluate/mark an exam subject. Requires COLLEGE_ADMIN, SUPER_ADMIN, or TEACHER role."
+    )
+    @PostMapping("/subjects/{examSubjectUuid}/assign-teacher")
+    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'COLLEGE_ADMIN', 'TEACHER')")
+    public ResponseEntity<ApiResponse<ExamSubjectResponse>> assignTeacherToExamSubject(
+            @Parameter(description = "UUID of the exam subject")
+            @PathVariable String examSubjectUuid,
+            @Valid @RequestBody AssignTeacherToExamSubjectRequest request
+    ) {
+        ExamSubjectResponse examSubject = examService.assignTeacherToExamSubject(examSubjectUuid, request);
+        return ResponseEntity.ok(ApiResponse.success(examSubject, "Teacher assigned to exam subject successfully"));
+    }
+
     // ========== Student Marks Management Endpoints ==========
 
     @Operation(

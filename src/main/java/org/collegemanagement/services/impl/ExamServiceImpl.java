@@ -21,8 +21,14 @@ import org.collegemanagement.mapper.StudentMarksMapper;
 import org.collegemanagement.mapper.StudentTranscriptMapper;
 import org.collegemanagement.repositories.*;
 import org.collegemanagement.security.tenant.TenantAccessGuard;
+import org.collegemanagement.services.AuditService;
 import org.collegemanagement.services.CollegeService;
 import org.collegemanagement.services.ExamService;
+import org.collegemanagement.services.NotificationService;
+import org.collegemanagement.enums.AuditAction;
+import org.collegemanagement.enums.AuditEntityType;
+import org.collegemanagement.enums.NotificationReferenceType;
+import org.collegemanagement.enums.NotificationType;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -52,8 +58,13 @@ public class ExamServiceImpl implements ExamService {
     private final SubjectRepository subjectRepository;
     private final StudentRepository studentRepository;
     private final StudentEnrollmentRepository studentEnrollmentRepository;
+    private final TeacherRepository teacherRepository;
+    private final ClassSubjectTeacherRepository classSubjectTeacherRepository;
+    private final ParentStudentRepository parentStudentRepository;
     private final TenantAccessGuard tenantAccessGuard;
     private final CollegeService collegeService;
+    private final NotificationService notificationService;
+    private final AuditService auditService;
 
     // ========== Exam Management ==========
 
@@ -110,6 +121,21 @@ public class ExamServiceImpl implements ExamService {
         // Refresh to get all associations
         exam = examRepository.findByUuidAndCollegeId(exam.getUuid(), collegeId)
                 .orElseThrow(() -> new ResourceNotFoundException("Exam not found"));
+
+        // Create audit log
+        User currentUser = getCurrentUser();
+        if (currentUser != null) {
+            auditService.createAuditLog(
+                    currentUser.getId(),
+                    AuditAction.CREATE,
+                    AuditEntityType.EXAM,
+                    exam.getId(),
+                    "Created exam: " + exam.getName()
+            );
+        }
+
+        // Send notifications to students in enrolled classes (optional - can be done asynchronously)
+        // This is a placeholder for future async notification implementation
 
         return ExamMapper.toResponse(exam);
     }
@@ -187,6 +213,18 @@ public class ExamServiceImpl implements ExamService {
         exam = examRepository.findByUuidAndCollegeId(exam.getUuid(), collegeId)
                 .orElseThrow(() -> new ResourceNotFoundException("Exam not found"));
 
+        // Create audit log
+        User currentUser = getCurrentUser();
+        if (currentUser != null) {
+            auditService.createAuditLog(
+                    currentUser.getId(),
+                    AuditAction.UPDATE,
+                    AuditEntityType.EXAM,
+                    exam.getId(),
+                    "Updated exam: " + exam.getName()
+            );
+        }
+
         return ExamMapper.toResponse(exam);
     }
 
@@ -246,6 +284,18 @@ public class ExamServiceImpl implements ExamService {
         Long collegeId = tenantAccessGuard.getCurrentTenantId();
         Exam exam = examRepository.findByUuidAndCollegeId(examUuid, collegeId)
                 .orElseThrow(() -> new ResourceNotFoundException("Exam not found with UUID: " + examUuid));
+
+        // Create audit log before deletion
+        User currentUser = getCurrentUser();
+        if (currentUser != null) {
+            auditService.createAuditLog(
+                    currentUser.getId(),
+                    AuditAction.DELETE,
+                    AuditEntityType.EXAM,
+                    exam.getId(),
+                    "Deleted exam: " + exam.getName()
+            );
+        }
 
         // Delete will cascade to exam classes, subjects, and marks
         examRepository.delete(exam);
@@ -391,9 +441,37 @@ public class ExamServiceImpl implements ExamService {
                 .maxMarks(request.getMaxMarks())
                 .passMarks(request.getPassMarks())
                 .examDate(request.getExamDate())
+                .assignedTeacher(null)
                 .build();
 
+        // Assign teacher if provided, otherwise try auto-assignment from ClassSubjectTeacher
+        if (request.getAssignedTeacherUuid() != null && !request.getAssignedTeacherUuid().isBlank()) {
+            User teacher = teacherRepository.findTeacherByUuidAndCollegeId(request.getAssignedTeacherUuid(), collegeId)
+                    .orElseThrow(() -> new ResourceNotFoundException("Teacher not found with UUID: " + request.getAssignedTeacherUuid()));
+            examSubject.setAssignedTeacher(teacher);
+        } else {
+            // Try to auto-assign based on ClassSubjectTeacher relationship
+            Optional<org.collegemanagement.entity.academic.ClassSubjectTeacher> assignment = 
+                    classSubjectTeacherRepository.findByClassUuidAndSubjectUuidAndCollegeId(
+                            examClass.getClassRoom().getUuid(), subject.getUuid(), collegeId);
+            if (assignment.isPresent()) {
+                examSubject.setAssignedTeacher(assignment.get().getTeacher());
+            }
+        }
+
         examSubject = examSubjectRepository.save(examSubject);
+
+        // Create audit log
+        User currentUser = getCurrentUser();
+        if (currentUser != null) {
+            auditService.createAuditLog(
+                    currentUser.getId(),
+                    AuditAction.CREATE,
+                    AuditEntityType.EXAM,
+                    examSubject.getId(),
+                    "Added subject " + subject.getName() + " to exam class " + examClass.getClassRoom().getName()
+            );
+        }
 
         return ExamMapper.toExamSubjectResponse(examSubject);
     }
@@ -422,6 +500,19 @@ public class ExamServiceImpl implements ExamService {
         }
         if (request.getExamDate() != null) {
             examSubject.setExamDate(request.getExamDate());
+        }
+
+        // Update teacher assignment if provided
+        if (request.getAssignedTeacherUuid() != null) {
+            if (request.getAssignedTeacherUuid().isBlank()) {
+                // Remove teacher assignment
+                examSubject.setAssignedTeacher(null);
+            } else {
+                // Assign new teacher
+                User teacher = teacherRepository.findTeacherByUuidAndCollegeId(request.getAssignedTeacherUuid(), collegeId)
+                        .orElseThrow(() -> new ResourceNotFoundException("Teacher not found with UUID: " + request.getAssignedTeacherUuid()));
+                examSubject.setAssignedTeacher(teacher);
+            }
         }
 
         // Validate pass marks <= max marks
@@ -462,6 +553,24 @@ public class ExamServiceImpl implements ExamService {
         return examSubjects.stream().map(ExamMapper::toExamSubjectResponse).collect(Collectors.toList());
     }
 
+    @Override
+    @Transactional
+    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'COLLEGE_ADMIN', 'TEACHER')")
+    public ExamSubjectResponse assignTeacherToExamSubject(String examSubjectUuid, AssignTeacherToExamSubjectRequest request) {
+        Long collegeId = tenantAccessGuard.getCurrentTenantId();
+        ExamSubject examSubject = examSubjectRepository.findByUuidAndCollegeId(examSubjectUuid, collegeId)
+                .orElseThrow(() -> new ResourceNotFoundException("Exam subject not found with UUID: " + examSubjectUuid));
+
+        // Find and validate teacher
+        User teacher = teacherRepository.findTeacherByUuidAndCollegeId(request.getTeacherUuid(), collegeId)
+                .orElseThrow(() -> new ResourceNotFoundException("Teacher not found with UUID: " + request.getTeacherUuid()));
+
+        examSubject.setAssignedTeacher(teacher);
+        examSubject = examSubjectRepository.save(examSubject);
+
+        return ExamMapper.toExamSubjectResponse(examSubject);
+    }
+
     // ========== Student Marks Management ==========
 
     @Override
@@ -474,6 +583,26 @@ public class ExamServiceImpl implements ExamService {
 
         Student student = studentRepository.findByUuidAndCollegeId(request.getStudentUuid(), collegeId)
                 .orElseThrow(() -> new ResourceNotFoundException("Student not found with UUID: " + request.getStudentUuid()));
+
+        // Validate student enrollment - check if student is enrolled in the class for this academic year
+        ExamClass examClass = examSubject.getExamClass();
+        AcademicYear academicYear = examClass.getExam().getAcademicYear();
+        ClassRoom classRoom = examClass.getClassRoom();
+        
+        Optional<StudentEnrollment> enrollment = studentEnrollmentRepository.findByStudentIdAndAcademicYearId(
+                student.getId(), academicYear.getId());
+        
+        if (enrollment.isEmpty()) {
+            throw new ResourceConflictException(
+                    "Student " + student.getRollNumber() + " is not enrolled in academic year " + academicYear.getYearName());
+        }
+        
+        StudentEnrollment studentEnrollment = enrollment.get();
+        if (!studentEnrollment.getClassRoom().getId().equals(classRoom.getId())) {
+            throw new ResourceConflictException(
+                    "Student " + student.getRollNumber() + " is not enrolled in class " + classRoom.getName() + 
+                    " for academic year " + academicYear.getYearName());
+        }
 
         // Validate marks
         if (request.getMarksObtained() < 0 || request.getMarksObtained() > examSubject.getMaxMarks()) {
@@ -523,6 +652,38 @@ public class ExamServiceImpl implements ExamService {
 
         studentMarks = studentMarksRepository.save(studentMarks);
 
+        Student student = studentMarks.getStudent();
+        
+        // Create audit log
+        User currentUser = getCurrentUser();
+        if (currentUser != null) {
+            auditService.createAuditLog(
+                    currentUser.getId(),
+                    AuditAction.UPDATE,
+                    AuditEntityType.EXAM,
+                    studentMarks.getId(),
+                    "Updated marks for student " + student.getRollNumber() + " in " + examSubject.getSubject().getName() + ": " + request.getMarksObtained() + "/" + examSubject.getMaxMarks()
+            );
+        }
+
+        // Send notification to student about marks update
+        if (student.getUser() != null && student.getUser().getId() != null) {
+            try {
+                notificationService.createNotification(
+                        student.getUser().getId(),
+                        "Marks Updated: " + examSubject.getSubject().getName(),
+                        "Your marks for " + examSubject.getSubject().getName() + " have been updated. Marks: " + request.getMarksObtained() + "/" + examSubject.getMaxMarks(),
+                        NotificationType.IN_APP,
+                        NotificationReferenceType.EXAM,
+                        examSubject.getExamClass().getExam().getId(),
+                        "/exams/" + examSubject.getExamClass().getExam().getUuid() + "/result",
+                        5
+                );
+            } catch (Exception e) {
+                log.warn("Failed to send notification to student: {}", e.getMessage());
+            }
+        }
+
         return StudentMarksMapper.toResponse(studentMarks);
     }
 
@@ -536,9 +697,30 @@ public class ExamServiceImpl implements ExamService {
 
         List<StudentMarksResponse> responses = new ArrayList<>();
 
+        // Get exam class and academic year for validation
+        ExamClass examClass = examSubject.getExamClass();
+        AcademicYear academicYear = examClass.getExam().getAcademicYear();
+        ClassRoom classRoom = examClass.getClassRoom();
+
         for (BulkStudentMarksRequest.StudentMarksEntry entry : request.getMarks()) {
             Student student = studentRepository.findByUuidAndCollegeId(entry.getStudentUuid(), collegeId)
                     .orElseThrow(() -> new ResourceNotFoundException("Student not found with UUID: " + entry.getStudentUuid()));
+
+            // Validate student enrollment - check if student is enrolled in the class for this academic year
+            Optional<StudentEnrollment> enrollment = studentEnrollmentRepository.findByStudentIdAndAcademicYearId(
+                    student.getId(), academicYear.getId());
+            
+            if (enrollment.isEmpty()) {
+                throw new ResourceConflictException(
+                        "Student " + student.getRollNumber() + " is not enrolled in academic year " + academicYear.getYearName());
+            }
+            
+            StudentEnrollment studentEnrollment = enrollment.get();
+            if (!studentEnrollment.getClassRoom().getId().equals(classRoom.getId())) {
+                throw new ResourceConflictException(
+                        "Student " + student.getRollNumber() + " is not enrolled in class " + classRoom.getName() + 
+                        " for academic year " + academicYear.getYearName());
+            }
 
             // Validate marks
             if (entry.getMarksObtained() < 0 || entry.getMarksObtained() > examSubject.getMaxMarks()) {
@@ -567,6 +749,37 @@ public class ExamServiceImpl implements ExamService {
 
             studentMarks = studentMarksRepository.save(studentMarks);
             responses.add(StudentMarksMapper.toResponse(studentMarks));
+
+            // Send notification to student about marks entry/update
+            if (student.getUser() != null && student.getUser().getId() != null) {
+                try {
+                    String action = existingMarks.isPresent() ? "updated" : "entered";
+                    notificationService.createNotification(
+                            student.getUser().getId(),
+                            "Marks " + action.substring(0, 1).toUpperCase() + action.substring(1) + ": " + examSubject.getSubject().getName(),
+                            "Your marks for " + examSubject.getSubject().getName() + " have been " + action + ". Marks: " + entry.getMarksObtained() + "/" + examSubject.getMaxMarks(),
+                            NotificationType.IN_APP,
+                            NotificationReferenceType.EXAM,
+                            examSubject.getExamClass().getExam().getId(),
+                            "/exams/" + examSubject.getExamClass().getExam().getUuid() + "/result",
+                            5
+                    );
+                } catch (Exception e) {
+                    log.warn("Failed to send notification to student {}: {}", student.getRollNumber(), e.getMessage());
+                }
+            }
+        }
+
+        // Create audit log for bulk operation
+        User currentUser = getCurrentUser();
+        if (currentUser != null) {
+            auditService.createAuditLog(
+                    currentUser.getId(),
+                    AuditAction.UPDATE,
+                    AuditEntityType.EXAM,
+                    examSubject.getId(),
+                    "Bulk updated marks for " + responses.size() + " students in " + examSubject.getSubject().getName()
+            );
         }
 
         return responses;
@@ -707,6 +920,18 @@ public class ExamServiceImpl implements ExamService {
 
         gradeScale = gradeScaleRepository.save(gradeScale);
 
+        // Create audit log
+        User currentUser = getCurrentUser();
+        if (currentUser != null) {
+            auditService.createAuditLog(
+                    currentUser.getId(),
+                    AuditAction.CREATE,
+                    AuditEntityType.EXAM,
+                    gradeScale.getId(),
+                    "Created grade scale: " + gradeScale.getGrade()
+            );
+        }
+
         return GradeScaleMapper.toResponse(gradeScale);
     }
 
@@ -743,6 +968,18 @@ public class ExamServiceImpl implements ExamService {
 
         gradeScale = gradeScaleRepository.save(gradeScale);
 
+        // Create audit log
+        User currentUser = getCurrentUser();
+        if (currentUser != null) {
+            auditService.createAuditLog(
+                    currentUser.getId(),
+                    AuditAction.UPDATE,
+                    AuditEntityType.EXAM,
+                    gradeScale.getId(),
+                    "Updated grade scale: " + gradeScale.getGrade()
+            );
+        }
+
         return GradeScaleMapper.toResponse(gradeScale);
     }
 
@@ -778,6 +1015,19 @@ public class ExamServiceImpl implements ExamService {
         Long collegeId = tenantAccessGuard.getCurrentTenantId();
         GradeScale gradeScale = gradeScaleRepository.findByUuidAndCollegeId(gradeScaleUuid, collegeId)
                 .orElseThrow(() -> new ResourceNotFoundException("Grade scale not found with UUID: " + gradeScaleUuid));
+
+        // Create audit log before deletion
+        User currentUser = getCurrentUser();
+        if (currentUser != null) {
+            auditService.createAuditLog(
+                    currentUser.getId(),
+                    AuditAction.DELETE,
+                    AuditEntityType.EXAM,
+                    gradeScale.getId(),
+                    "Deleted grade scale: " + gradeScale.getGrade()
+            );
+        }
+
         gradeScaleRepository.delete(gradeScale);
     }
 
@@ -890,11 +1140,11 @@ public class ExamServiceImpl implements ExamService {
                 .orElseThrow(() -> new ResourceNotFoundException("Transcript not found with UUID: " + transcriptUuid));
 
         // Get current user
-        User currentUser = (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        User approvingUser = getCurrentUser();
 
         transcript.setPublished(true);
         transcript.setPublishedAt(Instant.now());
-        transcript.setApprovedBy(currentUser);
+        transcript.setApprovedBy(approvingUser);
 
         if (request.getResultStatus() != null) {
             transcript.setResultStatus(request.getResultStatus());
@@ -904,6 +1154,59 @@ public class ExamServiceImpl implements ExamService {
         }
 
         transcript = studentTranscriptRepository.save(transcript);
+
+        // Create audit log
+        if (approvingUser != null) {
+            auditService.createAuditLog(
+                    approvingUser.getId(),
+                    AuditAction.APPROVE,
+                    AuditEntityType.EXAM,
+                    transcript.getId(),
+                    "Published transcript for student " + transcript.getStudent().getRollNumber() + " for academic year " + transcript.getAcademicYear().getYearName()
+            );
+        }
+
+        // Send notifications to student and parents
+        Student student = transcript.getStudent();
+        
+        // Notify student
+        if (student.getUser() != null && student.getUser().getId() != null) {
+            try {
+                notificationService.createNotification(
+                        student.getUser().getId(),
+                        "Results Published: " + transcript.getAcademicYear().getYearName(),
+                        "Your results for academic year " + transcript.getAcademicYear().getYearName() + " have been published. CGPA: " + transcript.getCgpa(),
+                        NotificationType.IN_APP,
+                        NotificationReferenceType.RESULT,
+                        transcript.getId(),
+                        "/transcripts/" + transcript.getUuid(),
+                        10
+                );
+            } catch (Exception e) {
+                log.warn("Failed to send notification to student: {}", e.getMessage());
+            }
+        }
+
+        // Notify parents
+        List<org.collegemanagement.entity.student.ParentStudent> parentStudents = parentStudentRepository.findByStudentId(student.getId());
+        for (org.collegemanagement.entity.student.ParentStudent parentStudent : parentStudents) {
+            if (parentStudent.getParent() != null && parentStudent.getParent().getUser() != null && parentStudent.getParent().getUser().getId() != null) {
+                try {
+                    notificationService.createNotification(
+                            parentStudent.getParent().getUser().getId(),
+                            "Results Published: " + student.getRollNumber() + " - " + transcript.getAcademicYear().getYearName(),
+                            "Results for " + student.getRollNumber() + " (" + (student.getUser() != null ? student.getUser().getName() : "") + ") have been published. CGPA: " + transcript.getCgpa(),
+                            NotificationType.IN_APP,
+                            NotificationReferenceType.RESULT,
+                            transcript.getId(),
+                            "/transcripts/" + transcript.getUuid(),
+                            10
+                    );
+                } catch (Exception e) {
+                    log.warn("Failed to send notification to parent: {}", e.getMessage());
+                }
+            }
+        }
 
         // Get marks for response
         List<StudentMarks> marks = studentMarksRepository.findByStudentUuidAndCollegeId(
@@ -1125,6 +1428,21 @@ public class ExamServiceImpl implements ExamService {
         College college = collegeService.findById(collegeId);
         tenantAccessGuard.assertCurrentTenant(college);
         return college;
+    }
+
+    /**
+     * Get current authenticated user
+     */
+    private User getCurrentUser() {
+        try {
+            Object principal = SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+            if (principal instanceof User) {
+                return (User) principal;
+            }
+        } catch (Exception e) {
+            log.debug("Could not get current user: {}", e.getMessage());
+        }
+        return null;
     }
 
     private GradeScale findGradeByMarks(Integer marks, Long collegeId) {

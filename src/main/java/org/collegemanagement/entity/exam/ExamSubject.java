@@ -5,6 +5,7 @@ import lombok.*;
 import lombok.experimental.SuperBuilder;
 import org.collegemanagement.entity.academic.Subject;
 import org.collegemanagement.entity.base.BaseEntity;
+import org.collegemanagement.entity.user.User;
 
 import java.time.LocalDate;
 import java.util.HashSet;
@@ -22,7 +23,8 @@ import java.util.Set;
         indexes = {
                 @Index(name = "idx_exam_subject_exam_class", columnList = "exam_class_id"),
                 @Index(name = "idx_exam_subject_subject", columnList = "subject_id"),
-                @Index(name = "idx_exam_subject_date", columnList = "exam_date")
+                @Index(name = "idx_exam_subject_date", columnList = "exam_date"),
+                @Index(name = "idx_exam_subject_teacher", columnList = "assigned_teacher_id")
         }
 )
 @Getter
@@ -49,7 +51,15 @@ public class ExamSubject extends BaseEntity {
     @Column(name = "exam_date", nullable = false)
     private LocalDate examDate;
 
+    /**
+     * Teacher assigned to evaluate/mark this exam subject (optional)
+     */
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "assigned_teacher_id")
+    private User assignedTeacher;
+
     @OneToMany(mappedBy = "examSubject", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
+    @Builder.Default
     private Set<StudentMarks> marks = new HashSet<>();
 }
 

@@ -87,6 +87,8 @@ public final class ExamMapper {
                         (int) examSubject.getMarks().stream()
                                 .filter(m -> m != null && m.getMarksObtained() != null)
                                 .count() : 0)
+                .assignedTeacherUuid(examSubject.getAssignedTeacher() != null ? examSubject.getAssignedTeacher().getUuid() : null)
+                .assignedTeacherName(examSubject.getAssignedTeacher() != null ? examSubject.getAssignedTeacher().getName() : null)
                 .createdAt(examSubject.getCreatedAt())
                 .updatedAt(examSubject.getUpdatedAt())
                 .build();

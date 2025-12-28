@@ -26,5 +26,10 @@ public class AddSubjectToExamClassRequest {
 
     @NotNull(message = "Exam date is required")
     private LocalDate examDate;
+
+    /**
+     * Optional: UUID of the teacher assigned to evaluate this exam subject
+     */
+    private String assignedTeacherUuid;
 }
 

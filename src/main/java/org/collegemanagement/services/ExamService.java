@@ -105,6 +105,11 @@ public interface ExamService {
      */
     List<ExamSubjectResponse> getExamSubjectsByExamClass(String examClassUuid);
 
+    /**
+     * Assign or reassign teacher to exam subject
+     */
+    ExamSubjectResponse assignTeacherToExamSubject(String examSubjectUuid, AssignTeacherToExamSubjectRequest request);
+
     // ========== Student Marks Management ==========
 
     /**

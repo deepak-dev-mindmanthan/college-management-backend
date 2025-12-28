@@ -44,5 +44,20 @@ public interface ClassSubjectTeacherRepository extends JpaRepository<ClassSubjec
             @Param("teacherId") Long teacherId,
             @Param("collegeId") Long collegeId
     );
+
+    /**
+     * Find ClassSubjectTeacher by class UUID and subject UUID (for auto-assignment)
+     */
+    @Query("""
+            SELECT cst FROM ClassSubjectTeacher cst
+            WHERE cst.classRoom.uuid = :classUuid
+            AND cst.subject.uuid = :subjectUuid
+            AND cst.classRoom.college.id = :collegeId
+            """)
+    Optional<ClassSubjectTeacher> findByClassUuidAndSubjectUuidAndCollegeId(
+            @Param("classUuid") String classUuid,
+            @Param("subjectUuid") String subjectUuid,
+            @Param("collegeId") Long collegeId
+    );
 }
 

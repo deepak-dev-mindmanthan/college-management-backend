@@ -24,6 +24,8 @@ public class ExamSubjectResponse {
     private LocalDate examDate;
     private Integer totalStudents;
     private Integer studentsWithMarks;
+    private String assignedTeacherUuid;
+    private String assignedTeacherName;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 }
