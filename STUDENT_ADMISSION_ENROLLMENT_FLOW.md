@@ -3,6 +3,8 @@
 ## Overview
 This document describes the complete API flow for student admission applications, approval process, student creation, and enrollment management in the college management system.
 
+**Note:** For comprehensive student management API documentation including all modules (documents, disciplinary cases, leave requests, promotions, PTM bookings), see `STUDENT_MANAGEMENT_API_FLOW.md`.
+
 ---
 
 ## Flow Diagram
