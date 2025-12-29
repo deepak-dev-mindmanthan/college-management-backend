@@ -5,6 +5,7 @@ import lombok.*;
 import lombok.experimental.SuperBuilder;
 import org.collegemanagement.entity.attendance.AttendanceRecord;
 import org.collegemanagement.entity.base.BaseEntity;
+import org.collegemanagement.entity.hostel.HostelAllocation;
 import org.collegemanagement.entity.tenant.College;
 import org.collegemanagement.entity.user.User;
 import org.collegemanagement.enums.Gender;
@@ -73,6 +74,8 @@ public class Student extends BaseEntity {
     @OneToMany(mappedBy = "student", fetch = FetchType.LAZY)
     private Set<AttendanceRecord> attendanceRecords;
 
+    @OneToMany(mappedBy = "student", fetch = FetchType.LAZY)
+    private Set<HostelAllocation> hostelAllocations;
 
     @Column(nullable = false)
     private Instant dob;

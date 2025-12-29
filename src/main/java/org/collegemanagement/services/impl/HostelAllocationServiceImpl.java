@@ -8,19 +8,29 @@ import org.collegemanagement.dto.hostel.HostelSummaryResponse;
 import org.collegemanagement.dto.hostel.UpdateHostelAllocationRequest;
 import org.collegemanagement.entity.hostel.HostelAllocation;
 import org.collegemanagement.entity.hostel.HostelRoom;
+import org.collegemanagement.entity.student.ParentStudent;
 import org.collegemanagement.entity.student.Student;
+import org.collegemanagement.entity.user.User;
+import org.collegemanagement.enums.AuditAction;
+import org.collegemanagement.enums.AuditEntityType;
+import org.collegemanagement.enums.NotificationReferenceType;
+import org.collegemanagement.enums.NotificationType;
 import org.collegemanagement.exception.ResourceConflictException;
 import org.collegemanagement.exception.ResourceNotFoundException;
 import org.collegemanagement.mapper.HostelAllocationMapper;
 import org.collegemanagement.repositories.HostelAllocationRepository;
 import org.collegemanagement.repositories.HostelRepository;
 import org.collegemanagement.repositories.HostelRoomRepository;
+import org.collegemanagement.repositories.ParentStudentRepository;
 import org.collegemanagement.repositories.StudentRepository;
 import org.collegemanagement.security.tenant.TenantAccessGuard;
+import org.collegemanagement.services.AuditService;
 import org.collegemanagement.services.HostelAllocationService;
+import org.collegemanagement.services.NotificationService;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -38,6 +48,9 @@ public class HostelAllocationServiceImpl implements HostelAllocationService {
     private final HostelRoomRepository hostelRoomRepository;
     private final HostelRepository hostelRepository;
     private final TenantAccessGuard tenantAccessGuard;
+    private final AuditService auditService;
+    private final NotificationService notificationService;
+    private final ParentStudentRepository parentStudentRepository;
 
     @Override
     @Transactional
@@ -86,6 +99,57 @@ public class HostelAllocationServiceImpl implements HostelAllocationService {
 
         allocation = hostelAllocationRepository.save(allocation);
 
+        // Create audit log
+        User currentUser = getCurrentUser();
+        if (currentUser != null) {
+            auditService.createAuditLog(
+                    currentUser.getId(),
+                    AuditAction.CREATE,
+                    AuditEntityType.HOSTEL_ALLOCATION,
+                    allocation.getId(),
+                    "Allocated student " + student.getUser().getName() + " to room " + room.getRoomNumber() + " in " + room.getHostel().getName()
+            );
+        }
+
+        // Send notifications to student
+        if (student.getUser() != null && student.getUser().getId() != null) {
+            try {
+                notificationService.createNotification(
+                        student.getUser().getId(),
+                        "Hostel Allocation: " + room.getHostel().getName(),
+                        "You have been allocated to " + room.getHostel().getName() + ", Room " + room.getRoomNumber() + ".",
+                        NotificationType.IN_APP,
+                        NotificationReferenceType.HOSTEL_ALLOCATION,
+                        allocation.getId(),
+                        "/hostel/allocations/" + allocation.getUuid(),
+                        5
+                );
+            } catch (Exception e) {
+                log.warn("Failed to send notification to student: {}", e.getMessage());
+            }
+        }
+
+        // Send notifications to parents
+        List<ParentStudent> parentStudents = parentStudentRepository.findByStudentId(student.getId());
+        for (ParentStudent parentStudent : parentStudents) {
+            if (parentStudent.getParent() != null && parentStudent.getParent().getUser() != null && parentStudent.getParent().getUser().getId() != null) {
+                try {
+                    notificationService.createNotification(
+                            parentStudent.getParent().getUser().getId(),
+                            "Hostel Allocation: " + student.getUser().getName(),
+                            "Your child " + student.getUser().getName() + " (" + student.getRollNumber() + ") has been allocated to " + room.getHostel().getName() + ", Room " + room.getRoomNumber() + ".",
+                            NotificationType.IN_APP,
+                            NotificationReferenceType.HOSTEL_ALLOCATION,
+                            allocation.getId(),
+                            "/hostel/allocations/" + allocation.getUuid(),
+                            5
+                    );
+                } catch (Exception e) {
+                    log.warn("Failed to send notification to parent: {}", e.getMessage());
+                }
+            }
+        }
+
         return HostelAllocationMapper.toResponse(allocation);
     }
 
@@ -121,6 +185,18 @@ public class HostelAllocationServiceImpl implements HostelAllocationService {
         }
 
         allocation = hostelAllocationRepository.save(allocation);
+
+        // Create audit log
+        User currentUser = getCurrentUser();
+        if (currentUser != null) {
+            auditService.createAuditLog(
+                    currentUser.getId(),
+                    AuditAction.UPDATE,
+                    AuditEntityType.HOSTEL_ALLOCATION,
+                    allocation.getId(),
+                    "Updated hostel allocation for student " + allocation.getStudent().getUser().getName()
+            );
+        }
 
         return HostelAllocationMapper.toResponse(allocation);
     }
@@ -254,8 +330,62 @@ public class HostelAllocationServiceImpl implements HostelAllocationService {
             throw new ResourceConflictException("Hostel allocation is already released");
         }
 
+        Student student = allocation.getStudent();
+        HostelRoom room = allocation.getRoom();
+
         allocation.setReleasedAt(Instant.now());
         allocation = hostelAllocationRepository.save(allocation);
+
+        // Create audit log
+        User currentUser = getCurrentUser();
+        if (currentUser != null) {
+            auditService.createAuditLog(
+                    currentUser.getId(),
+                    AuditAction.UPDATE,
+                    AuditEntityType.HOSTEL_ALLOCATION,
+                    allocation.getId(),
+                    "Released hostel allocation for student " + student.getUser().getName() + " from " + room.getHostel().getName() + ", Room " + room.getRoomNumber()
+            );
+        }
+
+        // Send notifications to student
+        if (student.getUser() != null && student.getUser().getId() != null) {
+            try {
+                notificationService.createNotification(
+                        student.getUser().getId(),
+                        "Hostel Allocation Released: " + room.getHostel().getName(),
+                        "Your hostel allocation has been released from " + room.getHostel().getName() + ", Room " + room.getRoomNumber() + ".",
+                        NotificationType.IN_APP,
+                        NotificationReferenceType.HOSTEL_ALLOCATION,
+                        allocation.getId(),
+                        "/hostel/allocations/" + allocation.getUuid(),
+                        5
+                );
+            } catch (Exception e) {
+                log.warn("Failed to send notification to student: {}", e.getMessage());
+            }
+        }
+
+        // Send notifications to parents
+        List<ParentStudent> parentStudents = parentStudentRepository.findByStudentId(student.getId());
+        for (ParentStudent parentStudent : parentStudents) {
+            if (parentStudent.getParent() != null && parentStudent.getParent().getUser() != null && parentStudent.getParent().getUser().getId() != null) {
+                try {
+                    notificationService.createNotification(
+                            parentStudent.getParent().getUser().getId(),
+                            "Hostel Allocation Released: " + student.getUser().getName(),
+                            "Your child " + student.getUser().getName() + " (" + student.getRollNumber() + ")'s hostel allocation has been released from " + room.getHostel().getName() + ", Room " + room.getRoomNumber() + ".",
+                            NotificationType.IN_APP,
+                            NotificationReferenceType.HOSTEL_ALLOCATION,
+                            allocation.getId(),
+                            "/hostel/allocations/" + allocation.getUuid(),
+                            5
+                    );
+                } catch (Exception e) {
+                    log.warn("Failed to send notification to parent: {}", e.getMessage());
+                }
+            }
+        }
 
         return HostelAllocationMapper.toResponse(allocation);
     }
@@ -279,7 +409,23 @@ public class HostelAllocationServiceImpl implements HostelAllocationService {
         HostelAllocation allocation = hostelAllocationRepository.findByUuidAndCollegeId(allocationUuid, collegeId)
                 .orElseThrow(() -> new ResourceNotFoundException("Hostel allocation not found with UUID: " + allocationUuid));
 
+        Long allocationId = allocation.getId();
+        String studentName = allocation.getStudent().getUser().getName();
+        String roomInfo = allocation.getRoom().getRoomNumber() + " in " + allocation.getRoom().getHostel().getName();
+
         hostelAllocationRepository.delete(allocation);
+
+        // Create audit log
+        User currentUser = getCurrentUser();
+        if (currentUser != null) {
+            auditService.createAuditLog(
+                    currentUser.getId(),
+                    AuditAction.DELETE,
+                    AuditEntityType.HOSTEL_ALLOCATION,
+                    allocationId,
+                    "Deleted hostel allocation for student " + studentName + " from " + roomInfo
+            );
+        }
     }
 
     @Override
@@ -328,6 +474,18 @@ public class HostelAllocationServiceImpl implements HostelAllocationService {
                 .totalOccupied(totalOccupied)
                 .totalAvailable(totalAvailable)
                 .build();
+    }
+
+    private User getCurrentUser() {
+        try {
+            Object principal = SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+            if (principal instanceof User) {
+                return (User) principal;
+            }
+        } catch (Exception e) {
+            log.debug("Could not get current user: {}", e.getMessage());
+        }
+        return null;
     }
 }
 

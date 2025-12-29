@@ -10,6 +10,7 @@ public enum NotificationReferenceType {
     LEAVE_REQUEST,
     ATTENDANCE_SESSION,
     RESULT,
-    TIMETABLE
+    TIMETABLE,
+    HOSTEL_ALLOCATION
 }
 

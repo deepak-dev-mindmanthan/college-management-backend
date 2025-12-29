@@ -9,6 +9,8 @@ import org.collegemanagement.entity.staff.StaffProfile;
 import org.collegemanagement.entity.tenant.College;
 import org.collegemanagement.entity.user.Role;
 import org.collegemanagement.entity.user.User;
+import org.collegemanagement.enums.AuditAction;
+import org.collegemanagement.enums.AuditEntityType;
 import org.collegemanagement.enums.RoleType;
 import org.collegemanagement.enums.Status;
 import org.collegemanagement.exception.ResourceConflictException;
@@ -17,6 +19,7 @@ import org.collegemanagement.mapper.HostelManagerMapper;
 import org.collegemanagement.repositories.HostelManagerRepository;
 import org.collegemanagement.repositories.StaffProfileRepository;
 import org.collegemanagement.security.tenant.TenantAccessGuard;
+import org.collegemanagement.services.AuditService;
 import org.collegemanagement.services.CollegeService;
 import org.collegemanagement.services.HostelManagerService;
 import org.collegemanagement.services.RoleService;
@@ -24,6 +27,7 @@ import org.collegemanagement.services.UserManager;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -40,6 +44,7 @@ public class HostelManagerServiceImpl implements HostelManagerService {
     private final StaffProfileRepository staffProfileRepository;
     private final TenantAccessGuard tenantAccessGuard;
     private final CollegeService collegeService;
+    private final AuditService auditService;
 
     @Override
     @Transactional
@@ -85,6 +90,18 @@ public class HostelManagerServiceImpl implements HostelManagerService {
                 .build();
 
         staffProfileRepository.save(staffProfile);
+
+        // Create audit log
+        User currentUser = getCurrentUser();
+        if (currentUser != null) {
+            auditService.createAuditLog(
+                    currentUser.getId(),
+                    AuditAction.CREATE,
+                    AuditEntityType.HOSTEL_MANAGER,
+                    createdUser.getId(),
+                    "Created hostel manager: " + createdUser.getName()
+            );
+        }
 
         return HostelManagerMapper.toResponse(createdUser, staffProfile);
     }
@@ -145,6 +162,18 @@ public class HostelManagerServiceImpl implements HostelManagerService {
             staffProfileRepository.save(staffProfile);
         }
 
+        // Create audit log
+        User currentUser = getCurrentUser();
+        if (currentUser != null) {
+            auditService.createAuditLog(
+                    currentUser.getId(),
+                    AuditAction.UPDATE,
+                    AuditEntityType.HOSTEL_MANAGER,
+                    updatedHostelManager.getId(),
+                    "Updated hostel manager: " + updatedHostelManager.getName()
+            );
+        }
+
         return HostelManagerMapper.toResponse(updatedHostelManager, staffProfile);
     }
 
@@ -203,8 +232,23 @@ public class HostelManagerServiceImpl implements HostelManagerService {
         staffProfileRepository.findByUserIdAndCollegeId(hostelManager.getId(), collegeId)
                 .ifPresent(staffProfileRepository::delete);
 
+        Long managerId = hostelManager.getId();
+        String managerName = hostelManager.getName();
+
         // Delete user (this will cascade appropriately based on entity relationships)
         userManager.deleteUserById(hostelManager.getId());
+
+        // Create audit log
+        User currentUser = getCurrentUser();
+        if (currentUser != null) {
+            auditService.createAuditLog(
+                    currentUser.getId(),
+                    AuditAction.DELETE,
+                    AuditEntityType.HOSTEL_MANAGER,
+                    managerId,
+                    "Deleted hostel manager: " + managerName
+            );
+        }
     }
 
     // Helper methods
@@ -213,6 +257,18 @@ public class HostelManagerServiceImpl implements HostelManagerService {
         College college = collegeService.findById(collegeId);
         tenantAccessGuard.assertCurrentTenant(college);
         return college;
+    }
+
+    private User getCurrentUser() {
+        try {
+            Object principal = SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+            if (principal instanceof User) {
+                return (User) principal;
+            }
+        } catch (Exception e) {
+            log.debug("Could not get current user: {}", e.getMessage());
+        }
+        return null;
     }
 }
 

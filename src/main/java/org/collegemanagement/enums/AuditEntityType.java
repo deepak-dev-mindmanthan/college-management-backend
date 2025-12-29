@@ -13,6 +13,11 @@ public enum AuditEntityType {
     DOCUMENT,
     ANNOUNCEMENT,
     NOTIFICATION,
-    SYSTEM
+    SYSTEM,
+    HOSTEL,
+    HOSTEL_ALLOCATION,
+    HOSTEL_ROOM,
+    HOSTEL_WARDEN,
+    HOSTEL_MANAGER
 }
 

@@ -8,6 +8,7 @@ import org.collegemanagement.entity.academic.ClassRoom;
 import org.collegemanagement.entity.academic.ClassSubjectTeacher;
 import org.collegemanagement.entity.base.BaseEntity;
 import org.collegemanagement.entity.communication.Notification;
+import org.collegemanagement.entity.hostel.Hostel;
 import org.collegemanagement.entity.leave.LeaveRequest;
 import org.collegemanagement.entity.library.LibraryIssue;
 import org.collegemanagement.entity.staff.StaffProfile;
@@ -103,6 +104,8 @@ public class User extends BaseEntity implements UserDetails {
     @OneToMany(mappedBy = "user", fetch = FetchType.LAZY)
     private Set<Notification> notifications;
 
+    @OneToMany(mappedBy = "warden", fetch = FetchType.LAZY)
+    private Set<Hostel> managedHostels;
 
     @PrePersist
     public void prePersist() {

@@ -10,14 +10,19 @@ import org.collegemanagement.entity.hostel.HostelRoom;
 import org.collegemanagement.exception.ResourceConflictException;
 import org.collegemanagement.exception.ResourceNotFoundException;
 import org.collegemanagement.mapper.HostelRoomMapper;
+import org.collegemanagement.entity.user.User;
+import org.collegemanagement.enums.AuditAction;
+import org.collegemanagement.enums.AuditEntityType;
 import org.collegemanagement.repositories.HostelAllocationRepository;
 import org.collegemanagement.repositories.HostelRepository;
 import org.collegemanagement.repositories.HostelRoomRepository;
 import org.collegemanagement.security.tenant.TenantAccessGuard;
+import org.collegemanagement.services.AuditService;
 import org.collegemanagement.services.HostelRoomService;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -33,6 +38,7 @@ public class HostelRoomServiceImpl implements HostelRoomService {
     private final HostelRepository hostelRepository;
     private final HostelAllocationRepository hostelAllocationRepository;
     private final TenantAccessGuard tenantAccessGuard;
+    private final AuditService auditService;
 
     @Override
     @Transactional
@@ -96,6 +102,18 @@ public class HostelRoomServiceImpl implements HostelRoomService {
         }
 
         room = hostelRoomRepository.save(room);
+
+        // Create audit log
+        User currentUser = getCurrentUser();
+        if (currentUser != null) {
+            auditService.createAuditLog(
+                    currentUser.getId(),
+                    AuditAction.UPDATE,
+                    AuditEntityType.HOSTEL_ROOM,
+                    room.getId(),
+                    "Updated hostel room: " + room.getRoomNumber() + " in " + room.getHostel().getName()
+            );
+        }
 
         // Calculate current occupancy
         long currentOccupancyLong = hostelAllocationRepository.countActiveByRoomUuidAndCollegeId(room.getUuid(), collegeId);
@@ -200,7 +218,35 @@ public class HostelRoomServiceImpl implements HostelRoomService {
             throw new ResourceConflictException("Cannot delete room with active allocations. Please release all students first.");
         }
 
+        Long roomId = room.getId();
+        String roomNumber = room.getRoomNumber();
+        String hostelName = room.getHostel().getName();
+
         hostelRoomRepository.delete(room);
+
+        // Create audit log
+        User currentUser = getCurrentUser();
+        if (currentUser != null) {
+            auditService.createAuditLog(
+                    currentUser.getId(),
+                    AuditAction.DELETE,
+                    AuditEntityType.HOSTEL_ROOM,
+                    roomId,
+                    "Deleted hostel room: " + roomNumber + " from " + hostelName
+            );
+        }
+    }
+
+    private User getCurrentUser() {
+        try {
+            Object principal = SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+            if (principal instanceof User) {
+                return (User) principal;
+            }
+        } catch (Exception e) {
+            log.debug("Could not get current user: {}", e.getMessage());
+        }
+        return null;
     }
 }
 
