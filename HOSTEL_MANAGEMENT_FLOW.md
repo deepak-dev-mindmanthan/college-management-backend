@@ -3,6 +3,14 @@
 ## Overview
 This document describes the complete API flow for Hostel Management in the college management system, including hostel manager management, hostel warden management, hostel setup, room management, student hostel allocation, and comprehensive hostel reporting for different roles (COLLEGE_ADMIN, HOSTEL_MANAGER, HOSTEL_WARDEN, TEACHER, STUDENT).
 
+**Production-Ready Features:**
+- ✅ **Notification System**: Automatic in-app notifications for students and parents on allocation/release events
+- ✅ **Audit Logging**: Complete audit trail for all operations (CREATE, UPDATE, DELETE) with user tracking
+- ✅ **Bidirectional Relationships**: Proper entity relationships (Student ↔ HostelAllocation, User ↔ Hostel) for data consistency
+- ✅ **Real-time Updates**: WebSocket/polling support for notifications
+- ✅ **Comprehensive Error Handling**: Detailed error responses with proper HTTP status codes
+- ✅ **Role-Based Security**: Full RBAC implementation with college isolation
+
 ---
 
 ## User Roles & Permissions
@@ -85,16 +93,22 @@ This document describes the complete API flow for Hostel Management in the colle
 │  - Auto-release previous active allocations                     │
 │  - Status: Active (releasedAt = null)                           │
 │  - Hostel Manager typically handles this                        │
+│  - ✅ AUDIT LOG: Creates audit log entry                        │
+│  - ✅ NOTIFICATION: Sends notification to student                │
+│  - ✅ NOTIFICATION: Sends notification to parents                │
 └─────────────────────────────────────────────────────────────────┘
                               │
                               ▼
 ┌─────────────────────────────────────────────────────────────────┐
 │              ACTIVE HOSTEL STAY PERIOD                           │
 │  - Student has active hostel allocation                         │
+│  - Student receives notification (in-app)                       │
+│  - Parents receive notification (in-app)                        │
 │  - Can view their hostel details                                │
 │  - System tracks allocation history                             │
 │  - Hostel Manager can monitor all allocations                   │
 │  - Warden can view assigned hostels                             │
+│  - All operations are audit logged                              │
 └─────────────────────────────────────────────────────────────────┘
                               │
                               ▼
@@ -110,6 +124,9 @@ This document describes the complete API flow for Hostel Management in the colle
 │  - Status: Active → Inactive                                    │
 │  - Room capacity freed                                          │
 │  - Hostel Manager handles releases                              │
+│  - ✅ AUDIT LOG: Creates audit log entry                        │
+│  - ✅ NOTIFICATION: Sends notification to student                │
+│  - ✅ NOTIFICATION: Sends notification to parents                │
 └─────────────────────────────────────────────────────────────────┘
                               │
                               ▼
@@ -119,6 +136,8 @@ This document describes the complete API flow for Hostel Management in the colle
 │  - Track hostel occupancy                                       │
 │  - Hostel summary statistics                                    │
 │  - Manage hostel manager and warden accounts                    │
+│  - View audit logs for all operations                           │
+│  - Monitor notification delivery                                 │
 └─────────────────────────────────────────────────────────────────┘
 ```
 
@@ -176,6 +195,7 @@ Response (200 OK):
 - ✅ Staff profile created with hostel manager details
 - ✅ Hostel manager can now access hostel management features
 - ✅ Email validated for uniqueness within college
+- ✅ **AUDIT LOG**: Creates audit log entry (CREATE action, HOSTEL_MANAGER entity type)
 
 ---
 
@@ -318,6 +338,7 @@ Response (200 OK):
 - ✅ Staff profile created with warden details
 - ✅ Warden can be assigned to hostels later
 - ✅ Email validated for uniqueness within college
+- ✅ **AUDIT LOG**: Creates audit log entry (CREATE action, HOSTEL_WARDEN entity type)
 
 ---
 
@@ -481,6 +502,7 @@ Response (200 OK):
 - ✅ Warden assigned if provided (must have ROLE_HOSTEL_WARDEN)
 - ✅ Validates college context
 - ✅ Accessible by COLLEGE_ADMIN, SUPER_ADMIN, and HOSTEL_MANAGER roles
+- ✅ **AUDIT LOG**: Creates audit log entry (CREATE action, HOSTEL entity type)
 
 **Error Response (409 Conflict):**
 ```json
@@ -752,6 +774,7 @@ Response (200 OK):
 - ✅ Capacity set for the room
 - ✅ Initial occupancy is 0
 - ✅ Validates hostel exists and belongs to college
+- ✅ **AUDIT LOG**: Creates audit log entry (CREATE action, HOSTEL_ROOM entity type)
 
 **Error Response (409 Conflict):**
 ```json
@@ -1031,6 +1054,9 @@ Response (200 OK):
 - ✅ Initial status: Active (releasedAt = null)
 - ✅ Validates student and room exist and belong to college
 - ✅ Prevents duplicate active allocations for same student
+- ✅ **AUDIT LOG**: Creates audit log entry (CREATE action, HOSTEL_ALLOCATION entity type)
+- ✅ **NOTIFICATION**: Sends in-app notification to student with allocation details
+- ✅ **NOTIFICATION**: Sends in-app notification to all parents of the student
 
 **Error Response (409 Conflict):**
 ```json
@@ -1127,6 +1153,9 @@ Response (200 OK):
 - ✅ Allocation becomes inactive but remains in history
 - ✅ Room capacity freed
 - ✅ Student can be allocated to a new room after release
+- ✅ **AUDIT LOG**: Creates audit log entry (UPDATE action, HOSTEL_ALLOCATION entity type)
+- ✅ **NOTIFICATION**: Sends in-app notification to student about release
+- ✅ **NOTIFICATION**: Sends in-app notification to all parents of the student
 
 **Error Response (409 Conflict):**
 ```json
@@ -1660,6 +1689,117 @@ Response (200 OK):
 
 ---
 
+## System Integration Features
+
+### **1. Notification System Integration**
+
+The Hostel Management module is fully integrated with the system-wide notification service. Notifications are automatically sent to relevant users when key events occur.
+
+#### **Notification Triggers:**
+
+1. **Student Hostel Allocation Created:**
+   - **Recipients**: Student, All Parents
+   - **Type**: IN_APP
+   - **Title**: "Hostel Allocation: [Hostel Name]"
+   - **Content**: "You have been allocated to [Hostel Name], Room [Room Number]."
+   - **Action URL**: `/hostel/allocations/{allocationUuid}`
+   - **Priority**: 5 (Medium)
+
+2. **Student Hostel Allocation Released:**
+   - **Recipients**: Student, All Parents
+   - **Type**: IN_APP
+   - **Title**: "Hostel Allocation Released: [Hostel Name]"
+   - **Content**: "Your hostel allocation has been released from [Hostel Name], Room [Room Number]."
+   - **Action URL**: `/hostel/allocations/{allocationUuid}`
+   - **Priority**: 5 (Medium)
+
+#### **Notification Reference Type:**
+- `HOSTEL_ALLOCATION` - Used to link notifications to hostel allocation entities
+
+#### **Frontend Notification Handling:**
+```typescript
+// Example: Listen for notifications
+const notifications = useNotifications(); // Custom hook
+
+useEffect(() => {
+  const hostelNotifications = notifications.filter(
+    n => n.referenceType === 'HOSTEL_ALLOCATION'
+  );
+  
+  hostelNotifications.forEach(notification => {
+    if (!notification.isRead) {
+      showToast(notification.title, notification.content);
+      // Navigate to allocation details on click
+      if (notification.actionUrl) {
+        navigate(notification.actionUrl);
+      }
+    }
+  });
+}, [notifications]);
+```
+
+---
+
+### **2. Audit Logging System Integration**
+
+All Hostel Management operations are automatically logged in the audit system for compliance, tracking, and security purposes.
+
+#### **Audit Log Entity Types:**
+
+- `HOSTEL` - Hostel creation, updates, deletions
+- `HOSTEL_ROOM` - Room creation, updates, deletions
+- `HOSTEL_ALLOCATION` - Allocation creation, updates, releases, deletions
+- `HOSTEL_WARDEN` - Warden account creation, updates, deletions
+- `HOSTEL_MANAGER` - Manager account creation, updates, deletions
+
+#### **Audit Actions Tracked:**
+
+- `CREATE` - When new entities are created
+- `UPDATE` - When entities are modified
+- `DELETE` - When entities are removed
+
+#### **Audit Log Information Captured:**
+
+- User who performed the action
+- Timestamp of the action
+- Entity type and ID
+- Descriptive message
+- IP address (if available)
+- College context
+
+#### **Example Audit Log Entry:**
+```json
+{
+  "id": 12345,
+  "userId": 789,
+  "userName": "John Admin",
+  "action": "CREATE",
+  "entityType": "HOSTEL_ALLOCATION",
+  "entityId": 456,
+  "description": "Allocated student Alice Johnson to room 101 in Boys Hostel A",
+  "ipAddress": "192.168.1.100",
+  "createdAt": "2024-01-15T10:30:00Z"
+}
+```
+
+#### **Frontend Audit Log Viewing:**
+```typescript
+// Example: View audit logs for a hostel allocation
+const fetchAuditLogs = async (allocationUuid: string) => {
+  const response = await fetch(
+    `/api/v1/audit-logs?entityType=HOSTEL_ALLOCATION&entityId=${allocationId}`,
+    {
+      headers: {
+        'Authorization': `Bearer ${token}`
+      }
+    }
+  );
+  return response.json();
+};
+```
+
+---
+
 ## Frontend Integration Guide
 
 ### **1. Hostel Manager Management Page**
@@ -1896,7 +2036,24 @@ const releaseAllocation = async (allocationUuid: string) => {
       }
     }
   );
-  return response.json();
+  
+  const result = await response.json();
+  
+  if (result.success) {
+    // Show success message
+    showSuccessToast('Hostel allocation released successfully');
+    
+    // Notifications are automatically sent by backend
+    await refreshNotifications();
+    
+    // Show notification preview
+    showNotificationPreview({
+      title: 'Notification Sent',
+      message: 'Student and parents have been notified about the release'
+    });
+  }
+  
+  return result;
 };
 
 // Get allocations by room
@@ -1922,7 +2079,8 @@ const getAllocationsByRoom = async (roomUuid: string) => {
 StudentHostelDashboard/
   ├── MyHostelCard.tsx (Current active hostel allocation)
   ├── HostelHistory.tsx (Historical allocations)
-  └── AvailableHostelsList.tsx (Browse available hostels)
+  ├── AvailableHostelsList.tsx (Browse available hostels)
+  └── NotificationBadge.tsx (Shows unread hostel notifications)
 ```
 
 **API Integration:**
@@ -1938,6 +2096,29 @@ const getMyActiveHostel = async () => {
     }
   );
   return response.json();
+};
+
+// Get hostel-related notifications
+const getHostelNotifications = async () => {
+  const response = await fetch(
+    `/api/v1/notifications?referenceType=HOSTEL_ALLOCATION&isRead=false`,
+    {
+      headers: {
+        'Authorization': `Bearer ${token}`
+      }
+    }
+  );
+  return response.json();
+};
+
+// Mark notification as read when user views allocation
+const markNotificationAsRead = async (notificationId: string) => {
+  await fetch(`/api/v1/notifications/${notificationId}/read`, {
+    method: 'PUT',
+    headers: {
+      'Authorization': `Bearer ${token}`
+    }
+  });
 };
 
 // Get student's hostel history
@@ -2026,9 +2207,11 @@ const getHostelSummary = async () => {
 ```typescript
 // 1. Create hostel manager
 POST /api/v1/hostel-managers
+// ✅ Audit log created (CREATE, HOSTEL_MANAGER)
 
 // 2. Create hostel warden
 POST /api/v1/hostel-wardens
+// ✅ Audit log created (CREATE, HOSTEL_WARDEN)
 
 // 3. Create hostel
 POST /api/v1/hostels
@@ -2038,6 +2221,7 @@ POST /api/v1/hostels
   "capacity": 200,
   "wardenUuid": "hostel-warden-uuid-456"
 }
+// ✅ Audit log created (CREATE, HOSTEL)
 
 // 4. Create rooms
 POST /api/v1/hostel-rooms
@@ -2046,6 +2230,7 @@ POST /api/v1/hostel-rooms
   "roomNumber": "101",
   "capacity": 4
 }
+// ✅ Audit log created (CREATE, HOSTEL_ROOM)
 
 // 5. Allocate student
 POST /api/v1/hostel-allocations
@@ -2053,6 +2238,9 @@ POST /api/v1/hostel-allocations
   "studentUuid": "student-uuid-001",
   "roomUuid": "room-uuid-101"
 }
+// ✅ Audit log created (CREATE, HOSTEL_ALLOCATION)
+// ✅ Notification sent to student
+// ✅ Notification sent to all parents
 ```
 
 ---
@@ -2069,6 +2257,11 @@ POST /api/v1/hostel-allocations
 7. System automatically releases any previous active allocation
 8. New allocation created and displayed
 9. Room occupancy updated
+10. ✅ **Audit log created** (CREATE action, HOSTEL_ALLOCATION entity)
+11. ✅ **Notification sent to student** (in-app notification)
+12. ✅ **Notification sent to all parents** (in-app notification)
+13. Frontend shows success message
+14. Frontend can poll for new notifications or use WebSocket
 
 **API Calls:**
 ```typescript
@@ -2077,6 +2270,14 @@ POST /api/v1/hostel-allocations
   "studentUuid": "student-uuid-001",
   "roomUuid": "room-uuid-101"
 }
+
+// What Happens:
+// ✅ Allocation created
+// ✅ Audit log entry created
+// ✅ Notification sent to student
+// ✅ Notification sent to parents
+// ✅ Frontend receives success response
+// ✅ Frontend can poll for new notifications or use WebSocket
 ```
 
 ---
@@ -2110,11 +2311,23 @@ PUT /api/v1/hostel-allocations/{allocationUuid}
 4. System sets releasedAt timestamp
 5. Allocation becomes inactive
 6. Room capacity freed
-7. Student can now be allocated to a new room
+7. ✅ **Audit log created** (UPDATE action, HOSTEL_ALLOCATION entity)
+8. ✅ **Notification sent to student** (in-app notification about release)
+9. ✅ **Notification sent to all parents** (in-app notification about release)
+10. Student can now be allocated to a new room
+11. Frontend shows success message
 
 **API Calls:**
 ```typescript
 POST /api/v1/hostel-allocations/{allocationUuid}/release
+
+// What Happens:
+// ✅ Allocation released
+// ✅ Audit log entry created (UPDATE action)
+// ✅ Notification sent to student
+// ✅ Notification sent to parents
+// ✅ Room capacity freed
+// ✅ Frontend receives success response
 ```
 
 ---
@@ -2160,10 +2373,13 @@ PUT /api/v1/hostels/{hostelUuid}
 
 **Flow:**
 1. Student logs in
-2. Navigates to "My Hostel" section
-3. Views active hostel allocation (if any)
-4. Sees hostel name, room number, roommates
-5. Can view hostel history
+2. Sees notification badge (if unread notifications exist)
+3. Clicks notification to view allocation details OR
+4. Navigates to "My Hostel" section
+5. Views active hostel allocation (if any)
+6. Sees hostel name, room number, roommates
+7. Can view hostel history
+8. Can view audit log timeline (if permissions allow)
 
 **API Calls:**
 ```typescript
@@ -2300,20 +2516,392 @@ GET /api/v1/hostel-allocations/hostel/{hostelUuid}/active
 
 ---
 
+## System Integration Features
+
+### **1. Notification System Integration**
+
+The Hostel Management module is fully integrated with the system-wide notification service. Notifications are automatically sent to relevant users when key events occur.
+
+#### **Notification Triggers:**
+
+1. **Student Hostel Allocation Created:**
+   - **Recipients**: Student, All Parents
+   - **Type**: IN_APP
+   - **Title**: "Hostel Allocation: [Hostel Name]"
+   - **Content**: "You have been allocated to [Hostel Name], Room [Room Number]."
+   - **Action URL**: `/hostel/allocations/{allocationUuid}`
+   - **Priority**: 5 (Medium)
+   - **Reference Type**: `HOSTEL_ALLOCATION`
+
+2. **Student Hostel Allocation Released:**
+   - **Recipients**: Student, All Parents
+   - **Type**: IN_APP
+   - **Title**: "Hostel Allocation Released: [Hostel Name]"
+   - **Content**: "Your hostel allocation has been released from [Hostel Name], Room [Room Number]."
+   - **Action URL**: `/hostel/allocations/{allocationUuid}`
+   - **Priority**: 5 (Medium)
+   - **Reference Type**: `HOSTEL_ALLOCATION`
+
+#### **Notification Flow Example:**
+```
+Admin creates allocation
+    ↓
+Backend creates allocation
+    ↓
+Backend sends notification to Student
+    ↓
+Backend sends notification to Parent 1
+    ↓
+Backend sends notification to Parent 2
+    ↓
+All notifications appear in user's notification center
+    ↓
+User clicks notification
+    ↓
+Frontend navigates to allocation details page
+    ↓
+Notification marked as read
+```
+
+---
+
+### **2. Audit Logging System Integration**
+
+All Hostel Management operations are automatically logged in the audit system for compliance, tracking, and security purposes.
+
+#### **Audit Log Entity Types:**
+
+- `HOSTEL` - Hostel creation, updates, deletions
+- `HOSTEL_ROOM` - Room creation, updates, deletions
+- `HOSTEL_ALLOCATION` - Allocation creation, updates, releases, deletions
+- `HOSTEL_WARDEN` - Warden account creation, updates, deletions
+- `HOSTEL_MANAGER` - Manager account creation, updates, deletions
+
+#### **Audit Actions Tracked:**
+
+- `CREATE` - When new entities are created
+- `UPDATE` - When entities are modified (including releases)
+- `DELETE` - When entities are removed
+
+#### **Audit Log Information Captured:**
+
+- User who performed the action
+- Timestamp of the action
+- Entity type and ID
+- Descriptive message
+- IP address (if available)
+- College context
+
+#### **Example Audit Log Entry:**
+```json
+{
+  "id": 12345,
+  "userId": 789,
+  "userName": "John Admin",
+  "action": "CREATE",
+  "entityType": "HOSTEL_ALLOCATION",
+  "entityId": 456,
+  "description": "Allocated student Alice Johnson to room 101 in Boys Hostel A",
+  "ipAddress": "192.168.1.100",
+  "collegeId": 1,
+  "createdAt": "2024-01-15T10:30:00Z"
+}
+```
+
+---
+
+## Frontend Notification Integration Patterns
+
+### **Real-time Notification Handling**
+
+**Option 1: Polling (Recommended for MVP)**
+```typescript
+// Poll for new notifications every 30 seconds
+useEffect(() => {
+  const interval = setInterval(async () => {
+    const response = await fetch('/api/v1/notifications?isRead=false', {
+      headers: {
+        'Authorization': `Bearer ${token}`
+      }
+    });
+    const data = await response.json();
+    updateNotificationState(data.data);
+  }, 30000);
+  
+  return () => clearInterval(interval);
+}, [token]);
+```
+
+**Option 2: WebSocket (Recommended for Production)**
+```typescript
+// Connect to WebSocket for real-time notifications
+useEffect(() => {
+  const ws = new WebSocket(`wss://api.example.com/notifications?token=${token}`);
+  
+  ws.onmessage = (event) => {
+    const notification = JSON.parse(event.data);
+    if (notification.referenceType === 'HOSTEL_ALLOCATION') {
+      showNotificationToast(notification);
+      updateNotificationBadge();
+    }
+  };
+  
+  return () => ws.close();
+}, [token]);
+```
+
+### **Notification UI Components**
+
+```typescript
+// Notification Badge Component
+const NotificationBadge = () => {
+  const { unreadCount } = useNotifications();
+  
+  return (
+    <Badge count={unreadCount} showZero={false}>
+      <BellIcon />
+    </Badge>
+  );
+};
+
+// Notification Center Component
+const NotificationCenter = () => {
+  const { notifications, markAsRead } = useNotifications();
+  const navigate = useNavigate();
+  
+  const handleNotificationClick = async (notification) => {
+    await markAsRead(notification.id);
+    if (notification.actionUrl) {
+      navigate(notification.actionUrl);
+    }
+  };
+  
+  return (
+    <NotificationList>
+      {notifications
+        .filter(n => n.referenceType === 'HOSTEL_ALLOCATION')
+        .map(notification => (
+          <NotificationItem
+            key={notification.id}
+            notification={notification}
+            onClick={() => handleNotificationClick(notification)}
+          />
+        ))}
+    </NotificationList>
+  );
+};
+```
+
+### **Notification Toast Integration**
+
+```typescript
+// Show toast when allocation is created
+const showAllocationNotification = (allocation) => {
+  showToast({
+    type: 'success',
+    title: 'Hostel Allocated',
+    message: `${allocation.studentName} allocated to ${allocation.hostelName}, Room ${allocation.roomNumber}`,
+    duration: 5000,
+    action: {
+      label: 'View Details',
+      onClick: () => navigate(`/hostel/allocations/${allocation.uuid}`)
+    }
+  });
+};
+```
+
+---
+
+## Frontend Audit Log Integration
+
+### **Viewing Audit Logs**
+
+```typescript
+// Fetch audit logs for a specific hostel allocation
+const fetchAllocationAuditLogs = async (allocationUuid: string) => {
+  const allocation = await getHostelAllocation(allocationUuid);
+  
+  const response = await fetch(
+    `/api/v1/audit-logs?entityType=HOSTEL_ALLOCATION&entityId=${allocation.id}`,
+    {
+      headers: {
+        'Authorization': `Bearer ${token}`
+      }
+    }
+  );
+  
+  return response.json();
+};
+
+// Display audit log timeline
+const AuditLogTimeline = ({ allocationUuid }) => {
+  const [logs, setLogs] = useState([]);
+  
+  useEffect(() => {
+    fetchAllocationAuditLogs(allocationUuid).then(setLogs);
+  }, [allocationUuid]);
+  
+  return (
+    <Timeline>
+      {logs.map(log => (
+        <TimelineItem key={log.id}>
+          <TimelineIcon action={log.action} />
+          <TimelineContent>
+            <User>{log.userName}</User>
+            <Action>{log.action}</Action>
+            <Description>{log.description}</Description>
+            <Timestamp>{formatDate(log.createdAt)}</Timestamp>
+          </TimelineContent>
+        </TimelineItem>
+      ))}
+    </Timeline>
+  );
+};
+```
+
+---
+
+## User Interaction Flows with Notifications
+
+### **Flow 1: Student Receives Hostel Allocation Notification**
+
+**Scenario:** Admin allocates a student to a hostel room.
+
+**User Journey:**
+1. Admin creates hostel allocation via API
+2. Backend automatically sends notifications to:
+   - Student's account
+   - All parents linked to the student
+3. Student logs into their dashboard
+4. Student sees notification badge with count of unread notifications
+5. Student clicks on notification
+6. Notification shows: "You have been allocated to Boys Hostel A, Room 101"
+7. Student clicks "View Details" button
+8. Frontend navigates to `/hostel/allocations/{allocationUuid}`
+9. Student views full allocation details
+10. Notification is marked as read
+11. Student can now see their hostel allocation in "My Hostel" section
+
+**Frontend Implementation:**
+```typescript
+// Notification Component
+const HostelAllocationNotification = ({ notification }) => {
+  const navigate = useNavigate();
+  
+  const handleClick = async () => {
+    // Mark as read
+    await markNotificationAsRead(notification.id);
+    
+    // Navigate to allocation details
+    if (notification.actionUrl) {
+      navigate(notification.actionUrl);
+    }
+  };
+  
+  return (
+    <NotificationCard onClick={handleClick}>
+      <NotificationIcon type="hostel" />
+      <NotificationContent>
+        <Title>{notification.title}</Title>
+        <Message>{notification.content}</Message>
+        <Timestamp>{formatDate(notification.createdAt)}</Timestamp>
+      </NotificationContent>
+      {!notification.isRead && <UnreadBadge />}
+    </NotificationCard>
+  );
+};
+```
+
+---
+
+### **Flow 2: Parent Receives Hostel Allocation Notification**
+
+**Scenario:** Parent receives notification when their child is allocated to hostel.
+
+**User Journey:**
+1. Parent logs into parent portal
+2. Parent sees notification in notification center
+3. Notification shows: "Your child Alice Johnson (10A001) has been allocated to Boys Hostel A, Room 101"
+4. Parent clicks notification
+5. Frontend navigates to allocation details page
+6. Parent can view:
+   - Hostel name and details
+   - Room number and capacity
+   - Allocation date
+   - Warden contact information
+7. Parent can share this information or contact warden if needed
+8. Notification is marked as read
+
+---
+
+### **Flow 3: Student Receives Hostel Release Notification**
+
+**Scenario:** Student's hostel allocation is released by admin.
+
+**User Journey:**
+1. Admin releases hostel allocation
+2. Backend sends notifications to student and parents
+3. Student receives notification: "Your hostel allocation has been released from Boys Hostel A, Room 101"
+4. Student views notification and allocation details
+5. Student can see the release date and reason (if provided)
+6. Student's "My Hostel" section now shows "No Active Allocation"
+7. Student can view historical allocations in "Hostel History"
+
+---
+
+## Production-Ready Features
+
+### **✅ System Integrations:**
+- **Audit Logging**: All operations are logged with user, timestamp, and action details
+- **Notification System**: Automatic notifications sent to students and parents
+- **Entity Relationships**: Bidirectional relationships for data consistency
+- **Error Handling**: Comprehensive error responses with proper HTTP status codes
+- **Security**: Role-based access control with `@PreAuthorize` annotations
+- **College Isolation**: Full tenant isolation using `TenantAccessGuard`
+
+### **✅ Frontend Integration Checklist:**
+
+- [ ] Implement notification polling or WebSocket connection
+- [ ] Create notification badge component showing unread count
+- [ ] Build notification center/dropdown for viewing notifications
+- [ ] Add notification toast/popup for real-time alerts
+- [ ] Implement notification click handlers to navigate to allocation details
+- [ ] Add "Mark as Read" functionality
+- [ ] Create audit log viewer component (for admin/manager roles)
+- [ ] Implement notification preferences (if applicable)
+- [ ] Add notification sound/vibration (mobile apps)
+- [ ] Handle notification deep links for mobile apps
+
+### **✅ User Experience Enhancements:**
+
+1. **Notification Badge**: Show unread notification count in header
+2. **Notification Center**: Dropdown/modal showing all notifications
+3. **Real-time Updates**: Use WebSocket or polling for live notifications
+4. **Toast Notifications**: Show temporary success/error messages
+5. **Deep Linking**: Navigate directly to allocation details from notification
+6. **Notification History**: Allow users to view past notifications
+7. **Filter Notifications**: Filter by type (HOSTEL_ALLOCATION, etc.)
+8. **Mark All as Read**: Bulk action for notifications
+
+---
+
 ## Conclusion
 
 This document provides a complete guide for frontend developers to integrate the Hostel Management system with hostel manager and warden management capabilities. All endpoints are RESTful, follow consistent patterns, and include proper error handling and security measures.
 
 ### **Key Features:**
-- ✅ **Hostel Manager Management:** Full CRUD operations for hostel manager accounts
-- ✅ **Hostel Warden Management:** Full CRUD operations for hostel warden accounts with assignment tracking
-- ✅ **Hostel Management:** Complete hostel catalog management with warden assignment
-- ✅ **Room Management:** Comprehensive room management with occupancy tracking
-- ✅ **Allocation Management:** Complete student hostel allocation system with capacity validation
+- ✅ **Hostel Manager Management:** Full CRUD operations for hostel manager accounts with audit logging
+- ✅ **Hostel Warden Management:** Full CRUD operations for hostel warden accounts with assignment tracking and audit logging
+- ✅ **Hostel Management:** Complete hostel catalog management with warden assignment and audit logging
+- ✅ **Room Management:** Comprehensive room management with occupancy tracking and audit logging
+- ✅ **Allocation Management:** Complete student hostel allocation system with capacity validation, notifications, and audit logging
 - ✅ **Active/Inactive Tracking:** Automatic allocation lifecycle management
 - ✅ **Statistics & Reporting:** Hostel analytics and monitoring
 - ✅ **Multi-Role Support:** Admin, Hostel Manager, Hostel Warden, Teacher, Student roles
 - ✅ **College Isolation:** Full tenant isolation for SaaS architecture
+- ✅ **Notification System:** Automatic in-app notifications for students and parents on allocation/release
+- ✅ **Audit Logging:** Complete audit trail for all operations (CREATE, UPDATE, DELETE)
+- ✅ **Bidirectional Relationships:** Proper entity relationships for data consistency
 
 ### **Role Hierarchy:**
 ```
@@ -2334,6 +2922,145 @@ SUPER_ADMIN / COLLEGE_ADMIN
   View Hostels (Teacher)
   View Own Hostel (Student)
 ```
+
+---
+
+## API Response Examples with System Features
+
+### **Allocation Creation Response:**
+```json
+{
+  "success": true,
+  "status": 200,
+  "message": "Hostel allocation created successfully",
+  "data": {
+    "uuid": "allocation-uuid-789",
+    "studentUuid": "student-uuid-001",
+    "studentName": "Alice Johnson",
+    "rollNumber": "10A001",
+    "roomUuid": "room-uuid-101",
+    "roomNumber": "101",
+    "hostelUuid": "hostel-uuid-789",
+    "hostelName": "Boys Hostel A",
+    "allocatedAt": "2024-01-15T08:00:00",
+    "releasedAt": null,
+    "isActive": true,
+    "createdAt": "2024-01-15T08:00:00",
+    "updatedAt": "2024-01-15T08:00:00"
+  }
+}
+```
+
+**Note:** Notifications and audit logs are created automatically by the backend. The frontend should poll for notifications or use WebSocket to receive them in real-time.
+
+---
+
+## Frontend Implementation Best Practices
+
+### **1. Notification Handling**
+
+**Recommended Approach:**
+```typescript
+// Custom hook for notifications
+const useHostelNotifications = () => {
+  const [notifications, setNotifications] = useState([]);
+  const [unreadCount, setUnreadCount] = useState(0);
+  
+  useEffect(() => {
+    // Initial fetch
+    fetchNotifications();
+    
+    // Poll every 30 seconds
+    const interval = setInterval(fetchNotifications, 30000);
+    
+    return () => clearInterval(interval);
+  }, []);
+  
+  const fetchNotifications = async () => {
+    const response = await fetch(
+      '/api/v1/notifications?referenceType=HOSTEL_ALLOCATION&isRead=false',
+      {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      }
+    );
+    const data = await response.json();
+    setNotifications(data.data);
+    setUnreadCount(data.data.length);
+  };
+  
+  return { notifications, unreadCount, refresh: fetchNotifications };
+};
+```
+
+### **2. Error Handling**
+
+```typescript
+// Comprehensive error handling
+const handleAllocationError = (error: ApiError) => {
+  switch (error.status) {
+    case 409:
+      if (error.message.includes('already has an active')) {
+        showErrorToast('Student already has an active allocation');
+      } else if (error.message.includes('full capacity')) {
+        showErrorToast('Room is at full capacity. Please select another room.');
+      }
+      break;
+    case 404:
+      showErrorToast('Resource not found. Please refresh and try again.');
+      break;
+    case 403:
+      showErrorToast('You do not have permission to perform this action.');
+      break;
+    default:
+      showErrorToast('An error occurred. Please try again.');
+  }
+};
+```
+
+### **3. Optimistic UI Updates**
+
+```typescript
+// Update UI immediately, then sync with server
+const createAllocationOptimistic = async (data) => {
+  // Show loading state
+  setLoading(true);
+  
+  // Optimistically add to list
+  const tempAllocation = {
+    ...data,
+    uuid: 'temp-' + Date.now(),
+    isActive: true,
+    allocatedAt: new Date().toISOString()
+  };
+  setAllocations(prev => [tempAllocation, ...prev]);
+  
+  try {
+    // Make API call
+    const result = await createAllocation(data);
+    
+    // Replace temp with real data
+    setAllocations(prev => 
+      prev.map(a => a.uuid === tempAllocation.uuid ? result.data : a)
+    );
+    
+    // Show success and refresh notifications
+    showSuccessToast('Allocation created successfully');
+    await refreshNotifications();
+  } catch (error) {
+    // Remove temp on error
+    setAllocations(prev => 
+      prev.filter(a => a.uuid !== tempAllocation.uuid)
+    );
+    handleAllocationError(error);
+  } finally {
+    setLoading(false);
+  }
+};
+```
+
+---
 
 For any questions or clarifications, refer to the API documentation or contact the backend team.
 
