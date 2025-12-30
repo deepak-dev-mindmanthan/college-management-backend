@@ -16,7 +16,7 @@ import org.collegemanagement.repositories.PaymentRepository;
 import org.collegemanagement.security.tenant.TenantAccessGuard;
 import org.collegemanagement.services.PaymentGatewayService;
 import org.collegemanagement.services.PaymentService;
-import org.collegemanagement.services.PaymentSummary;
+import org.collegemanagement.dto.PaymentSummary;
 import org.collegemanagement.services.SubscriptionService;
 import org.collegemanagement.services.EmailService;
 import org.springframework.data.domain.Page;

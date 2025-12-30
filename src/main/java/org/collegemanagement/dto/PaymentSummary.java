@@ -1,4 +1,4 @@
-package org.collegemanagement.services;
+package org.collegemanagement.dto;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;

@@ -17,13 +17,14 @@ import org.collegemanagement.enums.RoleType;
 import org.collegemanagement.enums.Status;
 import org.collegemanagement.exception.ResourceConflictException;
 import org.collegemanagement.exception.ResourceNotFoundException;
+import org.collegemanagement.exception.TenantRequiredException;
 import org.collegemanagement.mapper.StudentMapper;
 import org.collegemanagement.repositories.*;
 import org.collegemanagement.security.tenant.TenantAccessGuard;
 import org.collegemanagement.services.CollegeService;
 import org.collegemanagement.services.RoleService;
 import org.collegemanagement.services.StudentService;
-import org.collegemanagement.services.StudentSummary;
+import org.collegemanagement.dto.StudentSummary;
 import org.collegemanagement.services.UserManager;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
@@ -458,6 +459,11 @@ public class StudentServiceImpl implements StudentService {
     // Helper methods
 
     private College getCollegeById(Long collegeId) {
+
+        if(collegeId==null){
+            throw new TenantRequiredException("Tenant/College id is required");
+        }
+
         College college = collegeService.findById(collegeId);
         // Validate that the college belongs to the current tenant
         tenantAccessGuard.assertCurrentTenant(college);

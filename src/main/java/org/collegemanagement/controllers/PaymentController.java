@@ -15,7 +15,7 @@ import org.collegemanagement.dto.payment.ProcessPaymentRequest;
 import org.collegemanagement.enums.PaymentGateway;
 import org.collegemanagement.enums.PaymentStatus;
 import org.collegemanagement.services.PaymentService;
-import org.collegemanagement.services.PaymentSummary;
+import org.collegemanagement.dto.PaymentSummary;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;

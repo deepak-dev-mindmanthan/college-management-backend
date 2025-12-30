@@ -13,7 +13,7 @@ import org.collegemanagement.dto.student.*;
 import org.collegemanagement.enums.EnrollmentStatus;
 import org.collegemanagement.enums.Status;
 import org.collegemanagement.services.StudentService;
-import org.collegemanagement.services.StudentSummary;
+import org.collegemanagement.dto.StudentSummary;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;

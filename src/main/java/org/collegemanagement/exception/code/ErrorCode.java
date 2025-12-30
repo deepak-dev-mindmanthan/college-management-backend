@@ -13,7 +13,8 @@ public enum ErrorCode implements ErrorCodeContract {
     RESOURCE_CONFLICT(HttpStatus.CONFLICT, "Resource conflict"),
     VALIDATION_ERROR(HttpStatus.BAD_REQUEST, "Validation failed"),
     DATA_INTEGRITY_VIOLATION(HttpStatus.BAD_REQUEST, "Invalid request data"),
-    INTERNAL_SERVER_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "Internal server error");
+    INTERNAL_SERVER_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "Internal server error"),
+    TENANT_REQUIRED(HttpStatus.UNAUTHORIZED, "Tenant required id to access this resource"),;
 
     private final HttpStatus status;
     private final String defaultMessage;

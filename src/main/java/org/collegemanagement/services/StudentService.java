@@ -1,5 +1,6 @@
 package org.collegemanagement.services;
 
+import org.collegemanagement.dto.StudentSummary;
 import org.collegemanagement.dto.student.*;
 import org.collegemanagement.enums.EnrollmentStatus;
 import org.collegemanagement.enums.Status;

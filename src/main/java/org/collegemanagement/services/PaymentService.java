@@ -1,5 +1,6 @@
 package org.collegemanagement.services;
 
+import org.collegemanagement.dto.PaymentSummary;
 import org.collegemanagement.dto.payment.CreatePaymentRequest;
 import org.collegemanagement.dto.payment.PaymentResponse;
 import org.collegemanagement.dto.payment.ProcessPaymentRequest;
