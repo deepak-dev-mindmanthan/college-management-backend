@@ -6,9 +6,11 @@ import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.extern.slf4j.Slf4j;
+import org.collegemanagement.entity.subscription.Subscription;
 import org.collegemanagement.entity.user.User;
 import org.collegemanagement.enums.RoleType;
 import org.collegemanagement.security.errors.SecurityErrorCode;
+import org.collegemanagement.security.handler.CustomAccessDeniedHandler;
 import org.collegemanagement.services.SubscriptionService;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.security.access.AccessDeniedException;
@@ -23,12 +25,12 @@ import java.util.List;
 
 /**
  * Filter to check subscription status before allowing API access.
- * 
+ * <p>
  * Allows access to:
  * - Public endpoints (auth, pricing, swagger)
  * - SUPER_ADMIN (bypasses subscription check)
  * - Colleges with active subscriptions
- * 
+ * <p>
  * Blocks access for:
  * - Colleges with expired/inactive subscriptions
  * - Colleges with no subscription
@@ -38,9 +40,11 @@ import java.util.List;
 public class SubscriptionAccessFilter extends OncePerRequestFilter {
 
     private final SubscriptionService subscriptionService;
+    private final CustomAccessDeniedHandler accessDeniedHandler;
 
-    public SubscriptionAccessFilter(@Lazy SubscriptionService subscriptionService) {
+    public SubscriptionAccessFilter(@Lazy SubscriptionService subscriptionService, CustomAccessDeniedHandler accessDeniedHandler) {
         this.subscriptionService = subscriptionService;
+        this.accessDeniedHandler = accessDeniedHandler;
     }
 
     // Public endpoints that don't require subscription check
@@ -60,8 +64,8 @@ public class SubscriptionAccessFilter extends OncePerRequestFilter {
             @Nullable HttpServletResponse response,
             @Nullable FilterChain filterChain
     ) throws ServletException, IOException {
-        
-        if (request == null || filterChain == null) {
+
+        if (request == null || response == null || filterChain == null) {
             return;
         }
 
@@ -91,10 +95,10 @@ public class SubscriptionAccessFilter extends OncePerRequestFilter {
             // Check subscription for college users
             if (authentication.getPrincipal() instanceof User user && user.getCollege() != null) {
                 Long collegeId = user.getCollege().getId();
-                
+
                 // Check if subscription is active
                 boolean hasActiveSubscription = subscriptionService.getSubscriptionByCollegeId(collegeId)
-                        .map(subscription -> subscription.isActive())
+                        .map(Subscription::isActive)
                         .orElse(false);
 
                 if (!hasActiveSubscription) {
@@ -107,8 +111,12 @@ public class SubscriptionAccessFilter extends OncePerRequestFilter {
             filterChain.doFilter(request, response);
 
         } catch (AccessDeniedException e) {
-            // Re-throw access denied exceptions
-            throw e;
+            // Handle access denied exceptions
+            accessDeniedHandler.handle(
+                    request,
+                    response,
+                    new AccessDeniedException(SecurityErrorCode.SUBSCRIPTION_EXPIRED.name())
+            );
         } catch (Exception e) {
             log.error("Error in subscription access filter: {}", e.getMessage(), e);
             // On error, allow request to proceed (fail open)

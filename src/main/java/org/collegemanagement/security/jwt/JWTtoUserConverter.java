@@ -18,8 +18,6 @@ import org.springframework.stereotype.Component;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 
 
-
-
 @Component
 public class JWTtoUserConverter implements Converter<Jwt, UsernamePasswordAuthenticationToken> {
 
@@ -47,10 +45,14 @@ public class JWTtoUserConverter implements Converter<Jwt, UsernamePasswordAuthen
                 .map(role -> new SimpleGrantedAuthority(role.getName().name().toUpperCase()))
                 .collect(Collectors.toSet());
 
-        Long collegeId = source.getClaim("collegeId");
-        if (collegeId != null) {
-            College college = new College();
-            college.setId(collegeId);
+        Object collegeIdClaim = source.getClaim("collegeId");
+
+        if (collegeIdClaim != null && !collegeIdClaim.toString().isBlank()) {
+            Long collegeId = Long.valueOf(collegeIdClaim.toString());
+
+            College college = College.builder()
+                    .id(collegeId)
+                    .build();
             user.setCollege(college);
         }
 

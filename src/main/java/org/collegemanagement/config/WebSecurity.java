@@ -42,14 +42,15 @@ public class WebSecurity {
     final UserDetailsManager userDetailsManager;
     @Lazy
     final SubscriptionAccessFilter subscriptionAccessFilter;
-    CustomAuthenticationEntryPoint customAuthenticationEntryPoint;
-    CustomAccessDeniedHandler customAccessDeniedHandler;
+    final TenantIsolationFilter tenantIsolationFilter;
+    final CustomAuthenticationEntryPoint customAuthenticationEntryPoint;
+    final CustomAccessDeniedHandler customAccessDeniedHandler;
 
     public WebSecurity(JWTtoUserConverter jwtToUserConverter, CollegeIsolationPermissionEvaluator permissionEvaluator,
                        JwtDecoder jwtRefreshTokenDecoder,
                        PasswordEncoder passwordEncoder,
                        UserDetailsManager userDetailsManager,
-                       SubscriptionAccessFilter subscriptionAccessFilter,
+                       SubscriptionAccessFilter subscriptionAccessFilter, TenantIsolationFilter tenantIsolationFilter,
                        CustomAuthenticationEntryPoint customAuthenticationEntryPoint,
                        CustomAccessDeniedHandler customAccessDeniedHandler
     ) {
@@ -59,6 +60,7 @@ public class WebSecurity {
         this.passwordEncoder = passwordEncoder;
         this.userDetailsManager = userDetailsManager;
         this.subscriptionAccessFilter = subscriptionAccessFilter;
+        this.tenantIsolationFilter = tenantIsolationFilter;
         this.customAuthenticationEntryPoint = customAuthenticationEntryPoint;
         this.customAccessDeniedHandler = customAccessDeniedHandler;
     }
@@ -85,7 +87,7 @@ public class WebSecurity {
                 .sessionManagement((session) -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 // Tenant isolation filter - sets tenant context
                 .addFilterAfter(
-                        tenantIsolationFilter(),
+                        tenantIsolationFilter,
                         BearerTokenAuthenticationFilter.class
                 )
                 // Subscription access filter - checks subscription status
@@ -137,12 +139,4 @@ public class WebSecurity {
         handler.setPermissionEvaluator(permissionEvaluator);
         return handler;
     }
-
-
-    @Bean
-    public TenantIsolationFilter tenantIsolationFilter() {
-        return new TenantIsolationFilter();
-    }
-
-
 }
