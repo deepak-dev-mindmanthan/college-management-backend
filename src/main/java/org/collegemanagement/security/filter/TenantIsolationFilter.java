@@ -33,11 +33,13 @@ public class TenantIsolationFilter extends OncePerRequestFilter {
             if (authentication != null
                     && authentication.isAuthenticated()
                     && authentication.getPrincipal() instanceof User user) {
+
                 // Super admin has no tenant
                 if (user.getCollege() != null) {
                     TenantContext.setTenantId(user.getCollege().getId());
                 }
             }
+
 
             if (filterChain != null) {
                 filterChain.doFilter(request, response);

@@ -54,6 +54,8 @@ public class SubscriptionAccessFilter extends OncePerRequestFilter {
             "/api/v1/pricing",
             "/swagger-ui",
             "/api/docs",
+            "/api/v1/subscriptions",
+            "/api/v1/invoices/generate",
             "/v3/api-docs",
             "/api/v1/payments/webhooks" // Webhooks should be accessible
     );

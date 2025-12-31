@@ -18,7 +18,8 @@ import java.time.Instant;
                 @Index(name = "idx_payment_invoice", columnList = "invoice_id"),
                 @Index(name = "idx_payment_gateway", columnList = "gateway"),
                 @Index(name = "idx_payment_status", columnList = "status"),
-                @Index(name = "idx_payment_txn", columnList = "transaction_id", unique = true)
+                @Index(name = "idx_payment_gateway_order", columnList = "gateway_order_id", unique = true),
+                @Index(name = "idx_payment_gateway_txn", columnList = "gateway_transaction_id", unique = true)
         }
 )
 @Getter
@@ -27,9 +28,7 @@ import java.time.Instant;
 @AllArgsConstructor
 @SuperBuilder
 public class Payment extends BaseEntity {
-    /**
-     * Invoice (FK)
-     */
+
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "invoice_id", nullable = false)
     private Invoice invoice;
@@ -38,11 +37,11 @@ public class Payment extends BaseEntity {
     @Column(nullable = false, length = 20)
     private PaymentGateway gateway;
 
-    /**
-     * Gateway transaction reference
-     */
-    @Column(name = "transaction_id", nullable = false, unique = true, length = 100)
-    private String transactionId;
+    @Column(name = "gateway_order_id", unique = true, length = 100)
+    private String gatewayOrderId;
+
+    @Column(name = "gateway_transaction_id", unique = true, length = 100)
+    private String gatewayTransactionId;
 
     @Column(nullable = false, precision = 12, scale = 2)
     private BigDecimal amount;
@@ -51,7 +50,7 @@ public class Payment extends BaseEntity {
     @Column(nullable = false, length = 20)
     private PaymentStatus status;
 
-    @Column(name = "payment_date", nullable = false)
+    @Column(name = "payment_date")
     private Instant paymentDate;
 
     /**
@@ -67,4 +66,5 @@ public class Payment extends BaseEntity {
         }
     }
 }
+
 

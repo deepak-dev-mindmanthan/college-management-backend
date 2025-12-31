@@ -32,7 +32,7 @@ public interface PaymentRepository extends JpaRepository<Payment, Long> {
     @Query("""
             SELECT p FROM Payment p
             JOIN p.invoice i
-            WHERE p.transactionId = :transactionId
+            WHERE p.gatewayTransactionId = :transactionId
             AND i.college.id = :collegeId
             """)
     Optional<Payment> findByTransactionIdAndCollegeId(@Param("transactionId") String transactionId, @Param("collegeId") Long collegeId);
@@ -59,6 +59,20 @@ public interface PaymentRepository extends JpaRepository<Payment, Long> {
             ORDER BY p.paymentDate DESC
             """)
     List<Payment> findByInvoiceIdAndCollegeId(@Param("invoiceId") Long invoiceId, @Param("collegeId") Long collegeId);
+
+
+    @Query("""
+            SELECT p FROM Payment p
+            JOIN p.invoice i
+            WHERE p.invoice.id = :invoiceId
+            AND i.college.id = :collegeId
+            ORDER BY p.paymentDate DESC
+            """)
+    Page<Payment> findByInvoiceIdAndCollegeId(
+            Long invoiceId,
+            Long collegeId,
+            Pageable pageable
+    );
 
     /**
      * Find payments by status and college ID
@@ -115,6 +129,10 @@ public interface PaymentRepository extends JpaRepository<Payment, Long> {
     /**
      * Check if payment exists by transaction ID
      */
-    boolean existsByTransactionId(String transactionId);
+    boolean existsByGatewayTransactionId(String transactionId);
+
+    Optional<Payment> findByGatewayOrderId(String gatewayOrderId);
+
+
 }
 

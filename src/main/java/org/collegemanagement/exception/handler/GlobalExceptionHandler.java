@@ -11,6 +11,8 @@ import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
+import org.springframework.security.oauth2.jwt.BadJwtException;
+import org.springframework.security.oauth2.server.resource.InvalidBearerTokenException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
@@ -111,6 +113,23 @@ public class GlobalExceptionHandler {
 
         return ResponseEntity
                 .status(SecurityErrorCode.INVALID_CREDENTIALS.getStatus())
+                .body(response);
+    }
+
+    @ExceptionHandler(value = {
+            InvalidBearerTokenException.class,
+            BadJwtException.class
+    })
+    public ResponseEntity<ApiResponse<?>> handleBadJwtToken(
+            BadCredentialsException ex) {
+
+        ApiResponse<?> response =
+                ApiErrorResponseFactory.from(
+                        SecurityErrorCode.INVALID_TOKEN
+                );
+
+        return ResponseEntity
+                .status(SecurityErrorCode.INVALID_TOKEN.getStatus())
                 .body(response);
     }
 

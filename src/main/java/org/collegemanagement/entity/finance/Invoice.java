@@ -89,4 +89,8 @@ public class Invoice extends BaseEntity {
             this.status = InvoiceStatus.UNPAID;
         }
     }
+
+    public BigDecimal getOutStandingAmount() {
+        return this.amount;
+    }
 }

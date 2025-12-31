@@ -75,7 +75,6 @@ public class AuthController {
             description = "Login users ",
             security = {}
     )
-
     @ApiResponses(value = {
             @io.swagger.v3.oas.annotations.responses.ApiResponse(
                     responseCode = "200",
@@ -83,7 +82,6 @@ public class AuthController {
                     content = @Content(schema = @Schema(implementation = LoginResponse.class))
             ),
     })
-
     @PostMapping("/login")
     public ResponseEntity<ApiResponse<LoginResponse>> login(@RequestBody LoginRequest loginRequest) {
         return ResponseEntity.ok(ApiResponse.success(

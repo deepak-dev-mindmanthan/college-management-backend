@@ -50,7 +50,13 @@ public class SubscriptionServiceImpl implements SubscriptionService {
 
         // Check if college already has an active subscription
         Subscription existingSubscription = subscriptionRepository.findByCollegeId(collegeId).orElse(null);
-        if (existingSubscription != null && existingSubscription.isActive()) {
+
+
+        if(existingSubscription != null && existingSubscription.isActive()){
+            throw new ResourceConflictException("College already has an active subscription");
+        }
+
+        if (existingSubscription != null) {
             throw new ResourceConflictException("College already has an active subscription");
         }
 

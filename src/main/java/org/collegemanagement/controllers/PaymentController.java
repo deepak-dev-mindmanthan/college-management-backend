@@ -9,13 +9,12 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.AllArgsConstructor;
 import org.collegemanagement.api.response.ApiResponse;
-import org.collegemanagement.dto.payment.CreatePaymentRequest;
+import org.collegemanagement.dto.PaymentSummary;
+import org.collegemanagement.dto.payment.InitiatePaymentRequest;
 import org.collegemanagement.dto.payment.PaymentResponse;
-import org.collegemanagement.dto.payment.ProcessPaymentRequest;
 import org.collegemanagement.enums.PaymentGateway;
 import org.collegemanagement.enums.PaymentStatus;
 import org.collegemanagement.services.PaymentService;
-import org.collegemanagement.dto.PaymentSummary;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -31,34 +30,6 @@ import org.springframework.web.bind.annotation.*;
 public class PaymentController {
 
     private final PaymentService paymentService;
-
-    @Operation(
-            summary = "Create a new payment",
-            description = "Creates a new payment record for an invoice. Requires COLLEGE_ADMIN or SUPER_ADMIN role."
-    )
-    @ApiResponses(value = {
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(
-                    responseCode = "200",
-                    description = "Payment created successfully",
-                    content = @Content(schema = @Schema(implementation = PaymentResponse.class))
-            ),
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(
-                    responseCode = "404",
-                    description = "Invoice not found"
-            ),
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(
-                    responseCode = "409",
-                    description = "Transaction ID already exists"
-            )
-    })
-    @PostMapping
-    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'COLLEGE_ADMIN')")
-    public ResponseEntity<ApiResponse<PaymentResponse>> createPayment(
-            @Valid @RequestBody CreatePaymentRequest request
-    ) {
-        PaymentResponse payment = paymentService.createPayment(request);
-        return ResponseEntity.ok(ApiResponse.success(payment, "Payment created successfully"));
-    }
 
     @Operation(
             summary = "Initiate and process payment",
@@ -83,40 +54,29 @@ public class PaymentController {
     @PostMapping("/initiate")
     @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'COLLEGE_ADMIN')")
     public ResponseEntity<ApiResponse<PaymentResponse>> initiatePayment(
-            @Valid @RequestBody CreatePaymentRequest request
+            @Valid @RequestBody InitiatePaymentRequest request
     ) {
-        PaymentResponse payment = paymentService.initiatePayment(request);
-        return ResponseEntity.ok(ApiResponse.success(payment, "Payment initiated and processed successfully"));
-    }
-
-    @Operation(
-            summary = "Process payment",
-            description = "Updates payment status (e.g., SUCCESS, FAILED). Requires COLLEGE_ADMIN or SUPER_ADMIN role."
-    )
-    @PutMapping("/{paymentUuid}/process")
-    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'COLLEGE_ADMIN')")
-    public ResponseEntity<ApiResponse<PaymentResponse>> processPayment(
-            @Parameter(description = "UUID of the payment to process")
-            @PathVariable String paymentUuid,
-            @Valid @RequestBody ProcessPaymentRequest request
-    ) {
-        request.setPaymentUuid(paymentUuid);
-        PaymentResponse payment = paymentService.processPayment(request);
-        return ResponseEntity.ok(ApiResponse.success(payment, "Payment processed successfully"));
+        return ResponseEntity.ok(
+                ApiResponse.success(
+                        paymentService.initiatePayment(request),
+                        "Payment initiated"
+                )
+        );
     }
 
     @Operation(
             summary = "Get payment by UUID",
             description = "Retrieves payment information by UUID. Requires COLLEGE_ADMIN or SUPER_ADMIN role."
     )
-    @GetMapping("/{paymentUuid}")
+    @GetMapping("/{uuid}")
     @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'COLLEGE_ADMIN')")
-    public ResponseEntity<ApiResponse<PaymentResponse>> getPayment(
-            @Parameter(description = "UUID of the payment")
-            @PathVariable String paymentUuid
-    ) {
-        PaymentResponse payment = paymentService.getPaymentByUuid(paymentUuid);
-        return ResponseEntity.ok(ApiResponse.success(payment, "Payment retrieved successfully"));
+    public ResponseEntity<ApiResponse<PaymentResponse>> getPayment(@PathVariable String uuid) {
+        return ResponseEntity.ok(
+                ApiResponse.success(
+                        paymentService.getPaymentByUuid(uuid),
+                        "Payment retrieved"
+                )
+        );
     }
 
     @Operation(

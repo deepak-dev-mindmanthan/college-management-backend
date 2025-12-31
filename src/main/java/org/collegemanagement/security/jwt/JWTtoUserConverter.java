@@ -1,11 +1,7 @@
 package org.collegemanagement.security.jwt;
 
 
-import java.util.Collection;
-import java.util.List;
-import java.util.Set;
-import java.util.stream.Collectors;
-
+import lombok.extern.slf4j.Slf4j;
 import org.collegemanagement.entity.tenant.College;
 import org.collegemanagement.entity.user.Role;
 import org.collegemanagement.entity.user.User;
@@ -13,11 +9,17 @@ import org.collegemanagement.enums.RoleType;
 import org.springframework.core.convert.converter.Converter;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.stereotype.Component;
-import org.springframework.security.core.authority.SimpleGrantedAuthority;
+
+import java.util.Collection;
+import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 
+@Slf4j
 @Component
 public class JWTtoUserConverter implements Converter<Jwt, UsernamePasswordAuthenticationToken> {
 
@@ -26,7 +28,6 @@ public class JWTtoUserConverter implements Converter<Jwt, UsernamePasswordAuthen
         User user = new User();
         user.setId(Long.parseLong(source.getSubject()));
         user.setEmail(source.getClaim("email"));
-
         // Extract roles from JWT claims
         List<String> rolesFromJwt = source.getClaimAsStringList("roles");
         if (rolesFromJwt == null) rolesFromJwt = List.of();

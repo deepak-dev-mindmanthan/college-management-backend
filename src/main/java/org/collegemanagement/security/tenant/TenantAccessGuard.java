@@ -64,6 +64,8 @@ public class TenantAccessGuard {
      */
     public Long getCurrentTenantId() {
         // SUPER ADMIN can work without tenant context
+
+
         if (isSuperAdmin()) {
             // For SUPER_ADMIN, return null or get from context if available
             return TenantContext.getTenantId();
@@ -74,6 +76,7 @@ public class TenantAccessGuard {
         if (currentTenantId == null) {
             throw new AccessDeniedException(SecurityErrorCode.TENANT_CONTEXT_MISSING.name());
         }
+
 
         return currentTenantId;
     }
