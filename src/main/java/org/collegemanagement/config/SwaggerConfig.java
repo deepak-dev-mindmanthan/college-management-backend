@@ -33,7 +33,7 @@ import org.springframework.context.annotation.Configuration;
                 )
         ),
         servers = {
-                @Server(url = "/api/v1", description = "API v1")
+                @Server( description = "API v1")
         }
 )
 
