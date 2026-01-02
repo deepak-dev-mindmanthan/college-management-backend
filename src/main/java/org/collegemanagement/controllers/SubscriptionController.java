@@ -12,7 +12,7 @@ import org.collegemanagement.api.response.ApiResponse;
 import org.collegemanagement.dto.subscription.CreateSubscriptionRequest;
 import org.collegemanagement.dto.subscription.RenewSubscriptionRequest;
 import org.collegemanagement.dto.subscription.SubscriptionResponse;
-import org.collegemanagement.dto.subscription.UpdateSubscriptionRequest;
+import org.collegemanagement.dto.subscription.UpgradeSubscriptionRequest;
 import org.collegemanagement.enums.SubscriptionStatus;
 import org.collegemanagement.services.SubscriptionService;
 import org.springframework.data.domain.Page;
@@ -55,20 +55,46 @@ public class SubscriptionController {
         return ResponseEntity.ok(ApiResponse.success(subscription, "Subscription created successfully"));
     }
 
+
+
     @Operation(
-            summary = "Update subscription",
-            description = "Updates subscription details. Requires COLLEGE_ADMIN or SUPER_ADMIN role."
+            summary = "Upgrade subscription plan",
+            description = "Upgrades an ACTIVE subscription to a higher plan. "
+                    + "Subscription will move to PENDING state until payment is completed."
     )
-    @PutMapping("/{subscriptionUuid}")
+    @PostMapping("/{subscriptionUuid}/upgrade")
     @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'COLLEGE_ADMIN')")
-    public ResponseEntity<ApiResponse<SubscriptionResponse>> updateSubscription(
-            @Parameter(description = "UUID of the subscription to update")
+    public ResponseEntity<ApiResponse<SubscriptionResponse>> upgradeSubscription(
+            @Parameter(description = "UUID of the subscription to upgrade")
             @PathVariable String subscriptionUuid,
-            @Valid @RequestBody UpdateSubscriptionRequest request
+            @Valid @RequestBody UpgradeSubscriptionRequest request
     ) {
-        SubscriptionResponse subscription = subscriptionService.updateSubscription(subscriptionUuid, request);
-        return ResponseEntity.ok(ApiResponse.success(subscription, "Subscription updated successfully"));
+        SubscriptionResponse subscription =
+                subscriptionService.upgradeSubscription(subscriptionUuid, request);
+
+        return ResponseEntity.ok(
+                ApiResponse.success(
+                        subscription,
+                        "Subscription upgrade initiated successfully"
+                )
+        );
     }
+
+
+//    @Operation(
+//            summary = "Update subscription",
+//            description = "Updates subscription details. Requires COLLEGE_ADMIN or SUPER_ADMIN role."
+//    )
+//    @PutMapping("/{subscriptionUuid}")
+//    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'COLLEGE_ADMIN')")
+//    public ResponseEntity<ApiResponse<SubscriptionResponse>> updateSubscription(
+//            @Parameter(description = "UUID of the subscription to update")
+//            @PathVariable String subscriptionUuid,
+//            @Valid @RequestBody UpdateSubscriptionRequest request
+//    ) {
+//        SubscriptionResponse subscription = subscriptionService.updateSubscription(subscriptionUuid, request);
+//        return ResponseEntity.ok(ApiResponse.success(subscription, "Subscription updated successfully"));
+//    }
 
     @Operation(
             summary = "Cancel subscription",

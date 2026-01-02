@@ -2,20 +2,18 @@ package org.collegemanagement.entity.subscription;
 
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
-import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.experimental.SuperBuilder;
-import org.collegemanagement.entity.finance.Invoice;
 import org.collegemanagement.entity.base.BaseEntity;
+import org.collegemanagement.entity.finance.Invoice;
 import org.collegemanagement.entity.tenant.College;
 import org.collegemanagement.enums.SubscriptionStatus;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
 import java.time.LocalDate;
-
 import java.time.LocalDateTime;
 import java.util.Set;
 
@@ -33,6 +31,11 @@ import java.util.Set;
 @NoArgsConstructor
 @AllArgsConstructor
 @SuperBuilder
+
+/*
+ * Represents the CURRENT active subscription for a college.
+ * Historical subscriptions are stored in subscription_history.
+ */
 public class Subscription extends BaseEntity {
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
@@ -67,9 +70,7 @@ public class Subscription extends BaseEntity {
             unique = true,
             foreignKey = @ForeignKey(name = "fk_subscription_college")
     )
-
     private College college;
-
 
     @OneToMany(mappedBy = "subscription", fetch = FetchType.LAZY)
     private Set<Invoice> invoices;

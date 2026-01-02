@@ -2,7 +2,6 @@ package org.collegemanagement.config;
 
 
 import lombok.extern.slf4j.Slf4j;
-import org.collegemanagement.security.filter.SubscriptionAccessFilter;
 import org.collegemanagement.security.filter.TenantIsolationFilter;
 import org.collegemanagement.security.handler.CustomAccessDeniedHandler;
 import org.collegemanagement.security.handler.CustomAuthenticationEntryPoint;
@@ -11,6 +10,7 @@ import org.collegemanagement.security.permission.CollegeIsolationPermissionEvalu
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.access.expression.method.DefaultMethodSecurityExpressionHandler;
 import org.springframework.security.access.expression.method.MethodSecurityExpressionHandler;
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
@@ -25,7 +25,6 @@ import org.springframework.security.oauth2.server.resource.authentication.JwtAut
 import org.springframework.security.oauth2.server.resource.authentication.JwtGrantedAuthoritiesConverter;
 import org.springframework.security.oauth2.server.resource.web.authentication.BearerTokenAuthenticationFilter;
 import org.springframework.security.provisioning.UserDetailsManager;
-import org.springframework.context.annotation.Lazy;
 import org.springframework.security.web.SecurityFilterChain;
 
 @Configuration
@@ -40,8 +39,6 @@ public class WebSecurity {
 
     final PasswordEncoder passwordEncoder;
     final UserDetailsManager userDetailsManager;
-    @Lazy
-    final SubscriptionAccessFilter subscriptionAccessFilter;
     final TenantIsolationFilter tenantIsolationFilter;
     final CustomAuthenticationEntryPoint customAuthenticationEntryPoint;
     final CustomAccessDeniedHandler customAccessDeniedHandler;
@@ -49,8 +46,7 @@ public class WebSecurity {
     public WebSecurity(JWTtoUserConverter jwtToUserConverter, CollegeIsolationPermissionEvaluator permissionEvaluator,
                        JwtDecoder jwtRefreshTokenDecoder,
                        PasswordEncoder passwordEncoder,
-                       UserDetailsManager userDetailsManager,
-                       SubscriptionAccessFilter subscriptionAccessFilter, TenantIsolationFilter tenantIsolationFilter,
+                       UserDetailsManager userDetailsManager, TenantIsolationFilter tenantIsolationFilter,
                        CustomAuthenticationEntryPoint customAuthenticationEntryPoint,
                        CustomAccessDeniedHandler customAccessDeniedHandler
     ) {
@@ -59,7 +55,6 @@ public class WebSecurity {
         this.jwtRefreshTokenDecoder = jwtRefreshTokenDecoder;
         this.passwordEncoder = passwordEncoder;
         this.userDetailsManager = userDetailsManager;
-        this.subscriptionAccessFilter = subscriptionAccessFilter;
         this.tenantIsolationFilter = tenantIsolationFilter;
         this.customAuthenticationEntryPoint = customAuthenticationEntryPoint;
         this.customAccessDeniedHandler = customAccessDeniedHandler;
@@ -69,11 +64,21 @@ public class WebSecurity {
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
                 .authorizeHttpRequests((authorize) -> authorize
-                        .requestMatchers("/api/v1/auth/**").permitAll()
-                        .requestMatchers("/api/v1/pricing/**").permitAll()
-                        .requestMatchers("/api/v1/superuser/**").hasRole("SUPER_ADMIN")
-                        .requestMatchers("/api/v1/college-admin/**").hasAnyRole("SUPER_ADMIN", "COLLEGE_ADMIN")
-                        .requestMatchers("/swagger-ui.html", "/api/docs", "/api/swagger-ui/**", "/v3/api-docs/**").permitAll()
+                        .requestMatchers(
+                                "/api/v1/auth/**",
+                                "/api/v1/pricing/**",
+                                "/api/v1/payments/webhooks/**"
+                        ).permitAll()
+                        .requestMatchers(HttpMethod.GET,
+                                "/api/v1/subscription-plans/**"
+                        ).permitAll()
+                        .requestMatchers("/api/v1/admin/**").hasRole("SUPER_ADMIN")
+                        .requestMatchers(
+                                "/swagger-ui.html",
+                                "/api/docs",
+                                "/api/swagger-ui/**",
+                                "/v3/api-docs/**"
+                        ).permitAll()
                         .anyRequest().authenticated()
                 )
                 .csrf(AbstractHttpConfigurer::disable)
@@ -89,11 +94,6 @@ public class WebSecurity {
                 .addFilterAfter(
                         tenantIsolationFilter,
                         BearerTokenAuthenticationFilter.class
-                )
-                // Subscription access filter - checks subscription status
-                .addFilterAfter(
-                        subscriptionAccessFilter,
-                        TenantIsolationFilter.class
                 );
 
 

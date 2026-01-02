@@ -1,9 +1,6 @@
 package org.collegemanagement.services;
 
-import org.collegemanagement.dto.subscription.CreateSubscriptionRequest;
-import org.collegemanagement.dto.subscription.RenewSubscriptionRequest;
-import org.collegemanagement.dto.subscription.SubscriptionResponse;
-import org.collegemanagement.dto.subscription.UpdateSubscriptionRequest;
+import org.collegemanagement.dto.subscription.*;
 import org.collegemanagement.enums.SubscriptionStatus;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -14,6 +11,12 @@ public interface SubscriptionService {
      * Create a new subscription
      */
     SubscriptionResponse createSubscription(CreateSubscriptionRequest request);
+
+
+    /**
+     * Update subscription
+     */
+    public SubscriptionResponse upgradeSubscription(String subscriptionUuid, UpgradeSubscriptionRequest request);
 
     /**
      * Update subscription

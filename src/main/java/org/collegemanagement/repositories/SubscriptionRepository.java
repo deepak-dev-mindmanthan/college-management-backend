@@ -134,4 +134,9 @@ public interface SubscriptionRepository extends JpaRepository<Subscription, Long
             ORDER BY s.createdAt DESC
             """)
     Page<Subscription> findByStatus(@Param("status") SubscriptionStatus status, Pageable pageable);
+
+    /**
+     * Check whether Subscription exists or not with college id
+     */
+    boolean existsByCollegeId(Long id);
 }
