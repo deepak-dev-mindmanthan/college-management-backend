@@ -15,6 +15,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
@@ -48,7 +49,7 @@ public class TeacherController {
             @Valid @RequestBody CreateTeacherRequest request
     ) {
         TeacherResponse teacher = teacherService.createTeacher(request);
-        return ResponseEntity.ok(ApiResponse.success(teacher, "Teacher created successfully"));
+        return ResponseEntity.ok(ApiResponse.success(teacher, "Teacher created successfully", HttpStatus.OK.value()));
     }
 
     @Operation(
@@ -63,7 +64,7 @@ public class TeacherController {
             @Valid @RequestBody UpdateTeacherRequest request
     ) {
         TeacherResponse teacher = teacherService.updateTeacher(teacherUuid, request);
-        return ResponseEntity.ok(ApiResponse.success(teacher, "Teacher updated successfully"));
+        return ResponseEntity.ok(ApiResponse.success(teacher, "Teacher updated successfully",HttpStatus.OK.value()));
     }
 
     @Operation(
@@ -77,7 +78,7 @@ public class TeacherController {
             @PathVariable String teacherUuid
     ) {
         TeacherResponse teacher = teacherService.getTeacherByUuid(teacherUuid);
-        return ResponseEntity.ok(ApiResponse.success(teacher, "Teacher retrieved successfully"));
+        return ResponseEntity.ok(ApiResponse.success(teacher, "Teacher retrieved successfully",HttpStatus.OK.value()));
     }
 
     @Operation(
@@ -91,7 +92,7 @@ public class TeacherController {
             @PathVariable String teacherUuid
     ) {
         TeacherDetailResponse teacher = teacherService.getTeacherDetailsByUuid(teacherUuid);
-        return ResponseEntity.ok(ApiResponse.success(teacher, "Teacher details retrieved successfully"));
+        return ResponseEntity.ok(ApiResponse.success(teacher, "Teacher details retrieved successfully",HttpStatus.OK.value()));
     }
 
     @Operation(
@@ -112,7 +113,7 @@ public class TeacherController {
     ) {
         Pageable pageable = PageRequest.of(page, size, Sort.by(direction, sortBy));
         Page<TeacherResponse> teachers = teacherService.getAllTeachers(pageable);
-        return ResponseEntity.ok(ApiResponse.success(teachers, "Teachers retrieved successfully"));
+        return ResponseEntity.ok(ApiResponse.success(teachers, "Teachers retrieved successfully",HttpStatus.OK.value()));
     }
 
     @Operation(
@@ -135,7 +136,7 @@ public class TeacherController {
     ) {
         Pageable pageable = PageRequest.of(page, size, Sort.by(direction, sortBy));
         Page<TeacherResponse> teachers = teacherService.searchTeachers(q, pageable);
-        return ResponseEntity.ok(ApiResponse.success(teachers, "Search results retrieved successfully"));
+        return ResponseEntity.ok(ApiResponse.success(teachers, "Search results retrieved successfully",HttpStatus.OK.value()));
     }
 
     @Operation(
@@ -149,7 +150,7 @@ public class TeacherController {
             @PathVariable String teacherUuid
     ) {
         teacherService.deleteTeacher(teacherUuid);
-        return ResponseEntity.ok(ApiResponse.success(null, "Teacher deleted successfully"));
+        return ResponseEntity.ok(ApiResponse.success(null, "Teacher deleted successfully",HttpStatus.OK.value()));
     }
 
     @Operation(
@@ -164,7 +165,7 @@ public class TeacherController {
             @Valid @RequestBody AssignClassSubjectRequest request
     ) {
         teacherService.assignClassSubject(teacherUuid, request);
-        return ResponseEntity.ok(ApiResponse.success(null, "Teacher assigned to class and subject successfully"));
+        return ResponseEntity.ok(ApiResponse.success(null, "Teacher assigned to class and subject successfully",HttpStatus.OK.value()));
     }
 
     @Operation(
@@ -179,7 +180,7 @@ public class TeacherController {
             @Valid @RequestBody AssignClassSubjectRequest request
     ) {
         teacherService.removeClassSubjectAssignment(teacherUuid, request);
-        return ResponseEntity.ok(ApiResponse.success(null, "Teacher assignment removed successfully"));
+        return ResponseEntity.ok(ApiResponse.success(null, "Teacher assignment removed successfully",HttpStatus.OK.value()));
     }
 
     @Operation(
@@ -194,7 +195,7 @@ public class TeacherController {
             @Valid @RequestBody AssignClassTeacherRequest request
     ) {
         teacherService.assignClassTeacher(teacherUuid, request);
-        return ResponseEntity.ok(ApiResponse.success(null, "Teacher assigned as class teacher successfully"));
+        return ResponseEntity.ok(ApiResponse.success(null, "Teacher assigned as class teacher successfully",HttpStatus.OK.value()));
     }
 
     @Operation(
@@ -208,7 +209,7 @@ public class TeacherController {
             @PathVariable String classUuid
     ) {
         teacherService.removeClassTeacher(classUuid);
-        return ResponseEntity.ok(ApiResponse.success(null, "Class teacher assignment removed successfully"));
+        return ResponseEntity.ok(ApiResponse.success(null, "Class teacher assignment removed successfully",HttpStatus.OK.value()));
     }
 
     @Operation(
@@ -222,7 +223,7 @@ public class TeacherController {
             @PathVariable String teacherUuid
     ) {
         TeacherTimetableResponse timetable = teacherService.getTeacherTimetable(teacherUuid);
-        return ResponseEntity.ok(ApiResponse.success(timetable, "Teacher timetable retrieved successfully"));
+        return ResponseEntity.ok(ApiResponse.success(timetable, "Teacher timetable retrieved successfully",HttpStatus.OK.value()));
     }
 
     @Operation(
@@ -245,6 +246,6 @@ public class TeacherController {
     ) {
         Pageable pageable = PageRequest.of(page, size, Sort.by(direction, sortBy));
         Page<TeacherResponse> teachers = teacherService.getTeachersByDepartment(departmentId, pageable);
-        return ResponseEntity.ok(ApiResponse.success(teachers, "Department teachers retrieved successfully"));
+        return ResponseEntity.ok(ApiResponse.success(teachers, "Department teachers retrieved successfully",HttpStatus.OK.value()));
     }
 }

@@ -17,6 +17,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.format.annotation.DateTimeFormat;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
@@ -55,7 +56,7 @@ public class StudentFeeController {
             @Valid @RequestBody CreateFeeStructureRequest request
     ) {
         FeeStructureResponse feeStructure = studentFeeService.createFeeStructure(request);
-        return ResponseEntity.ok(ApiResponse.success(feeStructure, "Fee structure created successfully"));
+        return ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse.success(feeStructure, "Fee structure created successfully",HttpStatus.CONTINUE.value()));
     }
 
     @Operation(
@@ -69,7 +70,7 @@ public class StudentFeeController {
             @PathVariable String feeStructureUuid
     ) {
         FeeStructureResponse feeStructure = studentFeeService.getFeeStructureByUuid(feeStructureUuid);
-        return ResponseEntity.ok(ApiResponse.success(feeStructure, "Fee structure retrieved successfully"));
+        return ResponseEntity.ok(ApiResponse.success(feeStructure, "Fee structure retrieved successfully",HttpStatus.OK.value()));
     }
 
     @Operation(
@@ -83,7 +84,7 @@ public class StudentFeeController {
             @PathVariable String classUuid
     ) {
         FeeStructureResponse feeStructure = studentFeeService.getFeeStructureByClassUuid(classUuid);
-        return ResponseEntity.ok(ApiResponse.success(feeStructure, "Fee structure retrieved successfully"));
+        return ResponseEntity.ok(ApiResponse.success(feeStructure, "Fee structure retrieved successfully",HttpStatus.OK.value()));
     }
 
     @Operation(
@@ -98,7 +99,7 @@ public class StudentFeeController {
             @Valid @RequestBody UpdateFeeStructureRequest request
     ) {
         FeeStructureResponse feeStructure = studentFeeService.updateFeeStructure(feeStructureUuid, request);
-        return ResponseEntity.ok(ApiResponse.success(feeStructure, "Fee structure updated successfully"));
+        return ResponseEntity.ok(ApiResponse.success(feeStructure, "Fee structure updated successfully",HttpStatus.OK.value()));
     }
 
     @Operation(
@@ -112,7 +113,7 @@ public class StudentFeeController {
             @PathVariable String feeStructureUuid
     ) {
         studentFeeService.deleteFeeStructure(feeStructureUuid);
-        return ResponseEntity.ok(ApiResponse.success(null, "Fee structure deleted successfully"));
+        return ResponseEntity.ok(ApiResponse.success(null, "Fee structure deleted successfully",HttpStatus.OK.value()));
     }
 
     @Operation(
@@ -133,7 +134,7 @@ public class StudentFeeController {
     ) {
         Pageable pageable = PageRequest.of(page, size, Sort.by(direction, sortBy));
         Page<FeeStructureResponse> feeStructures = studentFeeService.getAllFeeStructures(pageable);
-        return ResponseEntity.ok(ApiResponse.success(feeStructures, "Fee structures retrieved successfully"));
+        return ResponseEntity.ok(ApiResponse.success(feeStructures, "Fee structures retrieved successfully",HttpStatus.OK.value()));
     }
 
     @Operation(
@@ -147,7 +148,7 @@ public class StudentFeeController {
             @PathVariable String classUuid
     ) {
         List<FeeStructureResponse> feeStructures = studentFeeService.getFeeStructuresByClassUuid(classUuid);
-        return ResponseEntity.ok(ApiResponse.success(feeStructures, "Fee structures retrieved successfully"));
+        return ResponseEntity.ok(ApiResponse.success(feeStructures, "Fee structures retrieved successfully",HttpStatus.OK.value()));
     }
 
     // ========== Student Fee Assignment Endpoints ==========
@@ -162,7 +163,7 @@ public class StudentFeeController {
             @Valid @RequestBody AssignFeeToStudentRequest request
     ) {
         StudentFeeResponse studentFee = studentFeeService.assignFeeToStudent(request);
-        return ResponseEntity.ok(ApiResponse.success(studentFee, "Fee assigned to student successfully"));
+        return ResponseEntity.ok(ApiResponse.success(studentFee, "Fee assigned to student successfully",HttpStatus.OK.value()));
     }
 
     @Operation(
@@ -178,7 +179,7 @@ public class StudentFeeController {
             @PathVariable String feeStructureUuid
     ) {
         List<StudentFeeResponse> studentFees = studentFeeService.assignFeeToClassStudents(classUuid, feeStructureUuid);
-        return ResponseEntity.ok(ApiResponse.success(studentFees, "Fee assigned to class students successfully"));
+        return ResponseEntity.ok(ApiResponse.success(studentFees, "Fee assigned to class students successfully",HttpStatus.OK.value()));
     }
 
     @Operation(
@@ -192,7 +193,7 @@ public class StudentFeeController {
             @PathVariable String studentFeeUuid
     ) {
         StudentFeeResponse studentFee = studentFeeService.getStudentFeeByUuid(studentFeeUuid);
-        return ResponseEntity.ok(ApiResponse.success(studentFee, "Student fee retrieved successfully"));
+        return ResponseEntity.ok(ApiResponse.success(studentFee, "Student fee retrieved successfully",HttpStatus.OK.value()));
     }
 
     @Operation(
@@ -215,7 +216,7 @@ public class StudentFeeController {
     ) {
         Pageable pageable = PageRequest.of(page, size, Sort.by(direction, sortBy));
         Page<StudentFeeResponse> studentFees = studentFeeService.getStudentFeesByStudentUuid(studentUuid, pageable);
-        return ResponseEntity.ok(ApiResponse.success(studentFees, "Student fees retrieved successfully"));
+        return ResponseEntity.ok(ApiResponse.success(studentFees, "Student fees retrieved successfully",HttpStatus.OK.value()));
     }
 
     @Operation(
@@ -234,7 +235,7 @@ public class StudentFeeController {
     ) {
         Pageable pageable = PageRequest.of(page, size);
         Page<StudentFeeResponse> studentFees = studentFeeService.getStudentFeesByFeeStructureUuid(feeStructureUuid, pageable);
-        return ResponseEntity.ok(ApiResponse.success(studentFees, "Student fees retrieved successfully"));
+        return ResponseEntity.ok(ApiResponse.success(studentFees, "Student fees retrieved successfully",HttpStatus.OK.value()));
     }
 
     @Operation(
@@ -253,7 +254,7 @@ public class StudentFeeController {
     ) {
         Pageable pageable = PageRequest.of(page, size);
         Page<StudentFeeResponse> studentFees = studentFeeService.getStudentFeesByStatus(status, pageable);
-        return ResponseEntity.ok(ApiResponse.success(studentFees, "Student fees retrieved successfully"));
+        return ResponseEntity.ok(ApiResponse.success(studentFees, "Student fees retrieved successfully",HttpStatus.OK.value()));
     }
 
     @Operation(
@@ -270,7 +271,7 @@ public class StudentFeeController {
     ) {
         Pageable pageable = PageRequest.of(page, size);
         Page<StudentFeeResponse> studentFees = studentFeeService.getOverdueStudentFees(pageable);
-        return ResponseEntity.ok(ApiResponse.success(studentFees, "Overdue student fees retrieved successfully"));
+        return ResponseEntity.ok(ApiResponse.success(studentFees, "Overdue student fees retrieved successfully",HttpStatus.OK.value()));
     }
 
     @Operation(
@@ -289,7 +290,7 @@ public class StudentFeeController {
     ) {
         Pageable pageable = PageRequest.of(page, size);
         Page<StudentFeeResponse> studentFees = studentFeeService.getStudentFeesByClassUuid(classUuid, pageable);
-        return ResponseEntity.ok(ApiResponse.success(studentFees, "Student fees retrieved successfully"));
+        return ResponseEntity.ok(ApiResponse.success(studentFees, "Student fees retrieved successfully",HttpStatus.OK.value()));
     }
 
     // ========== Fee Payment Management Endpoints ==========
@@ -304,7 +305,7 @@ public class StudentFeeController {
             @Valid @RequestBody CreateFeePaymentRequest request
     ) {
         FeePaymentResponse feePayment = studentFeeService.recordFeePayment(request);
-        return ResponseEntity.ok(ApiResponse.success(feePayment, "Fee payment recorded successfully"));
+        return ResponseEntity.ok(ApiResponse.success(feePayment, "Fee payment recorded successfully",HttpStatus.OK.value()));
     }
 
     @Operation(
@@ -318,7 +319,7 @@ public class StudentFeeController {
             @PathVariable String paymentUuid
     ) {
         FeePaymentResponse feePayment = studentFeeService.getFeePaymentByUuid(paymentUuid);
-        return ResponseEntity.ok(ApiResponse.success(feePayment, "Fee payment retrieved successfully"));
+        return ResponseEntity.ok(ApiResponse.success(feePayment, "Fee payment retrieved successfully",HttpStatus.OK.value()));
     }
 
     @Operation(
@@ -337,7 +338,7 @@ public class StudentFeeController {
     ) {
         Pageable pageable = PageRequest.of(page, size);
         Page<FeePaymentResponse> feePayments = studentFeeService.getFeePaymentsByStudentFeeUuid(studentFeeUuid, pageable);
-        return ResponseEntity.ok(ApiResponse.success(feePayments, "Fee payments retrieved successfully"));
+        return ResponseEntity.ok(ApiResponse.success(feePayments, "Fee payments retrieved successfully",HttpStatus.OK.value()));
     }
 
     @Operation(
@@ -356,7 +357,7 @@ public class StudentFeeController {
     ) {
         Pageable pageable = PageRequest.of(page, size);
         Page<FeePaymentResponse> feePayments = studentFeeService.getFeePaymentsByStudentUuid(studentUuid, pageable);
-        return ResponseEntity.ok(ApiResponse.success(feePayments, "Fee payments retrieved successfully"));
+        return ResponseEntity.ok(ApiResponse.success(feePayments, "Fee payments retrieved successfully",HttpStatus.OK.value()));
     }
 
     @Operation(
@@ -377,7 +378,7 @@ public class StudentFeeController {
     ) {
         Pageable pageable = PageRequest.of(page, size);
         Page<FeePaymentResponse> feePayments = studentFeeService.getFeePaymentsByDateRange(startDate, endDate, pageable);
-        return ResponseEntity.ok(ApiResponse.success(feePayments, "Fee payments retrieved successfully"));
+        return ResponseEntity.ok(ApiResponse.success(feePayments, "Fee payments retrieved successfully",HttpStatus.OK.value()));
     }
 
     // ========== Summary and Reports Endpoints ==========
@@ -393,7 +394,7 @@ public class StudentFeeController {
             @PathVariable String studentUuid
     ) {
         StudentFeeSummaryResponse summary = studentFeeService.getStudentFeeSummary(studentUuid);
-        return ResponseEntity.ok(ApiResponse.success(summary, "Student fee summary retrieved successfully"));
+        return ResponseEntity.ok(ApiResponse.success(summary, "Student fee summary retrieved successfully",HttpStatus.OK.value()));
     }
 
     @Operation(
@@ -404,7 +405,7 @@ public class StudentFeeController {
     @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'COLLEGE_ADMIN', 'ACCOUNTANT')")
     public ResponseEntity<ApiResponse<CollegeFeeSummaryResponse>> getCollegeFeeSummary() {
         CollegeFeeSummaryResponse summary = studentFeeService.getCollegeFeeSummary();
-        return ResponseEntity.ok(ApiResponse.success(summary, "College fee summary retrieved successfully"));
+        return ResponseEntity.ok(ApiResponse.success(summary, "College fee summary retrieved successfully",HttpStatus.OK.value()));
     }
 
     @Operation(
@@ -418,7 +419,7 @@ public class StudentFeeController {
             @PathVariable String classUuid
     ) {
         ClassFeeSummaryResponse summary = studentFeeService.getClassFeeSummary(classUuid);
-        return ResponseEntity.ok(ApiResponse.success(summary, "Class fee summary retrieved successfully"));
+        return ResponseEntity.ok(ApiResponse.success(summary, "Class fee summary retrieved successfully",HttpStatus.OK.value()));
     }
 }
 

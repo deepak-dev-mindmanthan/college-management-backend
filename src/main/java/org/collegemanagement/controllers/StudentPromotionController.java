@@ -16,6 +16,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
@@ -55,7 +56,7 @@ public class StudentPromotionController {
             @Valid @RequestBody PromoteStudentRequest request
     ) {
         StudentPromotionResponse promotion = studentPromotionService.promoteStudent(request);
-        return ResponseEntity.ok(ApiResponse.success(promotion, "Student promoted successfully"));
+        return ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse.success(promotion, "Student promoted successfully",HttpStatus.CREATED.value()));
     }
 
     @Operation(
@@ -69,7 +70,7 @@ public class StudentPromotionController {
             @PathVariable String promotionLogUuid
     ) {
         StudentPromotionResponse promotion = studentPromotionService.getPromotionLogByUuid(promotionLogUuid);
-        return ResponseEntity.ok(ApiResponse.success(promotion, "Promotion log retrieved successfully"));
+        return ResponseEntity.ok(ApiResponse.success(promotion, "Promotion log retrieved successfully",HttpStatus.OK.value()));
     }
 
     @Operation(
@@ -91,7 +92,7 @@ public class StudentPromotionController {
         Sort sort = sortDir.equalsIgnoreCase("ASC") ? Sort.by(sortBy).ascending() : Sort.by(sortBy).descending();
         Pageable pageable = PageRequest.of(page, size, sort);
         Page<StudentPromotionResponse> promotions = studentPromotionService.getAllPromotionLogs(pageable);
-        return ResponseEntity.ok(ApiResponse.success(promotions, "Promotion logs retrieved successfully"));
+        return ResponseEntity.ok(ApiResponse.success(promotions, "Promotion logs retrieved successfully",HttpStatus.OK.value()));
     }
 
     @Operation(
@@ -105,7 +106,7 @@ public class StudentPromotionController {
             @PathVariable String studentUuid
     ) {
         List<StudentPromotionResponse> promotions = studentPromotionService.getPromotionHistoryByStudent(studentUuid);
-        return ResponseEntity.ok(ApiResponse.success(promotions, "Promotion history retrieved successfully"));
+        return ResponseEntity.ok(ApiResponse.success(promotions, "Promotion history retrieved successfully",HttpStatus.OK.value()));
     }
 
     @Operation(
@@ -130,7 +131,7 @@ public class StudentPromotionController {
         Pageable pageable = PageRequest.of(page, size, sort);
         Page<StudentPromotionResponse> promotions = studentPromotionService.getPromotionLogsByAcademicYear(
                 academicYearUuid, pageable);
-        return ResponseEntity.ok(ApiResponse.success(promotions, "Promotion logs retrieved successfully"));
+        return ResponseEntity.ok(ApiResponse.success(promotions, "Promotion logs retrieved successfully",HttpStatus.OK.value()));
     }
 }
 

@@ -17,6 +17,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
@@ -50,7 +51,7 @@ public class TransportManagerController {
             @Valid @RequestBody CreateTransportManagerRequest request
     ) {
         TransportManagerResponse transportManager = transportManagerService.createTransportManager(request);
-        return ResponseEntity.ok(ApiResponse.success(transportManager, "Transport manager created successfully"));
+        return ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse.success(transportManager, "Transport manager created successfully",HttpStatus.CREATED.value()));
     }
 
     @Operation(
@@ -65,7 +66,7 @@ public class TransportManagerController {
             @Valid @RequestBody UpdateTransportManagerRequest request
     ) {
         TransportManagerResponse transportManager = transportManagerService.updateTransportManager(transportManagerUuid, request);
-        return ResponseEntity.ok(ApiResponse.success(transportManager, "Transport manager updated successfully"));
+        return ResponseEntity.ok(ApiResponse.success(transportManager, "Transport manager updated successfully",HttpStatus.OK.value()));
     }
 
     @Operation(
@@ -79,7 +80,7 @@ public class TransportManagerController {
             @PathVariable String transportManagerUuid
     ) {
         TransportManagerResponse transportManager = transportManagerService.getTransportManagerByUuid(transportManagerUuid);
-        return ResponseEntity.ok(ApiResponse.success(transportManager, "Transport manager retrieved successfully"));
+        return ResponseEntity.ok(ApiResponse.success(transportManager, "Transport manager retrieved successfully",HttpStatus.OK.value()));
     }
 
     @Operation(
@@ -100,7 +101,7 @@ public class TransportManagerController {
     ) {
         Pageable pageable = PageRequest.of(page, size, Sort.by(direction, sortBy));
         Page<TransportManagerResponse> transportManagers = transportManagerService.getAllTransportManagers(pageable);
-        return ResponseEntity.ok(ApiResponse.success(transportManagers, "Transport managers retrieved successfully"));
+        return ResponseEntity.ok(ApiResponse.success(transportManagers, "Transport managers retrieved successfully",HttpStatus.OK.value()));
     }
 
     @Operation(
@@ -123,7 +124,7 @@ public class TransportManagerController {
     ) {
         Pageable pageable = PageRequest.of(page, size, Sort.by(direction, sortBy));
         Page<TransportManagerResponse> transportManagers = transportManagerService.searchTransportManagers(q, pageable);
-        return ResponseEntity.ok(ApiResponse.success(transportManagers, "Search results retrieved successfully"));
+        return ResponseEntity.ok(ApiResponse.success(transportManagers, "Search results retrieved successfully",HttpStatus.OK.value()));
     }
 
     @Operation(
@@ -137,7 +138,7 @@ public class TransportManagerController {
             @PathVariable String transportManagerUuid
     ) {
         transportManagerService.deleteTransportManager(transportManagerUuid);
-        return ResponseEntity.ok(ApiResponse.success(null, "Transport manager deleted successfully"));
+        return ResponseEntity.ok(ApiResponse.success(null, "Transport manager deleted successfully",HttpStatus.OK.value()));
     }
 }
 

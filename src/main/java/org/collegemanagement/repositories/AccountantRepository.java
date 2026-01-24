@@ -23,6 +23,18 @@ public interface AccountantRepository extends JpaRepository<User, Long> {
             """)
     Page<User> findAllAccountantsByCollegeId(@Param("collegeId") Long collegeId, Pageable pageable);
 
+
+    /**
+     * Find all accountants with role filtering
+     */
+    @Query("""
+                SELECT u FROM User u
+                JOIN u.roles r
+                WHERE r.name = 'ROLE_ACCOUNTANT'
+                ORDER BY u.name ASC
+            """)
+    Page<User> findAllAccountants(Pageable pageable);
+
     /**
      * Find accountant by ID and college ID with role verification
      */

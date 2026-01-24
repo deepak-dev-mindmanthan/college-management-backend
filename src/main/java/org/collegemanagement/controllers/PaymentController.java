@@ -19,6 +19,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
@@ -59,7 +60,8 @@ public class PaymentController {
         return ResponseEntity.ok(
                 ApiResponse.success(
                         paymentService.initiatePayment(request),
-                        "Payment initiated"
+                        "Payment initiated",
+                        HttpStatus.OK.value()
                 )
         );
     }
@@ -74,7 +76,8 @@ public class PaymentController {
         return ResponseEntity.ok(
                 ApiResponse.success(
                         paymentService.getPaymentByUuid(uuid),
-                        "Payment retrieved"
+                        "Payment retrieved",
+                        HttpStatus.OK.value()
                 )
         );
     }
@@ -90,7 +93,7 @@ public class PaymentController {
             @PathVariable String transactionId
     ) {
         PaymentResponse payment = paymentService.getPaymentByTransactionId(transactionId);
-        return ResponseEntity.ok(ApiResponse.success(payment, "Payment retrieved successfully"));
+        return ResponseEntity.ok(ApiResponse.success(payment, "Payment retrieved successfully",HttpStatus.OK.value()));
     }
 
     @Operation(
@@ -111,7 +114,7 @@ public class PaymentController {
     ) {
         Pageable pageable = PageRequest.of(page, size, Sort.by(direction, sortBy));
         Page<PaymentResponse> payments = paymentService.getAllPayments(pageable);
-        return ResponseEntity.ok(ApiResponse.success(payments, "Payments retrieved successfully"));
+        return ResponseEntity.ok(ApiResponse.success(payments, "Payments retrieved successfully",HttpStatus.OK.value()));
     }
 
     @Operation(
@@ -130,7 +133,7 @@ public class PaymentController {
     ) {
         Pageable pageable = PageRequest.of(page, size);
         Page<PaymentResponse> payments = paymentService.getPaymentsByInvoiceUuid(invoiceUuid, pageable);
-        return ResponseEntity.ok(ApiResponse.success(payments, "Payments retrieved successfully"));
+        return ResponseEntity.ok(ApiResponse.success(payments, "Payments retrieved successfully",HttpStatus.OK.value()));
     }
 
     @Operation(
@@ -149,7 +152,7 @@ public class PaymentController {
     ) {
         Pageable pageable = PageRequest.of(page, size);
         Page<PaymentResponse> payments = paymentService.getPaymentsByStatus(status, pageable);
-        return ResponseEntity.ok(ApiResponse.success(payments, "Payments retrieved successfully"));
+        return ResponseEntity.ok(ApiResponse.success(payments, "Payments retrieved successfully",HttpStatus.OK.value()));
     }
 
     @Operation(
@@ -168,7 +171,7 @@ public class PaymentController {
     ) {
         Pageable pageable = PageRequest.of(page, size);
         Page<PaymentResponse> payments = paymentService.getPaymentsByGateway(gateway, pageable);
-        return ResponseEntity.ok(ApiResponse.success(payments, "Payments retrieved successfully"));
+        return ResponseEntity.ok(ApiResponse.success(payments, "Payments retrieved successfully",HttpStatus.OK.value()));
     }
 
     @Operation(
@@ -179,7 +182,7 @@ public class PaymentController {
     @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'COLLEGE_ADMIN')")
     public ResponseEntity<ApiResponse<PaymentSummary>> getPaymentSummary() {
         PaymentSummary summary = paymentService.getPaymentSummary();
-        return ResponseEntity.ok(ApiResponse.success(summary, "Payment summary retrieved successfully"));
+        return ResponseEntity.ok(ApiResponse.success(summary, "Payment summary retrieved successfully",HttpStatus.OK.value()));
     }
 }
 

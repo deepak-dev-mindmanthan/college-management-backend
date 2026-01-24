@@ -14,6 +14,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.format.annotation.DateTimeFormat;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
@@ -39,7 +40,7 @@ public class InvoiceController {
             @PathVariable String subscriptionUuid
     ) {
         InvoiceResponse invoice = invoiceService.generateInvoice(subscriptionUuid);
-        return ResponseEntity.ok(ApiResponse.success(invoice, "Invoice generated successfully"));
+        return ResponseEntity.ok(ApiResponse.success(invoice, "Invoice generated successfully", HttpStatus.OK.value()));
     }
 
     @Operation(
@@ -53,7 +54,7 @@ public class InvoiceController {
             @PathVariable String invoiceUuid
     ) {
         InvoiceResponse invoice = invoiceService.getInvoiceByUuid(invoiceUuid);
-        return ResponseEntity.ok(ApiResponse.success(invoice, "Invoice retrieved successfully"));
+        return ResponseEntity.ok(ApiResponse.success(invoice, "Invoice retrieved successfully",HttpStatus.OK.value()));
     }
 
     @Operation(
@@ -67,7 +68,7 @@ public class InvoiceController {
             @PathVariable String invoiceNumber
     ) {
         InvoiceResponse invoice = invoiceService.getInvoiceByInvoiceNumber(invoiceNumber);
-        return ResponseEntity.ok(ApiResponse.success(invoice, "Invoice retrieved successfully"));
+        return ResponseEntity.ok(ApiResponse.success(invoice, "Invoice retrieved successfully",HttpStatus.OK.value()));
     }
 
     @Operation(
@@ -88,7 +89,7 @@ public class InvoiceController {
     ) {
         Pageable pageable = PageRequest.of(page, size, Sort.by(direction, sortBy));
         Page<InvoiceResponse> invoices = invoiceService.getAllInvoices(pageable);
-        return ResponseEntity.ok(ApiResponse.success(invoices, "Invoices retrieved successfully"));
+        return ResponseEntity.ok(ApiResponse.success(invoices, "Invoices retrieved successfully",HttpStatus.OK.value()));
     }
 
     @Operation(
@@ -107,7 +108,7 @@ public class InvoiceController {
     ) {
         Pageable pageable = PageRequest.of(page, size);
         Page<InvoiceResponse> invoices = invoiceService.getInvoicesBySubscriptionUuid(subscriptionUuid, pageable);
-        return ResponseEntity.ok(ApiResponse.success(invoices, "Invoices retrieved successfully"));
+        return ResponseEntity.ok(ApiResponse.success(invoices, "Invoices retrieved successfully",HttpStatus.OK.value()));
     }
 
     @Operation(
@@ -126,7 +127,7 @@ public class InvoiceController {
     ) {
         Pageable pageable = PageRequest.of(page, size);
         Page<InvoiceResponse> invoices = invoiceService.getInvoicesByStatus(status, pageable);
-        return ResponseEntity.ok(ApiResponse.success(invoices, "Invoices retrieved successfully"));
+        return ResponseEntity.ok(ApiResponse.success(invoices, "Invoices retrieved successfully",HttpStatus.OK.value()));
     }
 
     @Operation(
@@ -143,7 +144,7 @@ public class InvoiceController {
     ) {
         Pageable pageable = PageRequest.of(page, size);
         Page<InvoiceResponse> invoices = invoiceService.getOverdueInvoices(pageable);
-        return ResponseEntity.ok(ApiResponse.success(invoices, "Overdue invoices retrieved successfully"));
+        return ResponseEntity.ok(ApiResponse.success(invoices, "Overdue invoices retrieved successfully",HttpStatus.OK.value()));
     }
 
     @Operation(
@@ -160,7 +161,7 @@ public class InvoiceController {
     ) {
         Pageable pageable = PageRequest.of(page, size);
         Page<InvoiceResponse> invoices = invoiceService.getUnpaidInvoices(pageable);
-        return ResponseEntity.ok(ApiResponse.success(invoices, "Unpaid invoices retrieved successfully"));
+        return ResponseEntity.ok(ApiResponse.success(invoices, "Unpaid invoices retrieved successfully",HttpStatus.OK.value()));
     }
 
     @Operation(
@@ -181,7 +182,7 @@ public class InvoiceController {
     ) {
         Pageable pageable = PageRequest.of(page, size);
         Page<InvoiceResponse> invoices = invoiceService.getInvoicesByDueDateRange(startDate, endDate, pageable);
-        return ResponseEntity.ok(ApiResponse.success(invoices, "Invoices retrieved successfully"));
+        return ResponseEntity.ok(ApiResponse.success(invoices, "Invoices retrieved successfully",HttpStatus.OK.value()));
     }
 
     @Operation(
@@ -192,7 +193,7 @@ public class InvoiceController {
     @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'COLLEGE_ADMIN')")
     public ResponseEntity<ApiResponse<InvoiceSummaryResponse>> getInvoiceSummary() {
         InvoiceSummaryResponse summary = invoiceService.getInvoiceSummary();
-        return ResponseEntity.ok(ApiResponse.success(summary, "Invoice summary retrieved successfully"));
+        return ResponseEntity.ok(ApiResponse.success(summary, "Invoice summary retrieved successfully",HttpStatus.OK.value()));
     }
 }
 

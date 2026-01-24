@@ -16,6 +16,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.format.annotation.DateTimeFormat;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
@@ -54,7 +55,7 @@ public class AttendanceController {
             @Valid @RequestBody CreateAttendanceSessionRequest request
     ) {
         AttendanceSessionResponse session = attendanceService.createAttendanceSession(request);
-        return ResponseEntity.ok(ApiResponse.success(session, "Attendance session created successfully"));
+        return ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse.success(session, "Attendance session created successfully", HttpStatus.OK.value()));
     }
 
     @Operation(
@@ -68,7 +69,7 @@ public class AttendanceController {
             @PathVariable String sessionUuid
     ) {
         AttendanceSessionResponse session = attendanceService.getSessionByUuid(sessionUuid);
-        return ResponseEntity.ok(ApiResponse.success(session, "Attendance session retrieved successfully"));
+        return ResponseEntity.ok(ApiResponse.success(session, "Attendance session retrieved successfully",HttpStatus.OK.value()));
     }
 
     @Operation(
@@ -91,7 +92,7 @@ public class AttendanceController {
     ) {
         Pageable pageable = PageRequest.of(page, size, Sort.by(direction, sortBy));
         Page<AttendanceSessionResponse> sessions = attendanceService.getSessionsByClass(classUuid, pageable);
-        return ResponseEntity.ok(ApiResponse.success(sessions, "Attendance sessions retrieved successfully"));
+        return ResponseEntity.ok(ApiResponse.success(sessions, "Attendance sessions retrieved successfully",HttpStatus.OK.value()));
     }
 
     @Operation(
@@ -109,7 +110,7 @@ public class AttendanceController {
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate
     ) {
         List<AttendanceSessionResponse> sessions = attendanceService.getSessionsByClassAndDateRange(classUuid, startDate, endDate);
-        return ResponseEntity.ok(ApiResponse.success(sessions, "Attendance sessions retrieved successfully"));
+        return ResponseEntity.ok(ApiResponse.success(sessions, "Attendance sessions retrieved successfully",HttpStatus.OK.value()));
     }
 
     @Operation(
@@ -130,7 +131,7 @@ public class AttendanceController {
     ) {
         Pageable pageable = PageRequest.of(page, size);
         Page<AttendanceSessionResponse> sessions = attendanceService.getSessionsByDateRange(startDate, endDate, pageable);
-        return ResponseEntity.ok(ApiResponse.success(sessions, "Attendance sessions retrieved successfully"));
+        return ResponseEntity.ok(ApiResponse.success(sessions, "Attendance sessions retrieved successfully",HttpStatus.OK.value()));
     }
 
     @Operation(
@@ -144,7 +145,7 @@ public class AttendanceController {
             @PathVariable @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date
     ) {
         List<AttendanceSessionResponse> sessions = attendanceService.getSessionsByDate(date);
-        return ResponseEntity.ok(ApiResponse.success(sessions, "Attendance sessions retrieved successfully"));
+        return ResponseEntity.ok(ApiResponse.success(sessions, "Attendance sessions retrieved successfully",HttpStatus.OK.value()));
     }
 
     @Operation(
@@ -158,7 +159,7 @@ public class AttendanceController {
             @PathVariable String sessionUuid
     ) {
         attendanceService.deleteSession(sessionUuid);
-        return ResponseEntity.ok(ApiResponse.success(null, "Attendance session deleted successfully"));
+        return ResponseEntity.ok(ApiResponse.success(null, "Attendance session deleted successfully",HttpStatus.OK.value()));
     }
 
     // ========== Attendance Marking Endpoints ==========
@@ -173,7 +174,7 @@ public class AttendanceController {
             @Valid @RequestBody MarkAttendanceRequest request
     ) {
         AttendanceSessionResponse session = attendanceService.markAttendance(request);
-        return ResponseEntity.ok(ApiResponse.success(session, "Attendance marked successfully"));
+        return ResponseEntity.ok(ApiResponse.success(session, "Attendance marked successfully",HttpStatus.OK.value()));
     }
 
     // ========== Attendance Record Endpoints ==========
@@ -189,7 +190,7 @@ public class AttendanceController {
             @PathVariable String recordUuid
     ) {
         AttendanceRecordResponse record = attendanceService.getRecordByUuid(recordUuid);
-        return ResponseEntity.ok(ApiResponse.success(record, "Attendance record retrieved successfully"));
+        return ResponseEntity.ok(ApiResponse.success(record, "Attendance record retrieved successfully",HttpStatus.OK.value()));
     }
 
     @Operation(
@@ -204,7 +205,7 @@ public class AttendanceController {
             @Valid @RequestBody UpdateAttendanceRecordRequest request
     ) {
         AttendanceRecordResponse record = attendanceService.updateAttendanceRecord(recordUuid, request);
-        return ResponseEntity.ok(ApiResponse.success(record, "Attendance record updated successfully"));
+        return ResponseEntity.ok(ApiResponse.success(record, "Attendance record updated successfully",HttpStatus.OK.value()));
     }
 
     @Operation(
@@ -218,7 +219,7 @@ public class AttendanceController {
             @PathVariable String sessionUuid
     ) {
         List<AttendanceRecordResponse> records = attendanceService.getRecordsBySession(sessionUuid);
-        return ResponseEntity.ok(ApiResponse.success(records, "Attendance records retrieved successfully"));
+        return ResponseEntity.ok(ApiResponse.success(records, "Attendance records retrieved successfully",HttpStatus.OK.value()));
     }
 
     @Operation(
@@ -241,7 +242,7 @@ public class AttendanceController {
     ) {
         Pageable pageable = PageRequest.of(page, size, Sort.by(direction, sortBy));
         Page<AttendanceRecordResponse> records = attendanceService.getRecordsByStudent(studentUuid, pageable);
-        return ResponseEntity.ok(ApiResponse.success(records, "Attendance records retrieved successfully"));
+        return ResponseEntity.ok(ApiResponse.success(records, "Attendance records retrieved successfully",HttpStatus.OK.value()));
     }
 
     @Operation(
@@ -259,7 +260,7 @@ public class AttendanceController {
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate
     ) {
         List<AttendanceRecordResponse> records = attendanceService.getRecordsByStudentAndDateRange(studentUuid, startDate, endDate);
-        return ResponseEntity.ok(ApiResponse.success(records, "Attendance records retrieved successfully"));
+        return ResponseEntity.ok(ApiResponse.success(records, "Attendance records retrieved successfully",HttpStatus.OK.value()));
     }
 
     // ========== Summary Endpoints ==========
@@ -279,7 +280,7 @@ public class AttendanceController {
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate
     ) {
         AttendanceSummaryResponse summary = attendanceService.getStudentAttendanceSummary(studentUuid, startDate, endDate);
-        return ResponseEntity.ok(ApiResponse.success(summary, "Attendance summary retrieved successfully"));
+        return ResponseEntity.ok(ApiResponse.success(summary, "Attendance summary retrieved successfully",HttpStatus.OK.value()));
     }
 
     @Operation(
@@ -297,7 +298,7 @@ public class AttendanceController {
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate
     ) {
         ClassAttendanceSummaryResponse summary = attendanceService.getClassAttendanceSummary(classUuid, startDate, endDate);
-        return ResponseEntity.ok(ApiResponse.success(summary, "Class attendance summary retrieved successfully"));
+        return ResponseEntity.ok(ApiResponse.success(summary, "Class attendance summary retrieved successfully",HttpStatus.OK.value()));
     }
 }
 

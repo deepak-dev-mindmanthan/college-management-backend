@@ -18,6 +18,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
@@ -53,7 +54,7 @@ public class HostelAllocationController {
             @Valid @RequestBody CreateHostelAllocationRequest request
     ) {
         HostelAllocationResponse allocation = hostelAllocationService.createHostelAllocation(request);
-        return ResponseEntity.ok(ApiResponse.success(allocation, "Hostel allocation created successfully"));
+        return ResponseEntity.ok(ApiResponse.success(allocation, "Hostel allocation created successfully", HttpStatus.CREATED.value()));
     }
 
     @Operation(
@@ -68,7 +69,7 @@ public class HostelAllocationController {
             @Valid @RequestBody UpdateHostelAllocationRequest request
     ) {
         HostelAllocationResponse allocation = hostelAllocationService.updateHostelAllocation(allocationUuid, request);
-        return ResponseEntity.ok(ApiResponse.success(allocation, "Hostel allocation updated successfully"));
+        return ResponseEntity.ok(ApiResponse.success(allocation, "Hostel allocation updated successfully",HttpStatus.OK.value()));
     }
 
     @Operation(
@@ -82,7 +83,7 @@ public class HostelAllocationController {
             @PathVariable String allocationUuid
     ) {
         HostelAllocationResponse allocation = hostelAllocationService.getHostelAllocationByUuid(allocationUuid);
-        return ResponseEntity.ok(ApiResponse.success(allocation, "Hostel allocation retrieved successfully"));
+        return ResponseEntity.ok(ApiResponse.success(allocation, "Hostel allocation retrieved successfully",HttpStatus.OK.value()));
     }
 
     @Operation(
@@ -103,7 +104,7 @@ public class HostelAllocationController {
     ) {
         Pageable pageable = PageRequest.of(page, size, Sort.by(direction, sortBy));
         Page<HostelAllocationResponse> allocations = hostelAllocationService.getAllHostelAllocations(pageable);
-        return ResponseEntity.ok(ApiResponse.success(allocations, "Hostel allocations retrieved successfully"));
+        return ResponseEntity.ok(ApiResponse.success(allocations, "Hostel allocations retrieved successfully",HttpStatus.OK.value()));
     }
 
     @Operation(
@@ -124,7 +125,7 @@ public class HostelAllocationController {
     ) {
         Pageable pageable = PageRequest.of(page, size, Sort.by(direction, sortBy));
         Page<HostelAllocationResponse> allocations = hostelAllocationService.getActiveHostelAllocations(pageable);
-        return ResponseEntity.ok(ApiResponse.success(allocations, "Active hostel allocations retrieved successfully"));
+        return ResponseEntity.ok(ApiResponse.success(allocations, "Active hostel allocations retrieved successfully",HttpStatus.OK.value()));
     }
 
     @Operation(
@@ -138,7 +139,7 @@ public class HostelAllocationController {
             @PathVariable String studentUuid
     ) {
         List<HostelAllocationResponse> allocations = hostelAllocationService.getHostelAllocationsByStudent(studentUuid);
-        return ResponseEntity.ok(ApiResponse.success(allocations, "Hostel allocations retrieved successfully"));
+        return ResponseEntity.ok(ApiResponse.success(allocations, "Hostel allocations retrieved successfully",HttpStatus.OK.value()));
     }
 
     @Operation(
@@ -152,7 +153,7 @@ public class HostelAllocationController {
             @PathVariable String studentUuid
     ) {
         HostelAllocationResponse allocation = hostelAllocationService.getActiveHostelAllocationByStudent(studentUuid);
-        return ResponseEntity.ok(ApiResponse.success(allocation, "Active hostel allocation retrieved successfully"));
+        return ResponseEntity.ok(ApiResponse.success(allocation, "Active hostel allocation retrieved successfully",HttpStatus.OK.value()));
     }
 
     @Operation(
@@ -175,7 +176,7 @@ public class HostelAllocationController {
     ) {
         Pageable pageable = PageRequest.of(page, size, Sort.by(direction, sortBy));
         Page<HostelAllocationResponse> allocations = hostelAllocationService.getHostelAllocationsByRoom(roomUuid, pageable);
-        return ResponseEntity.ok(ApiResponse.success(allocations, "Hostel allocations retrieved successfully"));
+        return ResponseEntity.ok(ApiResponse.success(allocations, "Hostel allocations retrieved successfully",HttpStatus.OK.value()));
     }
 
     @Operation(
@@ -189,7 +190,7 @@ public class HostelAllocationController {
             @PathVariable String roomUuid
     ) {
         List<HostelAllocationResponse> allocations = hostelAllocationService.getActiveHostelAllocationsByRoom(roomUuid);
-        return ResponseEntity.ok(ApiResponse.success(allocations, "Active hostel allocations retrieved successfully"));
+        return ResponseEntity.ok(ApiResponse.success(allocations, "Active hostel allocations retrieved successfully",HttpStatus.OK.value()));
     }
 
     @Operation(
@@ -212,7 +213,7 @@ public class HostelAllocationController {
     ) {
         Pageable pageable = PageRequest.of(page, size, Sort.by(direction, sortBy));
         Page<HostelAllocationResponse> allocations = hostelAllocationService.getHostelAllocationsByHostel(hostelUuid, pageable);
-        return ResponseEntity.ok(ApiResponse.success(allocations, "Hostel allocations retrieved successfully"));
+        return ResponseEntity.ok(ApiResponse.success(allocations, "Hostel allocations retrieved successfully",HttpStatus.OK.value()));
     }
 
     @Operation(
@@ -226,7 +227,7 @@ public class HostelAllocationController {
             @PathVariable String hostelUuid
     ) {
         List<HostelAllocationResponse> allocations = hostelAllocationService.getActiveHostelAllocationsByHostel(hostelUuid);
-        return ResponseEntity.ok(ApiResponse.success(allocations, "Active hostel allocations retrieved successfully"));
+        return ResponseEntity.ok(ApiResponse.success(allocations, "Active hostel allocations retrieved successfully",HttpStatus.OK.value()));
     }
 
     @Operation(
@@ -240,7 +241,7 @@ public class HostelAllocationController {
             @PathVariable String allocationUuid
     ) {
         HostelAllocationResponse allocation = hostelAllocationService.releaseHostelAllocation(allocationUuid);
-        return ResponseEntity.ok(ApiResponse.success(allocation, "Hostel allocation released successfully"));
+        return ResponseEntity.ok(ApiResponse.success(allocation, "Hostel allocation released successfully",HttpStatus.OK.value()));
     }
 
     @Operation(
@@ -263,7 +264,7 @@ public class HostelAllocationController {
     ) {
         Pageable pageable = PageRequest.of(page, size, Sort.by(direction, sortBy));
         Page<HostelAllocationResponse> allocations = hostelAllocationService.searchHostelAllocations(q, pageable);
-        return ResponseEntity.ok(ApiResponse.success(allocations, "Search results retrieved successfully"));
+        return ResponseEntity.ok(ApiResponse.success(allocations, "Search results retrieved successfully",HttpStatus.OK.value()));
     }
 
     @Operation(
@@ -277,7 +278,7 @@ public class HostelAllocationController {
             @PathVariable String allocationUuid
     ) {
         hostelAllocationService.deleteHostelAllocation(allocationUuid);
-        return ResponseEntity.ok(ApiResponse.success(null, "Hostel allocation deleted successfully"));
+        return ResponseEntity.ok(ApiResponse.success(null, "Hostel allocation deleted successfully",HttpStatus.OK.value()));
     }
 
     @Operation(
@@ -288,7 +289,7 @@ public class HostelAllocationController {
     @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'COLLEGE_ADMIN', 'HOSTEL_MANAGER')")
     public ResponseEntity<ApiResponse<HostelSummaryResponse>> getHostelSummary() {
         HostelSummaryResponse summary = hostelAllocationService.getHostelSummary();
-        return ResponseEntity.ok(ApiResponse.success(summary, "Hostel summary retrieved successfully"));
+        return ResponseEntity.ok(ApiResponse.success(summary, "Hostel summary retrieved successfully",HttpStatus.OK.value()));
     }
 }
 

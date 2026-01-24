@@ -17,6 +17,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
@@ -52,7 +53,7 @@ public class HostelRoomController {
             @Valid @RequestBody CreateHostelRoomRequest request
     ) {
         HostelRoomResponse room = hostelRoomService.createHostelRoom(request);
-        return ResponseEntity.ok(ApiResponse.success(room, "Hostel room created successfully"));
+        return ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse.success(room, "Hostel room created successfully",HttpStatus.CREATED.value()));
     }
 
     @Operation(
@@ -67,7 +68,7 @@ public class HostelRoomController {
             @Valid @RequestBody UpdateHostelRoomRequest request
     ) {
         HostelRoomResponse room = hostelRoomService.updateHostelRoom(roomUuid, request);
-        return ResponseEntity.ok(ApiResponse.success(room, "Hostel room updated successfully"));
+        return ResponseEntity.ok(ApiResponse.success(room, "Hostel room updated successfully",HttpStatus.OK.value()));
     }
 
     @Operation(
@@ -81,7 +82,7 @@ public class HostelRoomController {
             @PathVariable String roomUuid
     ) {
         HostelRoomResponse room = hostelRoomService.getHostelRoomByUuid(roomUuid);
-        return ResponseEntity.ok(ApiResponse.success(room, "Hostel room retrieved successfully"));
+        return ResponseEntity.ok(ApiResponse.success(room, "Hostel room retrieved successfully",HttpStatus.OK.value()));
     }
 
     @Operation(
@@ -102,7 +103,7 @@ public class HostelRoomController {
     ) {
         Pageable pageable = PageRequest.of(page, size, Sort.by(direction, sortBy));
         Page<HostelRoomResponse> rooms = hostelRoomService.getAllHostelRooms(pageable);
-        return ResponseEntity.ok(ApiResponse.success(rooms, "Hostel rooms retrieved successfully"));
+        return ResponseEntity.ok(ApiResponse.success(rooms, "Hostel rooms retrieved successfully",HttpStatus.OK.value()));
     }
 
     @Operation(
@@ -125,7 +126,7 @@ public class HostelRoomController {
     ) {
         Pageable pageable = PageRequest.of(page, size, Sort.by(direction, sortBy));
         Page<HostelRoomResponse> rooms = hostelRoomService.getHostelRoomsByHostel(hostelUuid, pageable);
-        return ResponseEntity.ok(ApiResponse.success(rooms, "Hostel rooms retrieved successfully"));
+        return ResponseEntity.ok(ApiResponse.success(rooms, "Hostel rooms retrieved successfully",HttpStatus.OK.value()));
     }
 
     @Operation(
@@ -139,7 +140,7 @@ public class HostelRoomController {
             @PathVariable String hostelUuid
     ) {
         List<HostelRoomResponse> rooms = hostelRoomService.getAllHostelRoomsByHostel(hostelUuid);
-        return ResponseEntity.ok(ApiResponse.success(rooms, "Hostel rooms retrieved successfully"));
+        return ResponseEntity.ok(ApiResponse.success(rooms, "Hostel rooms retrieved successfully",HttpStatus.OK.value()));
     }
 
     @Operation(
@@ -162,7 +163,7 @@ public class HostelRoomController {
     ) {
         Pageable pageable = PageRequest.of(page, size, Sort.by(direction, sortBy));
         Page<HostelRoomResponse> rooms = hostelRoomService.searchHostelRooms(q, pageable);
-        return ResponseEntity.ok(ApiResponse.success(rooms, "Search results retrieved successfully"));
+        return ResponseEntity.ok(ApiResponse.success(rooms, "Search results retrieved successfully",HttpStatus.OK.value()));
     }
 
     @Operation(
@@ -176,7 +177,7 @@ public class HostelRoomController {
             @PathVariable String roomUuid
     ) {
         hostelRoomService.deleteHostelRoom(roomUuid);
-        return ResponseEntity.ok(ApiResponse.success(null, "Hostel room deleted successfully"));
+        return ResponseEntity.ok(ApiResponse.success(null, "Hostel room deleted successfully",HttpStatus.OK.value()));
     }
 }
 

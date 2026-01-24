@@ -9,15 +9,16 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.AllArgsConstructor;
 import org.collegemanagement.api.response.ApiResponse;
+import org.collegemanagement.dto.StudentSummary;
 import org.collegemanagement.dto.student.*;
 import org.collegemanagement.enums.EnrollmentStatus;
 import org.collegemanagement.enums.Status;
 import org.collegemanagement.services.StudentService;
-import org.collegemanagement.dto.StudentSummary;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
@@ -51,7 +52,7 @@ public class StudentController {
             @Valid @RequestBody CreateStudentRequest request
     ) {
         StudentResponse student = studentService.createStudent(request);
-        return ResponseEntity.ok(ApiResponse.success(student, "Student created successfully"));
+        return ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse.success(student, "Student created successfully",HttpStatus.CREATED.value()));
     }
 
     @Operation(
@@ -66,7 +67,7 @@ public class StudentController {
             @Valid @RequestBody UpdateStudentRequest request
     ) {
         StudentResponse student = studentService.updateStudent(studentUuid, request);
-        return ResponseEntity.ok(ApiResponse.success(student, "Student updated successfully"));
+        return ResponseEntity.ok(ApiResponse.success(student, "Student updated successfully",HttpStatus.OK.value()));
     }
 
     @Operation(
@@ -80,7 +81,7 @@ public class StudentController {
             @PathVariable String studentUuid
     ) {
         StudentResponse student = studentService.getStudentByUuid(studentUuid);
-        return ResponseEntity.ok(ApiResponse.success(student, "Student retrieved successfully"));
+        return ResponseEntity.ok(ApiResponse.success(student, "Student retrieved successfully",HttpStatus.OK.value()));
     }
 
     @Operation(
@@ -94,7 +95,7 @@ public class StudentController {
             @PathVariable String studentUuid
     ) {
         StudentDetailResponse student = studentService.getStudentDetailsByUuid(studentUuid);
-        return ResponseEntity.ok(ApiResponse.success(student, "Student details retrieved successfully"));
+        return ResponseEntity.ok(ApiResponse.success(student, "Student details retrieved successfully",HttpStatus.OK.value()));
     }
 
     @Operation(
@@ -115,7 +116,7 @@ public class StudentController {
     ) {
         Pageable pageable = PageRequest.of(page, size, Sort.by(direction, sortBy));
         Page<StudentResponse> students = studentService.getAllStudents(pageable);
-        return ResponseEntity.ok(ApiResponse.success(students, "Students retrieved successfully"));
+        return ResponseEntity.ok(ApiResponse.success(students, "Students retrieved successfully",HttpStatus.OK.value()));
     }
 
     @Operation(
@@ -138,7 +139,7 @@ public class StudentController {
     ) {
         Pageable pageable = PageRequest.of(page, size, Sort.by(direction, sortBy));
         Page<StudentResponse> students = studentService.searchStudents(q, pageable);
-        return ResponseEntity.ok(ApiResponse.success(students, "Search results retrieved successfully"));
+        return ResponseEntity.ok(ApiResponse.success(students, "Search results retrieved successfully",HttpStatus.OK.value()));
     }
 
     @Operation(
@@ -157,7 +158,7 @@ public class StudentController {
     ) {
         Pageable pageable = PageRequest.of(page, size);
         Page<StudentResponse> students = studentService.getStudentsByStatus(status, pageable);
-        return ResponseEntity.ok(ApiResponse.success(students, "Students retrieved successfully"));
+        return ResponseEntity.ok(ApiResponse.success(students, "Students retrieved successfully",HttpStatus.OK.value()));
     }
 
     @Operation(
@@ -176,7 +177,7 @@ public class StudentController {
     ) {
         Pageable pageable = PageRequest.of(page, size);
         Page<StudentResponse> students = studentService.getStudentsByClass(classUuid, pageable);
-        return ResponseEntity.ok(ApiResponse.success(students, "Students retrieved successfully"));
+        return ResponseEntity.ok(ApiResponse.success(students, "Students retrieved successfully",HttpStatus.OK.value()));
     }
 
     @Operation(
@@ -195,7 +196,7 @@ public class StudentController {
     ) {
         Pageable pageable = PageRequest.of(page, size);
         Page<StudentResponse> students = studentService.getStudentsByAcademicYear(academicYearUuid, pageable);
-        return ResponseEntity.ok(ApiResponse.success(students, "Students retrieved successfully"));
+        return ResponseEntity.ok(ApiResponse.success(students, "Students retrieved successfully",HttpStatus.OK.value()));
     }
 
     @Operation(
@@ -209,7 +210,7 @@ public class StudentController {
             @PathVariable String studentUuid
     ) {
         studentService.deleteStudent(studentUuid);
-        return ResponseEntity.ok(ApiResponse.success(null, "Student deleted successfully"));
+        return ResponseEntity.ok(ApiResponse.success(null, "Student deleted successfully",HttpStatus.OK.value()));
     }
 
     @Operation(
@@ -224,7 +225,7 @@ public class StudentController {
             @Valid @RequestBody AssignParentRequest request
     ) {
         studentService.assignParent(studentUuid, request);
-        return ResponseEntity.ok(ApiResponse.success(null, "Parent assigned successfully"));
+        return ResponseEntity.ok(ApiResponse.success(null, "Parent assigned successfully",HttpStatus.OK.value()));
     }
 
     @Operation(
@@ -240,7 +241,7 @@ public class StudentController {
             @PathVariable String parentUuid
     ) {
         studentService.removeParent(studentUuid, parentUuid);
-        return ResponseEntity.ok(ApiResponse.success(null, "Parent removed successfully"));
+        return ResponseEntity.ok(ApiResponse.success(null, "Parent removed successfully",HttpStatus.OK.value()));
     }
 
     @Operation(
@@ -255,7 +256,7 @@ public class StudentController {
             @Valid @RequestBody CreateEnrollmentRequest request
     ) {
         studentService.createEnrollment(studentUuid, request);
-        return ResponseEntity.ok(ApiResponse.success(null, "Enrollment created successfully"));
+        return ResponseEntity.ok(ApiResponse.success(null, "Enrollment created successfully",HttpStatus.OK.value()));
     }
 
     @Operation(
@@ -273,7 +274,7 @@ public class StudentController {
             @RequestParam EnrollmentStatus status
     ) {
         studentService.updateEnrollmentStatus(studentUuid, enrollmentUuid, status);
-        return ResponseEntity.ok(ApiResponse.success(null, "Enrollment status updated successfully"));
+        return ResponseEntity.ok(ApiResponse.success(null, "Enrollment status updated successfully",HttpStatus.OK.value()));
     }
 
     @Operation(
@@ -284,7 +285,7 @@ public class StudentController {
     @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'COLLEGE_ADMIN')")
     public ResponseEntity<ApiResponse<StudentSummary>> getStudentSummary() {
         StudentSummary summary = studentService.getStudentSummary();
-        return ResponseEntity.ok(ApiResponse.success(summary, "Student summary retrieved successfully"));
+        return ResponseEntity.ok(ApiResponse.success(summary, "Student summary retrieved successfully",HttpStatus.OK.value()));
     }
 }
 

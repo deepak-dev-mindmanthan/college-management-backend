@@ -17,6 +17,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
@@ -50,7 +51,7 @@ public class AccountantController {
             @Valid @RequestBody CreateAccountantRequest request
     ) {
         AccountantResponse accountant = accountantService.createAccountant(request);
-        return ResponseEntity.ok(ApiResponse.success(accountant, "Accountant created successfully"));
+        return ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse.success(accountant, "Accountant created successfully", HttpStatus.CREATED.value()));
     }
 
     @Operation(
@@ -65,7 +66,7 @@ public class AccountantController {
             @Valid @RequestBody UpdateAccountantRequest request
     ) {
         AccountantResponse accountant = accountantService.updateAccountant(accountantUuid, request);
-        return ResponseEntity.ok(ApiResponse.success(accountant, "Accountant updated successfully"));
+        return ResponseEntity.ok(ApiResponse.success(accountant, "Accountant updated successfully",HttpStatus.OK.value()));
     }
 
     @Operation(
@@ -79,7 +80,7 @@ public class AccountantController {
             @PathVariable String accountantUuid
     ) {
         AccountantResponse accountant = accountantService.getAccountantByUuid(accountantUuid);
-        return ResponseEntity.ok(ApiResponse.success(accountant, "Accountant retrieved successfully"));
+        return ResponseEntity.ok(ApiResponse.success(accountant, "Accountant retrieved successfully",HttpStatus.OK.value()));
     }
 
     @Operation(
@@ -100,7 +101,7 @@ public class AccountantController {
     ) {
         Pageable pageable = PageRequest.of(page, size, Sort.by(direction, sortBy));
         Page<AccountantResponse> accountants = accountantService.getAllAccountants(pageable);
-        return ResponseEntity.ok(ApiResponse.success(accountants, "Accountants retrieved successfully"));
+        return ResponseEntity.ok(ApiResponse.success(accountants, "Accountants retrieved successfully",HttpStatus.OK.value()));
     }
 
     @Operation(
@@ -123,7 +124,7 @@ public class AccountantController {
     ) {
         Pageable pageable = PageRequest.of(page, size, Sort.by(direction, sortBy));
         Page<AccountantResponse> accountants = accountantService.searchAccountants(q, pageable);
-        return ResponseEntity.ok(ApiResponse.success(accountants, "Search results retrieved successfully"));
+        return ResponseEntity.ok(ApiResponse.success(accountants, "Search results retrieved successfully",HttpStatus.OK.value()));
     }
 
     @Operation(
@@ -137,7 +138,7 @@ public class AccountantController {
             @PathVariable String accountantUuid
     ) {
         accountantService.deleteAccountant(accountantUuid);
-        return ResponseEntity.ok(ApiResponse.success(null, "Accountant deleted successfully"));
+        return ResponseEntity.ok(ApiResponse.success(null, "Accountant deleted successfully",HttpStatus.OK.value()));
     }
 }
 

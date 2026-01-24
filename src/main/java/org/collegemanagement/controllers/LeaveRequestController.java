@@ -22,6 +22,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.format.annotation.DateTimeFormat;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
@@ -61,7 +62,7 @@ public class LeaveRequestController {
             @Valid @RequestBody CreateLeaveRequestRequest request
     ) {
         LeaveRequestResponse leaveRequest = leaveRequestService.createLeaveRequest(request);
-        return ResponseEntity.ok(ApiResponse.success(leaveRequest, "Leave request created successfully"));
+        return ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse.success(leaveRequest, "Leave request created successfully",HttpStatus.CREATED.value()));
     }
 
     @Operation(
@@ -76,7 +77,7 @@ public class LeaveRequestController {
             @Valid @RequestBody UpdateLeaveRequestRequest request
     ) {
         LeaveRequestResponse leaveRequest = leaveRequestService.updateLeaveRequest(leaveRequestUuid, request);
-        return ResponseEntity.ok(ApiResponse.success(leaveRequest, "Leave request updated successfully"));
+        return ResponseEntity.ok(ApiResponse.success(leaveRequest, "Leave request updated successfully",HttpStatus.OK.value()));
     }
 
     @Operation(
@@ -91,7 +92,7 @@ public class LeaveRequestController {
             @Valid @RequestBody ApproveLeaveRequestRequest request
     ) {
         LeaveRequestResponse leaveRequest = leaveRequestService.approveOrRejectLeaveRequest(leaveRequestUuid, request);
-        return ResponseEntity.ok(ApiResponse.success(leaveRequest, "Leave request " + request.getStatus() + " successfully"));
+        return ResponseEntity.ok(ApiResponse.success(leaveRequest, "Leave request " + request.getStatus() + " successfully",HttpStatus.OK.value()));
     }
 
     @Operation(
@@ -105,7 +106,7 @@ public class LeaveRequestController {
             @PathVariable String leaveRequestUuid
     ) {
         leaveRequestService.cancelLeaveRequest(leaveRequestUuid);
-        return ResponseEntity.ok(ApiResponse.success(null, "Leave request cancelled successfully"));
+        return ResponseEntity.ok(ApiResponse.success(null, "Leave request cancelled successfully",HttpStatus.OK.value()));
     }
 
     @Operation(
@@ -119,7 +120,7 @@ public class LeaveRequestController {
             @PathVariable String leaveRequestUuid
     ) {
         LeaveRequestResponse leaveRequest = leaveRequestService.getLeaveRequestByUuid(leaveRequestUuid);
-        return ResponseEntity.ok(ApiResponse.success(leaveRequest, "Leave request retrieved successfully"));
+        return ResponseEntity.ok(ApiResponse.success(leaveRequest, "Leave request retrieved successfully",HttpStatus.OK.value()));
     }
 
     @Operation(
@@ -141,7 +142,7 @@ public class LeaveRequestController {
         Sort sort = sortDir.equalsIgnoreCase("ASC") ? Sort.by(sortBy).ascending() : Sort.by(sortBy).descending();
         Pageable pageable = PageRequest.of(page, size, sort);
         Page<LeaveRequestResponse> leaveRequests = leaveRequestService.getAllLeaveRequests(pageable);
-        return ResponseEntity.ok(ApiResponse.success(leaveRequests, "Leave requests retrieved successfully"));
+        return ResponseEntity.ok(ApiResponse.success(leaveRequests, "Leave requests retrieved successfully",HttpStatus.OK.value()));
     }
 
     @Operation(
@@ -165,7 +166,7 @@ public class LeaveRequestController {
         Sort sort = sortDir.equalsIgnoreCase("ASC") ? Sort.by(sortBy).ascending() : Sort.by(sortBy).descending();
         Pageable pageable = PageRequest.of(page, size, sort);
         Page<LeaveRequestResponse> leaveRequests = leaveRequestService.getLeaveRequestsByUser(userUuid, pageable);
-        return ResponseEntity.ok(ApiResponse.success(leaveRequests, "Leave requests retrieved successfully"));
+        return ResponseEntity.ok(ApiResponse.success(leaveRequests, "Leave requests retrieved successfully",HttpStatus.OK.value()));
     }
 
     @Operation(
@@ -189,7 +190,7 @@ public class LeaveRequestController {
         Sort sort = sortDir.equalsIgnoreCase("ASC") ? Sort.by(sortBy).ascending() : Sort.by(sortBy).descending();
         Pageable pageable = PageRequest.of(page, size, sort);
         Page<LeaveRequestResponse> leaveRequests = leaveRequestService.getLeaveRequestsByOwnerType(ownerType, pageable);
-        return ResponseEntity.ok(ApiResponse.success(leaveRequests, "Leave requests retrieved successfully"));
+        return ResponseEntity.ok(ApiResponse.success(leaveRequests, "Leave requests retrieved successfully",HttpStatus.OK.value()));
     }
 
     @Operation(
@@ -213,7 +214,7 @@ public class LeaveRequestController {
         Sort sort = sortDir.equalsIgnoreCase("ASC") ? Sort.by(sortBy).ascending() : Sort.by(sortBy).descending();
         Pageable pageable = PageRequest.of(page, size, sort);
         Page<LeaveRequestResponse> leaveRequests = leaveRequestService.getLeaveRequestsByStatus(status, pageable);
-        return ResponseEntity.ok(ApiResponse.success(leaveRequests, "Leave requests retrieved successfully"));
+        return ResponseEntity.ok(ApiResponse.success(leaveRequests, "Leave requests retrieved successfully",HttpStatus.OK.value()));
     }
 
     @Operation(
@@ -240,7 +241,7 @@ public class LeaveRequestController {
         Pageable pageable = PageRequest.of(page, size, sort);
         Page<LeaveRequestResponse> leaveRequests = leaveRequestService.getLeaveRequestsByUserAndStatus(
                 userUuid, status, pageable);
-        return ResponseEntity.ok(ApiResponse.success(leaveRequests, "Leave requests retrieved successfully"));
+        return ResponseEntity.ok(ApiResponse.success(leaveRequests, "Leave requests retrieved successfully",HttpStatus.OK.value()));
     }
 
     @Operation(
@@ -267,7 +268,7 @@ public class LeaveRequestController {
         Pageable pageable = PageRequest.of(page, size, sort);
         Page<LeaveRequestResponse> leaveRequests = leaveRequestService.getLeaveRequestsByDateRange(
                 startDate, endDate, pageable);
-        return ResponseEntity.ok(ApiResponse.success(leaveRequests, "Leave requests retrieved successfully"));
+        return ResponseEntity.ok(ApiResponse.success(leaveRequests, "Leave requests retrieved successfully",HttpStatus.OK.value()));
     }
 
     @Operation(
@@ -291,7 +292,7 @@ public class LeaveRequestController {
         Sort sort = sortDir.equalsIgnoreCase("ASC") ? Sort.by(sortBy).ascending() : Sort.by(sortBy).descending();
         Pageable pageable = PageRequest.of(page, size, sort);
         Page<LeaveRequestResponse> leaveRequests = leaveRequestService.getLeaveRequestsByLeaveType(leaveType, pageable);
-        return ResponseEntity.ok(ApiResponse.success(leaveRequests, "Leave requests retrieved successfully"));
+        return ResponseEntity.ok(ApiResponse.success(leaveRequests, "Leave requests retrieved successfully",HttpStatus.OK.value()));
     }
 }
 

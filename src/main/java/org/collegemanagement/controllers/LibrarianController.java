@@ -17,6 +17,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
@@ -50,7 +51,7 @@ public class LibrarianController {
             @Valid @RequestBody CreateLibrarianRequest request
     ) {
         LibrarianResponse librarian = librarianService.createLibrarian(request);
-        return ResponseEntity.ok(ApiResponse.success(librarian, "Librarian created successfully"));
+        return ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse.success(librarian, "Librarian created successfully",HttpStatus.CREATED.value()));
     }
 
     @Operation(
@@ -65,7 +66,7 @@ public class LibrarianController {
             @Valid @RequestBody UpdateLibrarianRequest request
     ) {
         LibrarianResponse librarian = librarianService.updateLibrarian(librarianUuid, request);
-        return ResponseEntity.ok(ApiResponse.success(librarian, "Librarian updated successfully"));
+        return ResponseEntity.ok(ApiResponse.success(librarian, "Librarian updated successfully",HttpStatus.OK.value()));
     }
 
     @Operation(
@@ -79,7 +80,7 @@ public class LibrarianController {
             @PathVariable String librarianUuid
     ) {
         LibrarianResponse librarian = librarianService.getLibrarianByUuid(librarianUuid);
-        return ResponseEntity.ok(ApiResponse.success(librarian, "Librarian retrieved successfully"));
+        return ResponseEntity.ok(ApiResponse.success(librarian, "Librarian retrieved successfully",HttpStatus.OK.value()));
     }
 
     @Operation(
@@ -100,7 +101,7 @@ public class LibrarianController {
     ) {
         Pageable pageable = PageRequest.of(page, size, Sort.by(direction, sortBy));
         Page<LibrarianResponse> librarians = librarianService.getAllLibrarians(pageable);
-        return ResponseEntity.ok(ApiResponse.success(librarians, "Librarians retrieved successfully"));
+        return ResponseEntity.ok(ApiResponse.success(librarians, "Librarians retrieved successfully",HttpStatus.OK.value()));
     }
 
     @Operation(
@@ -123,7 +124,7 @@ public class LibrarianController {
     ) {
         Pageable pageable = PageRequest.of(page, size, Sort.by(direction, sortBy));
         Page<LibrarianResponse> librarians = librarianService.searchLibrarians(q, pageable);
-        return ResponseEntity.ok(ApiResponse.success(librarians, "Search results retrieved successfully"));
+        return ResponseEntity.ok(ApiResponse.success(librarians, "Search results retrieved successfully",HttpStatus.OK.value()));
     }
 
     @Operation(
@@ -137,7 +138,7 @@ public class LibrarianController {
             @PathVariable String librarianUuid
     ) {
         librarianService.deleteLibrarian(librarianUuid);
-        return ResponseEntity.ok(ApiResponse.success(null, "Librarian deleted successfully"));
+        return ResponseEntity.ok(ApiResponse.success(null, "Librarian deleted successfully",HttpStatus.OK.value()));
     }
 }
 

@@ -18,6 +18,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
@@ -53,7 +54,7 @@ public class HostelController {
             @Valid @RequestBody CreateHostelRequest request
     ) {
         HostelResponse hostel = hostelService.createHostel(request);
-        return ResponseEntity.ok(ApiResponse.success(hostel, "Hostel created successfully"));
+        return ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse.success(hostel, "Hostel created successfully",HttpStatus.CREATED.value()));
     }
 
     @Operation(
@@ -68,7 +69,7 @@ public class HostelController {
             @Valid @RequestBody UpdateHostelRequest request
     ) {
         HostelResponse hostel = hostelService.updateHostel(hostelUuid, request);
-        return ResponseEntity.ok(ApiResponse.success(hostel, "Hostel updated successfully"));
+        return ResponseEntity.ok(ApiResponse.success(hostel, "Hostel updated successfully",HttpStatus.OK.value()));
     }
 
     @Operation(
@@ -82,7 +83,7 @@ public class HostelController {
             @PathVariable String hostelUuid
     ) {
         HostelResponse hostel = hostelService.getHostelByUuid(hostelUuid);
-        return ResponseEntity.ok(ApiResponse.success(hostel, "Hostel retrieved successfully"));
+        return ResponseEntity.ok(ApiResponse.success(hostel, "Hostel retrieved successfully",HttpStatus.OK.value()));
     }
 
     @Operation(
@@ -103,7 +104,7 @@ public class HostelController {
     ) {
         Pageable pageable = PageRequest.of(page, size, Sort.by(direction, sortBy));
         Page<HostelResponse> hostels = hostelService.getAllHostels(pageable);
-        return ResponseEntity.ok(ApiResponse.success(hostels, "Hostels retrieved successfully"));
+        return ResponseEntity.ok(ApiResponse.success(hostels, "Hostels retrieved successfully",HttpStatus.OK.value()));
     }
 
     @Operation(
@@ -114,7 +115,7 @@ public class HostelController {
     @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'COLLEGE_ADMIN', 'HOSTEL_MANAGER', 'TEACHER', 'STUDENT')")
     public ResponseEntity<ApiResponse<List<HostelResponse>>> getAllHostelsList() {
         List<HostelResponse> hostels = hostelService.getAllHostels();
-        return ResponseEntity.ok(ApiResponse.success(hostels, "Hostels retrieved successfully"));
+        return ResponseEntity.ok(ApiResponse.success(hostels, "Hostels retrieved successfully",HttpStatus.OK.value()));
     }
 
     @Operation(
@@ -137,7 +138,7 @@ public class HostelController {
     ) {
         Pageable pageable = PageRequest.of(page, size, Sort.by(direction, sortBy));
         Page<HostelResponse> hostels = hostelService.getHostelsByType(type, pageable);
-        return ResponseEntity.ok(ApiResponse.success(hostels, "Hostels retrieved successfully"));
+        return ResponseEntity.ok(ApiResponse.success(hostels, "Hostels retrieved successfully",HttpStatus.OK.value()));
     }
 
     @Operation(
@@ -160,7 +161,7 @@ public class HostelController {
     ) {
         Pageable pageable = PageRequest.of(page, size, Sort.by(direction, sortBy));
         Page<HostelResponse> hostels = hostelService.searchHostels(q, pageable);
-        return ResponseEntity.ok(ApiResponse.success(hostels, "Search results retrieved successfully"));
+        return ResponseEntity.ok(ApiResponse.success(hostels, "Search results retrieved successfully",HttpStatus.OK.value()));
     }
 
     @Operation(
@@ -174,7 +175,7 @@ public class HostelController {
             @PathVariable String hostelUuid
     ) {
         hostelService.deleteHostel(hostelUuid);
-        return ResponseEntity.ok(ApiResponse.success(null, "Hostel deleted successfully"));
+        return ResponseEntity.ok(ApiResponse.success(null, "Hostel deleted successfully",HttpStatus.OK.value()));
     }
 }
 

@@ -19,6 +19,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.format.annotation.DateTimeFormat;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
@@ -54,7 +55,7 @@ public class DisciplinaryController {
             @Valid @RequestBody CreateDisciplinaryCaseRequest request
     ) {
         DisciplinaryCaseResponse caseResponse = disciplinaryService.createDisciplinaryCase(request);
-        return ResponseEntity.ok(ApiResponse.success(caseResponse, "Disciplinary case created successfully"));
+        return ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse.success(caseResponse, "Disciplinary case created successfully",HttpStatus.CREATED.value()));
     }
 
     @Operation(
@@ -69,7 +70,7 @@ public class DisciplinaryController {
             @Valid @RequestBody UpdateDisciplinaryCaseRequest request
     ) {
         DisciplinaryCaseResponse caseResponse = disciplinaryService.updateDisciplinaryCase(caseUuid, request);
-        return ResponseEntity.ok(ApiResponse.success(caseResponse, "Disciplinary case updated successfully"));
+        return ResponseEntity.ok(ApiResponse.success(caseResponse, "Disciplinary case updated successfully",HttpStatus.OK.value()));
     }
 
     @Operation(
@@ -83,7 +84,7 @@ public class DisciplinaryController {
             @PathVariable String caseUuid
     ) {
         DisciplinaryCaseResponse caseResponse = disciplinaryService.getDisciplinaryCaseByUuid(caseUuid);
-        return ResponseEntity.ok(ApiResponse.success(caseResponse, "Disciplinary case retrieved successfully"));
+        return ResponseEntity.ok(ApiResponse.success(caseResponse, "Disciplinary case retrieved successfully",HttpStatus.OK.value()));
     }
 
     @Operation(
@@ -105,7 +106,7 @@ public class DisciplinaryController {
         Sort sort = sortDir.equalsIgnoreCase("ASC") ? Sort.by(sortBy).ascending() : Sort.by(sortBy).descending();
         Pageable pageable = PageRequest.of(page, size, sort);
         Page<DisciplinaryCaseResponse> cases = disciplinaryService.getAllDisciplinaryCases(pageable);
-        return ResponseEntity.ok(ApiResponse.success(cases, "Disciplinary cases retrieved successfully"));
+        return ResponseEntity.ok(ApiResponse.success(cases, "Disciplinary cases retrieved successfully",HttpStatus.OK.value()));
     }
 
     @Operation(
@@ -129,7 +130,7 @@ public class DisciplinaryController {
         Sort sort = sortDir.equalsIgnoreCase("ASC") ? Sort.by(sortBy).ascending() : Sort.by(sortBy).descending();
         Pageable pageable = PageRequest.of(page, size, sort);
         Page<DisciplinaryCaseResponse> cases = disciplinaryService.getDisciplinaryCasesByStudent(studentUuid, pageable);
-        return ResponseEntity.ok(ApiResponse.success(cases, "Disciplinary cases retrieved successfully"));
+        return ResponseEntity.ok(ApiResponse.success(cases, "Disciplinary cases retrieved successfully",HttpStatus.OK.value()));
     }
 
     @Operation(
@@ -153,7 +154,7 @@ public class DisciplinaryController {
         Sort sort = sortDir.equalsIgnoreCase("ASC") ? Sort.by(sortBy).ascending() : Sort.by(sortBy).descending();
         Pageable pageable = PageRequest.of(page, size, sort);
         Page<DisciplinaryCaseResponse> cases = disciplinaryService.getDisciplinaryCasesByStatus(status, pageable);
-        return ResponseEntity.ok(ApiResponse.success(cases, "Disciplinary cases retrieved successfully"));
+        return ResponseEntity.ok(ApiResponse.success(cases, "Disciplinary cases retrieved successfully",HttpStatus.OK.value()));
     }
 
     @Operation(
@@ -180,7 +181,7 @@ public class DisciplinaryController {
         Pageable pageable = PageRequest.of(page, size, sort);
         Page<DisciplinaryCaseResponse> cases = disciplinaryService.getDisciplinaryCasesByStudentAndStatus(
                 studentUuid, status, pageable);
-        return ResponseEntity.ok(ApiResponse.success(cases, "Disciplinary cases retrieved successfully"));
+        return ResponseEntity.ok(ApiResponse.success(cases, "Disciplinary cases retrieved successfully",HttpStatus.OK.value()));
     }
 
     @Operation(
@@ -207,7 +208,7 @@ public class DisciplinaryController {
         Pageable pageable = PageRequest.of(page, size, sort);
         Page<DisciplinaryCaseResponse> cases = disciplinaryService.getDisciplinaryCasesByDateRange(
                 startDate, endDate, pageable);
-        return ResponseEntity.ok(ApiResponse.success(cases, "Disciplinary cases retrieved successfully"));
+        return ResponseEntity.ok(ApiResponse.success(cases, "Disciplinary cases retrieved successfully",HttpStatus.OK.value()));
     }
 }
 

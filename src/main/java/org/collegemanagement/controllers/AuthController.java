@@ -9,6 +9,7 @@ import lombok.AllArgsConstructor;
 import org.collegemanagement.api.response.ApiResponse;
 import org.collegemanagement.dto.*;
 import org.collegemanagement.services.AuthService;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -43,7 +44,7 @@ public class AuthController {
     public ResponseEntity<ApiResponse<UserDto>> register(@Valid @RequestBody RegisterSuperAdminRequest registerSuperAdminRequest) {
         return ResponseEntity.ok(ApiResponse.success(
                 authService.registerSuperAdmin(registerSuperAdminRequest),
-                "User registered successfully."
+                "User registered successfully.", HttpStatus.OK.value()
         ));
     }
 
@@ -64,7 +65,8 @@ public class AuthController {
         return ResponseEntity.ok(
                 ApiResponse.success(
                         authService.registerCollegeTenant(request),
-                        "College registered successfully."
+                        "College registered successfully.",
+                        HttpStatus.OK.value()
                 )
         );
     }
@@ -86,7 +88,9 @@ public class AuthController {
     public ResponseEntity<ApiResponse<LoginResponse>> login(@RequestBody LoginRequest loginRequest) {
         return ResponseEntity.ok(ApiResponse.success(
                 authService.login(loginRequest),
-                "Login successfully.")
+                "Login successfully.",
+                HttpStatus.OK.value()
+                )
         );
     }
 
@@ -104,7 +108,9 @@ public class AuthController {
     public ResponseEntity<ApiResponse<LoginResponse>> token(@RequestBody RefreshTokenRequest refreshTokenRequest) {
         return ResponseEntity.ok(ApiResponse.success(
                 authService.refreshToken(refreshTokenRequest)
-                , "Token refreshed successfully.")
+                , "Token refreshed successfully.",
+                HttpStatus.OK.value()
+                )
         );
     }
 }

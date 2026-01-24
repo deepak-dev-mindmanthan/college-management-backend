@@ -17,6 +17,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
@@ -50,7 +51,7 @@ public class HostelManagerController {
             @Valid @RequestBody CreateHostelManagerRequest request
     ) {
         HostelManagerResponse hostelManager = hostelManagerService.createHostelManager(request);
-        return ResponseEntity.ok(ApiResponse.success(hostelManager, "Hostel manager created successfully"));
+        return ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse.success(hostelManager, "Hostel manager created successfully",HttpStatus.CREATED.value()));
     }
 
     @Operation(
@@ -65,7 +66,7 @@ public class HostelManagerController {
             @Valid @RequestBody UpdateHostelManagerRequest request
     ) {
         HostelManagerResponse hostelManager = hostelManagerService.updateHostelManager(hostelManagerUuid, request);
-        return ResponseEntity.ok(ApiResponse.success(hostelManager, "Hostel manager updated successfully"));
+        return ResponseEntity.ok(ApiResponse.success(hostelManager, "Hostel manager updated successfully",HttpStatus.OK.value()));
     }
 
     @Operation(
@@ -79,7 +80,7 @@ public class HostelManagerController {
             @PathVariable String hostelManagerUuid
     ) {
         HostelManagerResponse hostelManager = hostelManagerService.getHostelManagerByUuid(hostelManagerUuid);
-        return ResponseEntity.ok(ApiResponse.success(hostelManager, "Hostel manager retrieved successfully"));
+        return ResponseEntity.ok(ApiResponse.success(hostelManager, "Hostel manager retrieved successfully",HttpStatus.OK.value()));
     }
 
     @Operation(
@@ -100,7 +101,7 @@ public class HostelManagerController {
     ) {
         Pageable pageable = PageRequest.of(page, size, Sort.by(direction, sortBy));
         Page<HostelManagerResponse> hostelManagers = hostelManagerService.getAllHostelManagers(pageable);
-        return ResponseEntity.ok(ApiResponse.success(hostelManagers, "Hostel managers retrieved successfully"));
+        return ResponseEntity.ok(ApiResponse.success(hostelManagers, "Hostel managers retrieved successfully",HttpStatus.OK.value()));
     }
 
     @Operation(
@@ -123,7 +124,7 @@ public class HostelManagerController {
     ) {
         Pageable pageable = PageRequest.of(page, size, Sort.by(direction, sortBy));
         Page<HostelManagerResponse> hostelManagers = hostelManagerService.searchHostelManagers(q, pageable);
-        return ResponseEntity.ok(ApiResponse.success(hostelManagers, "Search results retrieved successfully"));
+        return ResponseEntity.ok(ApiResponse.success(hostelManagers, "Search results retrieved successfully",HttpStatus.OK.value()));
     }
 
     @Operation(
@@ -137,7 +138,7 @@ public class HostelManagerController {
             @PathVariable String hostelManagerUuid
     ) {
         hostelManagerService.deleteHostelManager(hostelManagerUuid);
-        return ResponseEntity.ok(ApiResponse.success(null, "Hostel manager deleted successfully"));
+        return ResponseEntity.ok(ApiResponse.success(null, "Hostel manager deleted successfully",HttpStatus.OK.value()));
     }
 }
 

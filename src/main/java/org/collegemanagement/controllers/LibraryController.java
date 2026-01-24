@@ -16,6 +16,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
@@ -53,7 +54,7 @@ public class LibraryController {
             @Valid @RequestBody CreateBookRequest request
     ) {
         BookResponse book = libraryService.createBook(request);
-        return ResponseEntity.ok(ApiResponse.success(book, "Book created successfully"));
+        return ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse.success(book, "Book created successfully",HttpStatus.CREATED.value()));
     }
 
     @Operation(
@@ -68,7 +69,7 @@ public class LibraryController {
             @Valid @RequestBody UpdateBookRequest request
     ) {
         BookResponse book = libraryService.updateBook(bookUuid, request);
-        return ResponseEntity.ok(ApiResponse.success(book, "Book updated successfully"));
+        return ResponseEntity.ok(ApiResponse.success(book, "Book updated successfully",HttpStatus.OK.value()));
     }
 
     @Operation(
@@ -82,7 +83,7 @@ public class LibraryController {
             @PathVariable String bookUuid
     ) {
         BookResponse book = libraryService.getBookByUuid(bookUuid);
-        return ResponseEntity.ok(ApiResponse.success(book, "Book retrieved successfully"));
+        return ResponseEntity.ok(ApiResponse.success(book, "Book retrieved successfully",HttpStatus.OK.value()));
     }
 
     @Operation(
@@ -103,7 +104,7 @@ public class LibraryController {
     ) {
         Pageable pageable = PageRequest.of(page, size, Sort.by(direction, sortBy));
         Page<BookResponse> books = libraryService.getAllBooks(pageable);
-        return ResponseEntity.ok(ApiResponse.success(books, "Books retrieved successfully"));
+        return ResponseEntity.ok(ApiResponse.success(books, "Books retrieved successfully",HttpStatus.OK.value()));
     }
 
     @Operation(
@@ -126,7 +127,7 @@ public class LibraryController {
     ) {
         Pageable pageable = PageRequest.of(page, size, Sort.by(direction, sortBy));
         Page<BookResponse> books = libraryService.searchBooks(q, pageable);
-        return ResponseEntity.ok(ApiResponse.success(books, "Search results retrieved successfully"));
+        return ResponseEntity.ok(ApiResponse.success(books, "Search results retrieved successfully",HttpStatus.OK.value()));
     }
 
     @Operation(
@@ -145,7 +146,7 @@ public class LibraryController {
     ) {
         Pageable pageable = PageRequest.of(page, size);
         Page<BookResponse> books = libraryService.getBooksByCategory(category, pageable);
-        return ResponseEntity.ok(ApiResponse.success(books, "Books retrieved successfully"));
+        return ResponseEntity.ok(ApiResponse.success(books, "Books retrieved successfully",HttpStatus.OK.value()));
     }
 
     @Operation(
@@ -162,7 +163,7 @@ public class LibraryController {
     ) {
         Pageable pageable = PageRequest.of(page, size);
         Page<BookResponse> books = libraryService.getAvailableBooks(pageable);
-        return ResponseEntity.ok(ApiResponse.success(books, "Available books retrieved successfully"));
+        return ResponseEntity.ok(ApiResponse.success(books, "Available books retrieved successfully",HttpStatus.OK.value()));
     }
 
     @Operation(
@@ -176,7 +177,7 @@ public class LibraryController {
             @PathVariable String bookUuid
     ) {
         libraryService.deleteBook(bookUuid);
-        return ResponseEntity.ok(ApiResponse.success(null, "Book deleted successfully"));
+        return ResponseEntity.ok(ApiResponse.success(null, "Book deleted successfully",HttpStatus.OK.value()));
     }
 
     // ========== Book Issue/Return Endpoints ==========
@@ -191,7 +192,7 @@ public class LibraryController {
             @Valid @RequestBody IssueBookRequest request
     ) {
         LibraryIssueResponse issue = libraryService.issueBook(request);
-        return ResponseEntity.ok(ApiResponse.success(issue, "Book issued successfully"));
+        return ResponseEntity.ok(ApiResponse.success(issue, "Book issued successfully",HttpStatus.OK.value()));
     }
 
     @Operation(
@@ -209,7 +210,7 @@ public class LibraryController {
             request = ReturnBookRequest.builder().build();
         }
         LibraryIssueResponse issue = libraryService.returnBook(issueUuid, request);
-        return ResponseEntity.ok(ApiResponse.success(issue, "Book returned successfully"));
+        return ResponseEntity.ok(ApiResponse.success(issue, "Book returned successfully",HttpStatus.OK.value()));
     }
 
     // ========== Issue Management Endpoints ==========
@@ -225,7 +226,7 @@ public class LibraryController {
             @PathVariable String issueUuid
     ) {
         LibraryIssueResponse issue = libraryService.getIssueByUuid(issueUuid);
-        return ResponseEntity.ok(ApiResponse.success(issue, "Issue retrieved successfully"));
+        return ResponseEntity.ok(ApiResponse.success(issue, "Issue retrieved successfully",HttpStatus.OK.value()));
     }
 
     @Operation(
@@ -246,7 +247,7 @@ public class LibraryController {
     ) {
         Pageable pageable = PageRequest.of(page, size, Sort.by(direction, sortBy));
         Page<LibraryIssueResponse> issues = libraryService.getAllIssues(pageable);
-        return ResponseEntity.ok(ApiResponse.success(issues, "Issues retrieved successfully"));
+        return ResponseEntity.ok(ApiResponse.success(issues, "Issues retrieved successfully",HttpStatus.OK.value()));
     }
 
     @Operation(
@@ -265,7 +266,7 @@ public class LibraryController {
     ) {
         Pageable pageable = PageRequest.of(page, size);
         Page<LibraryIssueResponse> issues = libraryService.getIssuesByStatus(status, pageable);
-        return ResponseEntity.ok(ApiResponse.success(issues, "Issues retrieved successfully"));
+        return ResponseEntity.ok(ApiResponse.success(issues, "Issues retrieved successfully",HttpStatus.OK.value()));
     }
 
     @Operation(
@@ -284,7 +285,7 @@ public class LibraryController {
     ) {
         Pageable pageable = PageRequest.of(page, size);
         Page<LibraryIssueResponse> issues = libraryService.getIssuesByUser(userUuid, pageable);
-        return ResponseEntity.ok(ApiResponse.success(issues, "Issues retrieved successfully"));
+        return ResponseEntity.ok(ApiResponse.success(issues, "Issues retrieved successfully",HttpStatus.OK.value()));
     }
 
     @Operation(
@@ -303,7 +304,7 @@ public class LibraryController {
     ) {
         Pageable pageable = PageRequest.of(page, size);
         Page<LibraryIssueResponse> issues = libraryService.getActiveIssuesByUser(userUuid, pageable);
-        return ResponseEntity.ok(ApiResponse.success(issues, "Active issues retrieved successfully"));
+        return ResponseEntity.ok(ApiResponse.success(issues, "Active issues retrieved successfully",HttpStatus.OK.value()));
     }
 
     @Operation(
@@ -320,7 +321,7 @@ public class LibraryController {
     ) {
         Pageable pageable = PageRequest.of(page, size);
         Page<LibraryIssueResponse> issues = libraryService.getOverdueIssues(pageable);
-        return ResponseEntity.ok(ApiResponse.success(issues, "Overdue issues retrieved successfully"));
+        return ResponseEntity.ok(ApiResponse.success(issues, "Overdue issues retrieved successfully",HttpStatus.OK.value()));
     }
 
     @Operation(
@@ -339,7 +340,7 @@ public class LibraryController {
     ) {
         Pageable pageable = PageRequest.of(page, size);
         Page<LibraryIssueResponse> issues = libraryService.getOverdueIssuesByUser(userUuid, pageable);
-        return ResponseEntity.ok(ApiResponse.success(issues, "Overdue issues retrieved successfully"));
+        return ResponseEntity.ok(ApiResponse.success(issues, "Overdue issues retrieved successfully",HttpStatus.OK.value()));
     }
 
     @Operation(
@@ -355,7 +356,7 @@ public class LibraryController {
             @RequestParam LibraryIssueStatus status
     ) {
         LibraryIssueResponse issue = libraryService.updateIssueStatus(issueUuid, status);
-        return ResponseEntity.ok(ApiResponse.success(issue, "Issue status updated successfully"));
+        return ResponseEntity.ok(ApiResponse.success(issue, "Issue status updated successfully",HttpStatus.OK.value()));
     }
 
     @Operation(
@@ -369,7 +370,7 @@ public class LibraryController {
             @PathVariable String issueUuid
     ) {
         BigDecimal fine = libraryService.calculateFine(issueUuid);
-        return ResponseEntity.ok(ApiResponse.success(fine, "Fine calculated successfully"));
+        return ResponseEntity.ok(ApiResponse.success(fine, "Fine calculated successfully",HttpStatus.OK.value()));
     }
 
     // ========== Library Summary Endpoints ==========
@@ -382,7 +383,7 @@ public class LibraryController {
     @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'COLLEGE_ADMIN', 'LIBRARIAN', 'TEACHER')")
     public ResponseEntity<ApiResponse<LibrarySummary>> getLibrarySummary() {
         LibrarySummary summary = libraryService.getLibrarySummary();
-        return ResponseEntity.ok(ApiResponse.success(summary, "Library summary retrieved successfully"));
+        return ResponseEntity.ok(ApiResponse.success(summary, "Library summary retrieved successfully",HttpStatus.OK.value()));
     }
 }
 

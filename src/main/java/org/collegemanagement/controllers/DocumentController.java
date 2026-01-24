@@ -18,6 +18,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
@@ -51,7 +52,7 @@ public class DocumentController {
             @Valid @RequestBody UploadDocumentRequest request
     ) {
         DocumentResponse document = documentService.uploadDocument(request);
-        return ResponseEntity.ok(ApiResponse.success(document, "Document uploaded successfully"));
+        return ResponseEntity.ok(ApiResponse.success(document, "Document uploaded successfully", HttpStatus.OK.value()));
     }
 
     @Operation(
@@ -65,7 +66,7 @@ public class DocumentController {
             @PathVariable String documentUuid
     ) {
         DocumentResponse document = documentService.getDocumentByUuid(documentUuid);
-        return ResponseEntity.ok(ApiResponse.success(document, "Document retrieved successfully"));
+        return ResponseEntity.ok(ApiResponse.success(document, "Document retrieved successfully",HttpStatus.OK.value()));
     }
 
     @Operation(
@@ -87,7 +88,7 @@ public class DocumentController {
         Sort sort = sortDir.equalsIgnoreCase("ASC") ? Sort.by(sortBy).ascending() : Sort.by(sortBy).descending();
         Pageable pageable = PageRequest.of(page, size, sort);
         Page<DocumentResponse> documents = documentService.getAllDocuments(pageable);
-        return ResponseEntity.ok(ApiResponse.success(documents, "Documents retrieved successfully"));
+        return ResponseEntity.ok(ApiResponse.success(documents, "Documents retrieved successfully",HttpStatus.OK.value()));
     }
 
     @Operation(
@@ -113,7 +114,7 @@ public class DocumentController {
         Sort sort = sortDir.equalsIgnoreCase("ASC") ? Sort.by(sortBy).ascending() : Sort.by(sortBy).descending();
         Pageable pageable = PageRequest.of(page, size, sort);
         Page<DocumentResponse> documents = documentService.getDocumentsByOwner(ownerUuid, ownerType, pageable);
-        return ResponseEntity.ok(ApiResponse.success(documents, "Documents retrieved successfully"));
+        return ResponseEntity.ok(ApiResponse.success(documents, "Documents retrieved successfully",HttpStatus.OK.value()));
     }
 
     @Operation(
@@ -137,7 +138,7 @@ public class DocumentController {
         Sort sort = sortDir.equalsIgnoreCase("ASC") ? Sort.by(sortBy).ascending() : Sort.by(sortBy).descending();
         Pageable pageable = PageRequest.of(page, size, sort);
         Page<DocumentResponse> documents = documentService.getDocumentsByType(documentType, pageable);
-        return ResponseEntity.ok(ApiResponse.success(documents, "Documents retrieved successfully"));
+        return ResponseEntity.ok(ApiResponse.success(documents, "Documents retrieved successfully",HttpStatus.OK.value()));
     }
 
     @Operation(
@@ -166,7 +167,7 @@ public class DocumentController {
         Pageable pageable = PageRequest.of(page, size, sort);
         Page<DocumentResponse> documents = documentService.getDocumentsByOwnerAndType(
                 ownerUuid, ownerType, documentType, pageable);
-        return ResponseEntity.ok(ApiResponse.success(documents, "Documents retrieved successfully"));
+        return ResponseEntity.ok(ApiResponse.success(documents, "Documents retrieved successfully",HttpStatus.OK.value()));
     }
 
     @Operation(
@@ -180,7 +181,7 @@ public class DocumentController {
             @PathVariable String documentUuid
     ) {
         documentService.deleteDocument(documentUuid);
-        return ResponseEntity.ok(ApiResponse.success(null, "Document deleted successfully"));
+        return ResponseEntity.ok(ApiResponse.success(null, "Document deleted successfully",HttpStatus.OK.value()));
     }
 }
 

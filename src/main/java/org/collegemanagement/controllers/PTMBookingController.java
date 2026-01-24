@@ -17,6 +17,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.format.annotation.DateTimeFormat;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
@@ -56,7 +57,7 @@ public class PTMBookingController {
             @Valid @RequestBody CreatePTMBookingRequest request
     ) {
         PTMBookingResponse booking = ptmBookingService.createPTMBooking(request);
-        return ResponseEntity.ok(ApiResponse.success(booking, "PTM booking created successfully"));
+        return ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse.success(booking, "PTM booking created successfully",HttpStatus.CREATED.value()));
     }
 
     @Operation(
@@ -70,7 +71,7 @@ public class PTMBookingController {
             @PathVariable String bookingUuid
     ) {
         ptmBookingService.cancelPTMBooking(bookingUuid);
-        return ResponseEntity.ok(ApiResponse.success(null, "PTM booking cancelled successfully"));
+        return ResponseEntity.ok(ApiResponse.success(null, "PTM booking cancelled successfully",HttpStatus.OK.value()));
     }
 
     @Operation(
@@ -84,7 +85,7 @@ public class PTMBookingController {
             @PathVariable String bookingUuid
     ) {
         PTMBookingResponse booking = ptmBookingService.getPTMBookingByUuid(bookingUuid);
-        return ResponseEntity.ok(ApiResponse.success(booking, "PTM booking retrieved successfully"));
+        return ResponseEntity.ok(ApiResponse.success(booking, "PTM booking retrieved successfully",HttpStatus.OK.value()));
     }
 
     @Operation(
@@ -106,7 +107,7 @@ public class PTMBookingController {
         Sort sort = sortDir.equalsIgnoreCase("ASC") ? Sort.by(sortBy).ascending() : Sort.by(sortBy).descending();
         Pageable pageable = PageRequest.of(page, size, sort);
         Page<PTMBookingResponse> bookings = ptmBookingService.getAllPTMBookings(pageable);
-        return ResponseEntity.ok(ApiResponse.success(bookings, "PTM bookings retrieved successfully"));
+        return ResponseEntity.ok(ApiResponse.success(bookings, "PTM bookings retrieved successfully",HttpStatus.OK.value()));
     }
 
     @Operation(
@@ -130,7 +131,7 @@ public class PTMBookingController {
         Sort sort = sortDir.equalsIgnoreCase("ASC") ? Sort.by(sortBy).ascending() : Sort.by(sortBy).descending();
         Pageable pageable = PageRequest.of(page, size, sort);
         Page<PTMBookingResponse> bookings = ptmBookingService.getPTMBookingsByParent(parentUuid, pageable);
-        return ResponseEntity.ok(ApiResponse.success(bookings, "PTM bookings retrieved successfully"));
+        return ResponseEntity.ok(ApiResponse.success(bookings, "PTM bookings retrieved successfully",HttpStatus.OK.value()));
     }
 
     @Operation(
@@ -154,7 +155,7 @@ public class PTMBookingController {
         Sort sort = sortDir.equalsIgnoreCase("ASC") ? Sort.by(sortBy).ascending() : Sort.by(sortBy).descending();
         Pageable pageable = PageRequest.of(page, size, sort);
         Page<PTMBookingResponse> bookings = ptmBookingService.getPTMBookingsByStudent(studentUuid, pageable);
-        return ResponseEntity.ok(ApiResponse.success(bookings, "PTM bookings retrieved successfully"));
+        return ResponseEntity.ok(ApiResponse.success(bookings, "PTM bookings retrieved successfully",HttpStatus.OK.value()));
     }
 
     @Operation(
@@ -178,7 +179,7 @@ public class PTMBookingController {
         Sort sort = sortDir.equalsIgnoreCase("ASC") ? Sort.by(sortBy).ascending() : Sort.by(sortBy).descending();
         Pageable pageable = PageRequest.of(page, size, sort);
         Page<PTMBookingResponse> bookings = ptmBookingService.getPTMBookingsByTeacher(teacherUuid, pageable);
-        return ResponseEntity.ok(ApiResponse.success(bookings, "PTM bookings retrieved successfully"));
+        return ResponseEntity.ok(ApiResponse.success(bookings, "PTM bookings retrieved successfully",HttpStatus.OK.value()));
     }
 
     @Operation(
@@ -202,7 +203,7 @@ public class PTMBookingController {
         Sort sort = sortDir.equalsIgnoreCase("ASC") ? Sort.by(sortBy).ascending() : Sort.by(sortBy).descending();
         Pageable pageable = PageRequest.of(page, size, sort);
         Page<PTMBookingResponse> bookings = ptmBookingService.getPTMBookingsByDate(date, pageable);
-        return ResponseEntity.ok(ApiResponse.success(bookings, "PTM bookings retrieved successfully"));
+        return ResponseEntity.ok(ApiResponse.success(bookings, "PTM bookings retrieved successfully",HttpStatus.OK.value()));
     }
 }
 

@@ -16,6 +16,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.collegemanagement.api.response.ApiResponse;
 import org.collegemanagement.services.PaymentWebhookService;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -39,7 +40,7 @@ public class PaymentWebhookController {
     ) {
         log.info("Razorpay webhook received");
         webhookService.handleRazorpay(payload, signature);
-        return ResponseEntity.ok(ApiResponse.success("OK", "Razorpay webhook processed"));
+        return ResponseEntity.ok(ApiResponse.success("OK", "Razorpay webhook processed", HttpStatus.OK.value()));
     }
 
     @Operation(
@@ -53,6 +54,6 @@ public class PaymentWebhookController {
     ) {
         log.info("Stripe webhook received");
         webhookService.handleStripe(payload, signature);
-        return ResponseEntity.ok(ApiResponse.success("OK", "Stripe webhook processed"));
+        return ResponseEntity.ok(ApiResponse.success("OK", "Stripe webhook processed",HttpStatus.OK.value()));
     }
 }

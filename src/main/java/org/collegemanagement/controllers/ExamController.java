@@ -16,6 +16,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
@@ -53,7 +54,7 @@ public class ExamController {
             @Valid @RequestBody CreateExamRequest request
     ) {
         ExamResponse exam = examService.createExam(request);
-        return ResponseEntity.ok(ApiResponse.success(exam, "Exam created successfully"));
+        return ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse.success(exam, "Exam created successfully",HttpStatus.CREATED.value()));
     }
 
     @Operation(
@@ -68,7 +69,7 @@ public class ExamController {
             @Valid @RequestBody UpdateExamRequest request
     ) {
         ExamResponse exam = examService.updateExam(examUuid, request);
-        return ResponseEntity.ok(ApiResponse.success(exam, "Exam updated successfully"));
+        return ResponseEntity.ok(ApiResponse.success(exam, "Exam updated successfully",HttpStatus.OK.value()));
     }
 
     @Operation(
@@ -82,7 +83,7 @@ public class ExamController {
             @PathVariable String examUuid
     ) {
         ExamResponse exam = examService.getExamByUuid(examUuid);
-        return ResponseEntity.ok(ApiResponse.success(exam, "Exam retrieved successfully"));
+        return ResponseEntity.ok(ApiResponse.success(exam, "Exam retrieved successfully",HttpStatus.OK.value()));
     }
 
     @Operation(
@@ -103,7 +104,7 @@ public class ExamController {
     ) {
         Pageable pageable = PageRequest.of(page, size, Sort.by(direction, sortBy));
         Page<ExamResponse> exams = examService.getAllExams(pageable);
-        return ResponseEntity.ok(ApiResponse.success(exams, "Exams retrieved successfully"));
+        return ResponseEntity.ok(ApiResponse.success(exams, "Exams retrieved successfully",HttpStatus.OK.value()));
     }
 
     @Operation(
@@ -114,7 +115,7 @@ public class ExamController {
     @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'COLLEGE_ADMIN', 'TEACHER', 'STUDENT')")
     public ResponseEntity<ApiResponse<List<ExamResponse>>> getAllExamsList() {
         List<ExamResponse> exams = examService.getAllExams();
-        return ResponseEntity.ok(ApiResponse.success(exams, "Exams retrieved successfully"));
+        return ResponseEntity.ok(ApiResponse.success(exams, "Exams retrieved successfully",HttpStatus.OK.value()));
     }
 
     @Operation(
@@ -137,7 +138,7 @@ public class ExamController {
     ) {
         Pageable pageable = PageRequest.of(page, size, Sort.by(direction, sortBy));
         Page<ExamResponse> exams = examService.getExamsByType(examType, pageable);
-        return ResponseEntity.ok(ApiResponse.success(exams, "Exams retrieved successfully"));
+        return ResponseEntity.ok(ApiResponse.success(exams, "Exams retrieved successfully",HttpStatus.OK.value()));
     }
 
     @Operation(
@@ -160,7 +161,7 @@ public class ExamController {
     ) {
         Pageable pageable = PageRequest.of(page, size, Sort.by(direction, sortBy));
         Page<ExamResponse> exams = examService.getExamsByAcademicYear(academicYearUuid, pageable);
-        return ResponseEntity.ok(ApiResponse.success(exams, "Exams retrieved successfully"));
+        return ResponseEntity.ok(ApiResponse.success(exams, "Exams retrieved successfully",HttpStatus.OK.value()));
     }
 
     @Operation(
@@ -183,7 +184,7 @@ public class ExamController {
     ) {
         Pageable pageable = PageRequest.of(page, size, Sort.by(direction, sortBy));
         Page<ExamResponse> exams = examService.searchExams(q, pageable);
-        return ResponseEntity.ok(ApiResponse.success(exams, "Search results retrieved successfully"));
+        return ResponseEntity.ok(ApiResponse.success(exams, "Search results retrieved successfully",HttpStatus.OK.value()));
     }
 
     @Operation(
@@ -197,7 +198,7 @@ public class ExamController {
             @PathVariable String examUuid
     ) {
         ExamSummaryResponse summary = examService.getExamSummary(examUuid);
-        return ResponseEntity.ok(ApiResponse.success(summary, "Exam summary retrieved successfully"));
+        return ResponseEntity.ok(ApiResponse.success(summary, "Exam summary retrieved successfully",HttpStatus.OK.value()));
     }
 
     @Operation(
@@ -211,7 +212,7 @@ public class ExamController {
             @PathVariable String examUuid
     ) {
         examService.deleteExam(examUuid);
-        return ResponseEntity.ok(ApiResponse.success(null, "Exam deleted successfully"));
+        return ResponseEntity.ok(ApiResponse.success(null, "Exam deleted successfully",HttpStatus.OK.value()));
     }
 
     // ========== Exam Class Management Endpoints ==========
@@ -228,7 +229,7 @@ public class ExamController {
             @Valid @RequestBody AddClassToExamRequest request
     ) {
         ExamClassResponse examClass = examService.addClassToExam(examUuid, request);
-        return ResponseEntity.ok(ApiResponse.success(examClass, "Class added to exam successfully"));
+        return ResponseEntity.ok(ApiResponse.success(examClass, "Class added to exam successfully",HttpStatus.OK.value()));
     }
 
     @Operation(
@@ -244,7 +245,7 @@ public class ExamController {
             @PathVariable String examClassUuid
     ) {
         examService.removeClassFromExam(examUuid, examClassUuid);
-        return ResponseEntity.ok(ApiResponse.success(null, "Class removed from exam successfully"));
+        return ResponseEntity.ok(ApiResponse.success(null, "Class removed from exam successfully",HttpStatus.OK.value()));
     }
 
     @Operation(
@@ -258,7 +259,7 @@ public class ExamController {
             @PathVariable String examClassUuid
     ) {
         ExamClassResponse examClass = examService.getExamClassByUuid(examClassUuid);
-        return ResponseEntity.ok(ApiResponse.success(examClass, "Exam class retrieved successfully"));
+        return ResponseEntity.ok(ApiResponse.success(examClass, "Exam class retrieved successfully",HttpStatus.OK.value()));
     }
 
     // ========== Exam Subject Management Endpoints ==========
@@ -275,7 +276,7 @@ public class ExamController {
             @Valid @RequestBody AddSubjectToExamClassRequest request
     ) {
         ExamSubjectResponse examSubject = examService.addSubjectToExamClass(examClassUuid, request);
-        return ResponseEntity.ok(ApiResponse.success(examSubject, "Subject added to exam class successfully"));
+        return ResponseEntity.ok(ApiResponse.success(examSubject, "Subject added to exam class successfully",HttpStatus.OK.value()));
     }
 
     @Operation(
@@ -290,7 +291,7 @@ public class ExamController {
             @Valid @RequestBody AddSubjectToExamClassRequest request
     ) {
         ExamSubjectResponse examSubject = examService.updateExamSubject(examSubjectUuid, request);
-        return ResponseEntity.ok(ApiResponse.success(examSubject, "Exam subject updated successfully"));
+        return ResponseEntity.ok(ApiResponse.success(examSubject, "Exam subject updated successfully",HttpStatus.OK.value()));
     }
 
     @Operation(
@@ -304,7 +305,7 @@ public class ExamController {
             @PathVariable String examSubjectUuid
     ) {
         examService.removeSubjectFromExamClass(examSubjectUuid);
-        return ResponseEntity.ok(ApiResponse.success(null, "Subject removed from exam class successfully"));
+        return ResponseEntity.ok(ApiResponse.success(null, "Subject removed from exam class successfully",HttpStatus.OK.value()));
     }
 
     @Operation(
@@ -318,7 +319,7 @@ public class ExamController {
             @PathVariable String examSubjectUuid
     ) {
         ExamSubjectResponse examSubject = examService.getExamSubjectByUuid(examSubjectUuid);
-        return ResponseEntity.ok(ApiResponse.success(examSubject, "Exam subject retrieved successfully"));
+        return ResponseEntity.ok(ApiResponse.success(examSubject, "Exam subject retrieved successfully",HttpStatus.OK.value()));
     }
 
     @Operation(
@@ -332,7 +333,7 @@ public class ExamController {
             @PathVariable String examClassUuid
     ) {
         List<ExamSubjectResponse> subjects = examService.getExamSubjectsByExamClass(examClassUuid);
-        return ResponseEntity.ok(ApiResponse.success(subjects, "Exam subjects retrieved successfully"));
+        return ResponseEntity.ok(ApiResponse.success(subjects, "Exam subjects retrieved successfully",HttpStatus.OK.value()));
     }
 
     @Operation(
@@ -347,7 +348,7 @@ public class ExamController {
             @Valid @RequestBody AssignTeacherToExamSubjectRequest request
     ) {
         ExamSubjectResponse examSubject = examService.assignTeacherToExamSubject(examSubjectUuid, request);
-        return ResponseEntity.ok(ApiResponse.success(examSubject, "Teacher assigned to exam subject successfully"));
+        return ResponseEntity.ok(ApiResponse.success(examSubject, "Teacher assigned to exam subject successfully",HttpStatus.OK.value()));
     }
 
     // ========== Student Marks Management Endpoints ==========
@@ -362,7 +363,7 @@ public class ExamController {
             @Valid @RequestBody CreateStudentMarksRequest request
     ) {
         StudentMarksResponse marks = examService.createStudentMarks(request);
-        return ResponseEntity.ok(ApiResponse.success(marks, "Student marks created successfully"));
+        return ResponseEntity.ok(ApiResponse.success(marks, "Student marks created successfully",HttpStatus.OK.value()));
     }
 
     @Operation(
@@ -377,7 +378,7 @@ public class ExamController {
             @Valid @RequestBody UpdateStudentMarksRequest request
     ) {
         StudentMarksResponse marks = examService.updateStudentMarks(studentMarksUuid, request);
-        return ResponseEntity.ok(ApiResponse.success(marks, "Student marks updated successfully"));
+        return ResponseEntity.ok(ApiResponse.success(marks, "Student marks updated successfully",HttpStatus.OK.value()));
     }
 
     @Operation(
@@ -390,7 +391,7 @@ public class ExamController {
             @Valid @RequestBody BulkStudentMarksRequest request
     ) {
         List<StudentMarksResponse> marks = examService.bulkUpdateStudentMarks(request);
-        return ResponseEntity.ok(ApiResponse.success(marks, "Student marks updated successfully"));
+        return ResponseEntity.ok(ApiResponse.success(marks, "Student marks updated successfully",HttpStatus.OK.value()));
     }
 
     @Operation(
@@ -404,7 +405,7 @@ public class ExamController {
             @PathVariable String studentMarksUuid
     ) {
         StudentMarksResponse marks = examService.getStudentMarksByUuid(studentMarksUuid);
-        return ResponseEntity.ok(ApiResponse.success(marks, "Student marks retrieved successfully"));
+        return ResponseEntity.ok(ApiResponse.success(marks, "Student marks retrieved successfully",HttpStatus.OK.value()));
     }
 
     @Operation(
@@ -418,7 +419,7 @@ public class ExamController {
             @PathVariable String examSubjectUuid
     ) {
         List<StudentMarksResponse> marks = examService.getStudentMarksByExamSubject(examSubjectUuid);
-        return ResponseEntity.ok(ApiResponse.success(marks, "Student marks retrieved successfully"));
+        return ResponseEntity.ok(ApiResponse.success(marks, "Student marks retrieved successfully",HttpStatus.OK.value()));
     }
 
     @Operation(
@@ -434,7 +435,7 @@ public class ExamController {
             @PathVariable String studentUuid
     ) {
         StudentExamResultResponse result = examService.getStudentExamResult(studentUuid, examUuid);
-        return ResponseEntity.ok(ApiResponse.success(result, "Student exam result retrieved successfully"));
+        return ResponseEntity.ok(ApiResponse.success(result, "Student exam result retrieved successfully",HttpStatus.OK.value()));
     }
 
     @Operation(
@@ -448,7 +449,7 @@ public class ExamController {
             @PathVariable String studentMarksUuid
     ) {
         examService.deleteStudentMarks(studentMarksUuid);
-        return ResponseEntity.ok(ApiResponse.success(null, "Student marks deleted successfully"));
+        return ResponseEntity.ok(ApiResponse.success(null, "Student marks deleted successfully",HttpStatus.OK.value()));
     }
 
     // ========== Grade Scale Management Endpoints ==========
@@ -463,7 +464,7 @@ public class ExamController {
             @Valid @RequestBody CreateGradeScaleRequest request
     ) {
         GradeScaleResponse gradeScale = examService.createGradeScale(request);
-        return ResponseEntity.ok(ApiResponse.success(gradeScale, "Grade scale created successfully"));
+        return ResponseEntity.ok(ApiResponse.success(gradeScale, "Grade scale created successfully",HttpStatus.OK.value()));
     }
 
     @Operation(
@@ -478,7 +479,7 @@ public class ExamController {
             @Valid @RequestBody UpdateGradeScaleRequest request
     ) {
         GradeScaleResponse gradeScale = examService.updateGradeScale(gradeScaleUuid, request);
-        return ResponseEntity.ok(ApiResponse.success(gradeScale, "Grade scale updated successfully"));
+        return ResponseEntity.ok(ApiResponse.success(gradeScale, "Grade scale updated successfully",HttpStatus.OK.value()));
     }
 
     @Operation(
@@ -492,7 +493,7 @@ public class ExamController {
             @PathVariable String gradeScaleUuid
     ) {
         GradeScaleResponse gradeScale = examService.getGradeScaleByUuid(gradeScaleUuid);
-        return ResponseEntity.ok(ApiResponse.success(gradeScale, "Grade scale retrieved successfully"));
+        return ResponseEntity.ok(ApiResponse.success(gradeScale, "Grade scale retrieved successfully",HttpStatus.OK.value()));
     }
 
     @Operation(
@@ -513,7 +514,7 @@ public class ExamController {
     ) {
         Pageable pageable = PageRequest.of(page, size, Sort.by(direction, sortBy));
         Page<GradeScaleResponse> gradeScales = examService.getAllGradeScales(pageable);
-        return ResponseEntity.ok(ApiResponse.success(gradeScales, "Grade scales retrieved successfully"));
+        return ResponseEntity.ok(ApiResponse.success(gradeScales, "Grade scales retrieved successfully",HttpStatus.OK.value()));
     }
 
     @Operation(
@@ -524,7 +525,7 @@ public class ExamController {
     @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'COLLEGE_ADMIN', 'TEACHER', 'STUDENT')")
     public ResponseEntity<ApiResponse<List<GradeScaleResponse>>> getAllGradeScalesList() {
         List<GradeScaleResponse> gradeScales = examService.getAllGradeScales();
-        return ResponseEntity.ok(ApiResponse.success(gradeScales, "Grade scales retrieved successfully"));
+        return ResponseEntity.ok(ApiResponse.success(gradeScales, "Grade scales retrieved successfully",HttpStatus.OK.value()));
     }
 
     @Operation(
@@ -538,7 +539,7 @@ public class ExamController {
             @PathVariable String gradeScaleUuid
     ) {
         examService.deleteGradeScale(gradeScaleUuid);
-        return ResponseEntity.ok(ApiResponse.success(null, "Grade scale deleted successfully"));
+        return ResponseEntity.ok(ApiResponse.success(null, "Grade scale deleted successfully",HttpStatus.OK.value()));
     }
 
     // ========== Student Transcript Management Endpoints ==========
@@ -556,7 +557,7 @@ public class ExamController {
             @RequestParam String academicYearUuid
     ) {
         StudentTranscriptResponse transcript = examService.generateTranscript(studentUuid, academicYearUuid);
-        return ResponseEntity.ok(ApiResponse.success(transcript, "Transcript generated successfully"));
+        return ResponseEntity.ok(ApiResponse.success(transcript, "Transcript generated successfully",HttpStatus.OK.value()));
     }
 
     @Operation(
@@ -571,7 +572,7 @@ public class ExamController {
             @Valid @RequestBody PublishTranscriptRequest request
     ) {
         StudentTranscriptResponse transcript = examService.updateTranscript(transcriptUuid, request);
-        return ResponseEntity.ok(ApiResponse.success(transcript, "Transcript updated successfully"));
+        return ResponseEntity.ok(ApiResponse.success(transcript, "Transcript updated successfully",HttpStatus.OK.value()));
     }
 
     @Operation(
@@ -586,7 +587,7 @@ public class ExamController {
             @Valid @RequestBody PublishTranscriptRequest request
     ) {
         StudentTranscriptResponse transcript = examService.publishTranscript(transcriptUuid, request);
-        return ResponseEntity.ok(ApiResponse.success(transcript, "Transcript published successfully"));
+        return ResponseEntity.ok(ApiResponse.success(transcript, "Transcript published successfully",HttpStatus.OK.value()));
     }
 
     @Operation(
@@ -600,7 +601,7 @@ public class ExamController {
             @PathVariable String transcriptUuid
     ) {
         StudentTranscriptResponse transcript = examService.unpublishTranscript(transcriptUuid);
-        return ResponseEntity.ok(ApiResponse.success(transcript, "Transcript unpublished successfully"));
+        return ResponseEntity.ok(ApiResponse.success(transcript, "Transcript unpublished successfully",HttpStatus.OK.value()));
     }
 
     @Operation(
@@ -614,7 +615,7 @@ public class ExamController {
             @PathVariable String transcriptUuid
     ) {
         StudentTranscriptResponse transcript = examService.getTranscriptByUuid(transcriptUuid);
-        return ResponseEntity.ok(ApiResponse.success(transcript, "Transcript retrieved successfully"));
+        return ResponseEntity.ok(ApiResponse.success(transcript, "Transcript retrieved successfully",HttpStatus.OK.value()));
     }
 
     @Operation(
@@ -628,7 +629,7 @@ public class ExamController {
             @PathVariable String studentUuid
     ) {
         List<StudentTranscriptResponse> transcripts = examService.getTranscriptsByStudent(studentUuid);
-        return ResponseEntity.ok(ApiResponse.success(transcripts, "Transcripts retrieved successfully"));
+        return ResponseEntity.ok(ApiResponse.success(transcripts, "Transcripts retrieved successfully",HttpStatus.OK.value()));
     }
 
     @Operation(
@@ -651,7 +652,7 @@ public class ExamController {
     ) {
         Pageable pageable = PageRequest.of(page, size, Sort.by(direction, sortBy));
         Page<StudentTranscriptResponse> transcripts = examService.getTranscriptsByAcademicYear(academicYearUuid, pageable);
-        return ResponseEntity.ok(ApiResponse.success(transcripts, "Transcripts retrieved successfully"));
+        return ResponseEntity.ok(ApiResponse.success(transcripts, "Transcripts retrieved successfully",HttpStatus.OK.value()));
     }
 
     @Operation(
@@ -674,7 +675,7 @@ public class ExamController {
     ) {
         Pageable pageable = PageRequest.of(page, size, Sort.by(direction, sortBy));
         Page<StudentTranscriptResponse> transcripts = examService.getPublishedTranscriptsByAcademicYear(academicYearUuid, pageable);
-        return ResponseEntity.ok(ApiResponse.success(transcripts, "Published transcripts retrieved successfully"));
+        return ResponseEntity.ok(ApiResponse.success(transcripts, "Published transcripts retrieved successfully",HttpStatus.OK.value()));
     }
 
     // ========== Reports and Summaries Endpoints ==========
@@ -692,7 +693,7 @@ public class ExamController {
             @PathVariable String classUuid
     ) {
         ClassExamSummaryResponse summary = examService.getClassExamSummary(examUuid, classUuid);
-        return ResponseEntity.ok(ApiResponse.success(summary, "Class exam summary retrieved successfully"));
+        return ResponseEntity.ok(ApiResponse.success(summary, "Class exam summary retrieved successfully",HttpStatus.OK.value()));
     }
 
     @Operation(
@@ -706,7 +707,7 @@ public class ExamController {
             @PathVariable String examUuid
     ) {
         List<ClassExamSummaryResponse> summaries = examService.getClassExamSummaries(examUuid);
-        return ResponseEntity.ok(ApiResponse.success(summaries, "Class exam summaries retrieved successfully"));
+        return ResponseEntity.ok(ApiResponse.success(summaries, "Class exam summaries retrieved successfully",HttpStatus.OK.value()));
     }
 }
 

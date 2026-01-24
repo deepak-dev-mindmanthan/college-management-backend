@@ -17,6 +17,7 @@ import org.collegemanagement.enums.BillingCycle;
 import org.collegemanagement.enums.SubscriptionPlanType;
 import org.collegemanagement.repositories.SubscriptionPlanRepository;
 import org.collegemanagement.services.SubscriptionPlanService;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
@@ -43,7 +44,7 @@ public class SubscriptionPlanController {
         List<SubscriptionPlanResponse> responses = plans.stream()
                 .map(this::mapToResponse)
                 .collect(Collectors.toList());
-        return ResponseEntity.ok(ApiResponse.success(responses, "Active plans retrieved successfully"));
+        return ResponseEntity.ok(ApiResponse.success(responses, "Active plans retrieved successfully", HttpStatus.OK.value()));
     }
 
     @Operation(
@@ -58,7 +59,7 @@ public class SubscriptionPlanController {
             @PathVariable BillingCycle billingCycle
     ) {
         SubscriptionPlan plan = subscriptionPlanService.getActivePlan(planType, billingCycle);
-        return ResponseEntity.ok(ApiResponse.success(mapToResponse(plan), "Plan retrieved successfully"));
+        return ResponseEntity.ok(ApiResponse.success(mapToResponse(plan), "Plan retrieved successfully", HttpStatus.OK.value()));
     }
 
     @Operation(
@@ -90,7 +91,7 @@ public class SubscriptionPlanController {
                 .build();
 
         plan = subscriptionPlanService.createPlan(plan);
-        return ResponseEntity.ok(ApiResponse.success(mapToResponse(plan), "Plan created successfully"));
+        return ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse.success(mapToResponse(plan), "Plan created successfully", HttpStatus.CREATED.value()));
     }
 
     @Operation(
@@ -118,7 +119,7 @@ public class SubscriptionPlanController {
         }
 
         plan = subscriptionPlanRepository.save(plan);
-        return ResponseEntity.ok(ApiResponse.success(mapToResponse(plan), "Plan updated successfully"));
+        return ResponseEntity.ok(ApiResponse.success(mapToResponse(plan), "Plan updated successfully", HttpStatus.OK.value()));
     }
 
     @Operation(
@@ -133,7 +134,7 @@ public class SubscriptionPlanController {
     ) {
         SubscriptionPlan plan = subscriptionPlanService.deactivatePlan(planId);
         plan = subscriptionPlanRepository.save(plan);
-        return ResponseEntity.ok(ApiResponse.success(mapToResponse(plan), "Plan deactivated successfully"));
+        return ResponseEntity.ok(ApiResponse.success(mapToResponse(plan), "Plan deactivated successfully", HttpStatus.OK.value()));
     }
 
     @Operation(
@@ -147,7 +148,7 @@ public class SubscriptionPlanController {
     ) {
         SubscriptionPlan plan = subscriptionPlanRepository.findById(planId)
                 .orElseThrow(() -> new org.collegemanagement.exception.ResourceNotFoundException("Plan not found"));
-        return ResponseEntity.ok(ApiResponse.success(mapToResponse(plan), "Plan retrieved successfully"));
+        return ResponseEntity.ok(ApiResponse.success(mapToResponse(plan), "Plan retrieved successfully", HttpStatus.OK.value()));
     }
 
     private SubscriptionPlanResponse mapToResponse(SubscriptionPlan plan) {

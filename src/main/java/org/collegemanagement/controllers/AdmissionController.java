@@ -17,6 +17,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
@@ -46,7 +47,7 @@ public class AdmissionController {
             @Valid @RequestBody CreateAdmissionRequest request
     ) {
         AdmissionResponse admission = admissionService.createAdmission(request);
-        return ResponseEntity.ok(ApiResponse.success(admission, "Admission application created successfully"));
+        return ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse.success(admission, "Admission application created successfully", HttpStatus.CREATED.value()));
     }
 
     @Operation(
@@ -61,7 +62,7 @@ public class AdmissionController {
             @Valid @RequestBody UpdateAdmissionRequest request
     ) {
         AdmissionResponse admission = admissionService.updateAdmission(admissionUuid, request);
-        return ResponseEntity.ok(ApiResponse.success(admission, "Admission application updated successfully"));
+        return ResponseEntity.ok(ApiResponse.success(admission, "Admission application updated successfully",HttpStatus.OK.value()));
     }
 
     @Operation(
@@ -75,7 +76,7 @@ public class AdmissionController {
             @PathVariable String admissionUuid
     ) {
         AdmissionResponse admission = admissionService.getAdmissionByUuid(admissionUuid);
-        return ResponseEntity.ok(ApiResponse.success(admission, "Admission application retrieved successfully"));
+        return ResponseEntity.ok(ApiResponse.success(admission, "Admission application retrieved successfully",HttpStatus.OK.value()));
     }
 
     @Operation(
@@ -96,7 +97,7 @@ public class AdmissionController {
     ) {
         Pageable pageable = PageRequest.of(page, size, Sort.by(direction, sortBy));
         Page<AdmissionResponse> admissions = admissionService.getAllAdmissions(pageable);
-        return ResponseEntity.ok(ApiResponse.success(admissions, "Admission applications retrieved successfully"));
+        return ResponseEntity.ok(ApiResponse.success(admissions, "Admission applications retrieved successfully",HttpStatus.OK.value()));
     }
 
     @Operation(
@@ -115,7 +116,7 @@ public class AdmissionController {
     ) {
         Pageable pageable = PageRequest.of(page, size);
         Page<AdmissionResponse> admissions = admissionService.searchAdmissions(q, pageable);
-        return ResponseEntity.ok(ApiResponse.success(admissions, "Search results retrieved successfully"));
+        return ResponseEntity.ok(ApiResponse.success(admissions, "Search results retrieved successfully",HttpStatus.OK.value()));
     }
 
     @Operation(
@@ -134,7 +135,7 @@ public class AdmissionController {
     ) {
         Pageable pageable = PageRequest.of(page, size);
         Page<AdmissionResponse> admissions = admissionService.getAdmissionsByStatus(status, pageable);
-        return ResponseEntity.ok(ApiResponse.success(admissions, "Admission applications retrieved successfully"));
+        return ResponseEntity.ok(ApiResponse.success(admissions, "Admission applications retrieved successfully",HttpStatus.OK.value()));
     }
 
     @Operation(
@@ -153,7 +154,7 @@ public class AdmissionController {
     ) {
         Pageable pageable = PageRequest.of(page, size);
         Page<AdmissionResponse> admissions = admissionService.getAdmissionsByClass(classUuid, pageable);
-        return ResponseEntity.ok(ApiResponse.success(admissions, "Admission applications retrieved successfully"));
+        return ResponseEntity.ok(ApiResponse.success(admissions, "Admission applications retrieved successfully",HttpStatus.OK.value()));
     }
 
     @Operation(
@@ -167,7 +168,7 @@ public class AdmissionController {
             @PathVariable String admissionUuid
     ) {
         AdmissionResponse admission = admissionService.submitAdmission(admissionUuid);
-        return ResponseEntity.ok(ApiResponse.success(admission, "Admission application submitted successfully"));
+        return ResponseEntity.ok(ApiResponse.success(admission, "Admission application submitted successfully",HttpStatus.OK.value()));
     }
 
     @Operation(
@@ -181,7 +182,7 @@ public class AdmissionController {
             @PathVariable String admissionUuid
     ) {
         AdmissionResponse admission = admissionService.verifyAdmission(admissionUuid);
-        return ResponseEntity.ok(ApiResponse.success(admission, "Admission application verified successfully"));
+        return ResponseEntity.ok(ApiResponse.success(admission, "Admission application verified successfully",HttpStatus.OK.value()));
     }
 
     @Operation(
@@ -196,7 +197,7 @@ public class AdmissionController {
             @Valid @RequestBody ApproveAdmissionRequest request
     ) {
         StudentResponse student = admissionService.approveAdmission(admissionUuid, request);
-        return ResponseEntity.ok(ApiResponse.success(student, "Admission application approved and student created successfully"));
+        return ResponseEntity.ok(ApiResponse.success(student, "Admission application approved and student created successfully",HttpStatus.OK.value()));
     }
 
     @Operation(
@@ -210,7 +211,7 @@ public class AdmissionController {
             @PathVariable String admissionUuid
     ) {
         AdmissionResponse admission = admissionService.rejectAdmission(admissionUuid);
-        return ResponseEntity.ok(ApiResponse.success(admission, "Admission application rejected successfully"));
+        return ResponseEntity.ok(ApiResponse.success(admission, "Admission application rejected successfully",HttpStatus.OK.value()));
     }
 
     @Operation(
@@ -224,7 +225,7 @@ public class AdmissionController {
             @PathVariable String admissionUuid
     ) {
         admissionService.deleteAdmission(admissionUuid);
-        return ResponseEntity.ok(ApiResponse.success(null, "Admission application deleted successfully"));
+        return ResponseEntity.ok(ApiResponse.success(null, "Admission application deleted successfully",HttpStatus.OK.value()));
     }
 
     @Operation(
@@ -235,7 +236,7 @@ public class AdmissionController {
     @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'COLLEGE_ADMIN')")
     public ResponseEntity<ApiResponse<AdmissionSummary>> getAdmissionSummary() {
         AdmissionSummary summary = admissionService.getAdmissionSummary();
-        return ResponseEntity.ok(ApiResponse.success(summary, "Admission summary retrieved successfully"));
+        return ResponseEntity.ok(ApiResponse.success(summary, "Admission summary retrieved successfully",HttpStatus.OK.value()));
     }
 }
 

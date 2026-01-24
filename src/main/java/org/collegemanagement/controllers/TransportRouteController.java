@@ -18,6 +18,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
@@ -53,7 +54,7 @@ public class TransportRouteController {
             @Valid @RequestBody CreateTransportRouteRequest request
     ) {
         TransportRouteResponse transportRoute = transportRouteService.createTransportRoute(request);
-        return ResponseEntity.ok(ApiResponse.success(transportRoute, "Transport route created successfully"));
+        return ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse.success(transportRoute, "Transport route created successfully", HttpStatus.CREATED.value()));
     }
 
     @Operation(
@@ -68,7 +69,7 @@ public class TransportRouteController {
             @Valid @RequestBody UpdateTransportRouteRequest request
     ) {
         TransportRouteResponse transportRoute = transportRouteService.updateTransportRoute(routeUuid, request);
-        return ResponseEntity.ok(ApiResponse.success(transportRoute, "Transport route updated successfully"));
+        return ResponseEntity.ok(ApiResponse.success(transportRoute, "Transport route updated successfully",HttpStatus.OK.value()));
     }
 
     @Operation(
@@ -82,7 +83,7 @@ public class TransportRouteController {
             @PathVariable String routeUuid
     ) {
         TransportRouteResponse transportRoute = transportRouteService.getTransportRouteByUuid(routeUuid);
-        return ResponseEntity.ok(ApiResponse.success(transportRoute, "Transport route retrieved successfully"));
+        return ResponseEntity.ok(ApiResponse.success(transportRoute, "Transport route retrieved successfully",HttpStatus.OK.value()));
     }
 
     @Operation(
@@ -103,7 +104,7 @@ public class TransportRouteController {
     ) {
         Pageable pageable = PageRequest.of(page, size, Sort.by(direction, sortBy));
         Page<TransportRouteResponse> transportRoutes = transportRouteService.getAllTransportRoutes(pageable);
-        return ResponseEntity.ok(ApiResponse.success(transportRoutes, "Transport routes retrieved successfully"));
+        return ResponseEntity.ok(ApiResponse.success(transportRoutes, "Transport routes retrieved successfully",HttpStatus.OK.value()));
     }
 
     @Operation(
@@ -114,7 +115,7 @@ public class TransportRouteController {
     @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'COLLEGE_ADMIN', 'TRANSPORT_MANAGER', 'TEACHER', 'STUDENT')")
     public ResponseEntity<ApiResponse<List<TransportRouteResponse>>> getAllTransportRoutesList() {
         List<TransportRouteResponse> transportRoutes = transportRouteService.getAllTransportRoutes();
-        return ResponseEntity.ok(ApiResponse.success(transportRoutes, "Transport routes retrieved successfully"));
+        return ResponseEntity.ok(ApiResponse.success(transportRoutes, "Transport routes retrieved successfully",HttpStatus.OK.value()));
     }
 
     @Operation(
@@ -137,7 +138,7 @@ public class TransportRouteController {
     ) {
         Pageable pageable = PageRequest.of(page, size, Sort.by(direction, sortBy));
         Page<TransportRouteResponse> transportRoutes = transportRouteService.searchTransportRoutes(q, pageable);
-        return ResponseEntity.ok(ApiResponse.success(transportRoutes, "Search results retrieved successfully"));
+        return ResponseEntity.ok(ApiResponse.success(transportRoutes, "Search results retrieved successfully",HttpStatus.OK.value()));
     }
 
     @Operation(
@@ -151,7 +152,7 @@ public class TransportRouteController {
             @PathVariable String routeUuid
     ) {
         transportRouteService.deleteTransportRoute(routeUuid);
-        return ResponseEntity.ok(ApiResponse.success(null, "Transport route deleted successfully"));
+        return ResponseEntity.ok(ApiResponse.success(null, "Transport route deleted successfully",HttpStatus.OK.value()));
     }
 
     @Operation(
@@ -162,7 +163,7 @@ public class TransportRouteController {
     @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'COLLEGE_ADMIN', 'TRANSPORT_MANAGER')")
     public ResponseEntity<ApiResponse<TransportSummaryResponse>> getTransportSummary() {
         TransportSummaryResponse summary = transportRouteService.getTransportSummary();
-        return ResponseEntity.ok(ApiResponse.success(summary, "Transport summary retrieved successfully"));
+        return ResponseEntity.ok(ApiResponse.success(summary, "Transport summary retrieved successfully",HttpStatus.OK.value()));
     }
 }
 

@@ -18,6 +18,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
@@ -53,7 +54,7 @@ public class HostelWardenController {
             @Valid @RequestBody CreateHostelWardenRequest request
     ) {
         HostelWardenResponse warden = hostelWardenService.createHostelWarden(request);
-        return ResponseEntity.ok(ApiResponse.success(warden, "Hostel warden created successfully"));
+        return ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse.success(warden, "Hostel warden created successfully",HttpStatus.CREATED.value()));
     }
 
     @Operation(
@@ -68,7 +69,7 @@ public class HostelWardenController {
             @Valid @RequestBody UpdateHostelWardenRequest request
     ) {
         HostelWardenResponse warden = hostelWardenService.updateHostelWarden(wardenUuid, request);
-        return ResponseEntity.ok(ApiResponse.success(warden, "Hostel warden updated successfully"));
+        return ResponseEntity.ok(ApiResponse.success(warden, "Hostel warden updated successfully",HttpStatus.OK.value()));
     }
 
     @Operation(
@@ -82,7 +83,7 @@ public class HostelWardenController {
             @PathVariable String wardenUuid
     ) {
         HostelWardenResponse warden = hostelWardenService.getHostelWardenByUuid(wardenUuid);
-        return ResponseEntity.ok(ApiResponse.success(warden, "Hostel warden retrieved successfully"));
+        return ResponseEntity.ok(ApiResponse.success(warden, "Hostel warden retrieved successfully",HttpStatus.OK.value()));
     }
 
     @Operation(
@@ -103,7 +104,7 @@ public class HostelWardenController {
     ) {
         Pageable pageable = PageRequest.of(page, size, Sort.by(direction, sortBy));
         Page<HostelWardenResponse> wardens = hostelWardenService.getAllHostelWardens(pageable);
-        return ResponseEntity.ok(ApiResponse.success(wardens, "Hostel wardens retrieved successfully"));
+        return ResponseEntity.ok(ApiResponse.success(wardens, "Hostel wardens retrieved successfully",HttpStatus.OK.value()));
     }
 
     @Operation(
@@ -126,7 +127,7 @@ public class HostelWardenController {
     ) {
         Pageable pageable = PageRequest.of(page, size, Sort.by(direction, sortBy));
         Page<HostelWardenResponse> wardens = hostelWardenService.searchHostelWardens(q, pageable);
-        return ResponseEntity.ok(ApiResponse.success(wardens, "Search results retrieved successfully"));
+        return ResponseEntity.ok(ApiResponse.success(wardens, "Search results retrieved successfully",HttpStatus.OK.value()));
     }
 
     @Operation(
@@ -140,7 +141,7 @@ public class HostelWardenController {
             @PathVariable String wardenUuid
     ) {
         List<HostelResponse> hostels = hostelWardenService.getHostelsByWarden(wardenUuid);
-        return ResponseEntity.ok(ApiResponse.success(hostels, "Hostels retrieved successfully"));
+        return ResponseEntity.ok(ApiResponse.success(hostels, "Hostels retrieved successfully",HttpStatus.OK.value()));
     }
 
     @Operation(
@@ -154,7 +155,7 @@ public class HostelWardenController {
             @PathVariable String wardenUuid
     ) {
         hostelWardenService.deleteHostelWarden(wardenUuid);
-        return ResponseEntity.ok(ApiResponse.success(null, "Hostel warden deleted successfully"));
+        return ResponseEntity.ok(ApiResponse.success(null, "Hostel warden deleted successfully",HttpStatus.OK.value()));
     }
 }
 

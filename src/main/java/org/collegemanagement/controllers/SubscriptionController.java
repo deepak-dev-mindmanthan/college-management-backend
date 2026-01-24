@@ -19,6 +19,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
@@ -52,7 +53,7 @@ public class SubscriptionController {
             @Valid @RequestBody CreateSubscriptionRequest request
     ) {
         SubscriptionResponse subscription = subscriptionService.createSubscription(request);
-        return ResponseEntity.ok(ApiResponse.success(subscription, "Subscription created successfully"));
+        return ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse.success(subscription, "Subscription created successfully",HttpStatus.CREATED.value()));
     }
 
 
@@ -75,7 +76,8 @@ public class SubscriptionController {
         return ResponseEntity.ok(
                 ApiResponse.success(
                         subscription,
-                        "Subscription upgrade initiated successfully"
+                        "Subscription upgrade initiated successfully",
+                        HttpStatus.OK.value()
                 )
         );
     }
@@ -107,7 +109,7 @@ public class SubscriptionController {
             @PathVariable String subscriptionUuid
     ) {
         SubscriptionResponse subscription = subscriptionService.cancelSubscription(subscriptionUuid);
-        return ResponseEntity.ok(ApiResponse.success(subscription, "Subscription cancelled successfully"));
+        return ResponseEntity.ok(ApiResponse.success(subscription, "Subscription cancelled successfully",HttpStatus.OK.value()));
     }
 
     @Operation(
@@ -122,7 +124,7 @@ public class SubscriptionController {
             @Valid @RequestBody RenewSubscriptionRequest request
     ) {
         SubscriptionResponse subscription = subscriptionService.renewSubscription(subscriptionUuid, request);
-        return ResponseEntity.ok(ApiResponse.success(subscription, "Subscription renewed successfully"));
+        return ResponseEntity.ok(ApiResponse.success(subscription, "Subscription renewed successfully",HttpStatus.OK.value()));
     }
 
     @Operation(
@@ -136,7 +138,7 @@ public class SubscriptionController {
             @PathVariable String subscriptionUuid
     ) {
         SubscriptionResponse subscription = subscriptionService.getSubscriptionByUuid(subscriptionUuid);
-        return ResponseEntity.ok(ApiResponse.success(subscription, "Subscription retrieved successfully"));
+        return ResponseEntity.ok(ApiResponse.success(subscription, "Subscription retrieved successfully",HttpStatus.OK.value()));
     }
 
     @Operation(
@@ -147,7 +149,7 @@ public class SubscriptionController {
     @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'COLLEGE_ADMIN')")
     public ResponseEntity<ApiResponse<SubscriptionResponse>> getCurrentSubscription() {
         SubscriptionResponse subscription = subscriptionService.getCurrentSubscription();
-        return ResponseEntity.ok(ApiResponse.success(subscription, "Current subscription retrieved successfully"));
+        return ResponseEntity.ok(ApiResponse.success(subscription, "Current subscription retrieved successfully",HttpStatus.OK.value()));
     }
 
     @Operation(
@@ -168,7 +170,7 @@ public class SubscriptionController {
     ) {
         Pageable pageable = PageRequest.of(page, size, Sort.by(direction, sortBy));
         Page<SubscriptionResponse> subscriptions = subscriptionService.getAllSubscriptions(pageable);
-        return ResponseEntity.ok(ApiResponse.success(subscriptions, "Subscriptions retrieved successfully"));
+        return ResponseEntity.ok(ApiResponse.success(subscriptions, "Subscriptions retrieved successfully",HttpStatus.OK.value()));
     }
 
     @Operation(
@@ -187,7 +189,7 @@ public class SubscriptionController {
     ) {
         Pageable pageable = PageRequest.of(page, size);
         Page<SubscriptionResponse> subscriptions = subscriptionService.getSubscriptionsByStatus(status, pageable);
-        return ResponseEntity.ok(ApiResponse.success(subscriptions, "Subscriptions retrieved successfully"));
+        return ResponseEntity.ok(ApiResponse.success(subscriptions, "Subscriptions retrieved successfully",HttpStatus.OK.value()));
     }
 
     @Operation(
@@ -206,7 +208,7 @@ public class SubscriptionController {
     ) {
         Pageable pageable = PageRequest.of(page, size);
         Page<SubscriptionResponse> subscriptions = subscriptionService.getSubscriptionsByCollegeId(collegeId, pageable);
-        return ResponseEntity.ok(ApiResponse.success(subscriptions, "Subscriptions retrieved successfully"));
+        return ResponseEntity.ok(ApiResponse.success(subscriptions, "Subscriptions retrieved successfully",HttpStatus.OK.value()));
     }
 
     @Operation(
@@ -223,7 +225,7 @@ public class SubscriptionController {
     ) {
         Pageable pageable = PageRequest.of(page, size);
         Page<SubscriptionResponse> subscriptions = subscriptionService.getExpiredSubscriptions(pageable);
-        return ResponseEntity.ok(ApiResponse.success(subscriptions, "Expired subscriptions retrieved successfully"));
+        return ResponseEntity.ok(ApiResponse.success(subscriptions, "Expired subscriptions retrieved successfully",HttpStatus.OK.value()));
     }
 
     @Operation(
@@ -242,7 +244,7 @@ public class SubscriptionController {
     ) {
         Pageable pageable = PageRequest.of(page, size);
         Page<SubscriptionResponse> subscriptions = subscriptionService.getSubscriptionsExpiringSoon(days, pageable);
-        return ResponseEntity.ok(ApiResponse.success(subscriptions, "Subscriptions expiring soon retrieved successfully"));
+        return ResponseEntity.ok(ApiResponse.success(subscriptions, "Subscriptions expiring soon retrieved successfully",HttpStatus.OK.value()));
     }
 
     @Operation(
@@ -256,7 +258,7 @@ public class SubscriptionController {
             @PathVariable String subscriptionUuid
     ) {
         SubscriptionResponse subscription = subscriptionService.activateSubscription(subscriptionUuid);
-        return ResponseEntity.ok(ApiResponse.success(subscription, "Subscription activated successfully"));
+        return ResponseEntity.ok(ApiResponse.success(subscription, "Subscription activated successfully",HttpStatus.OK.value()));
     }
 
     @Operation(
@@ -270,7 +272,7 @@ public class SubscriptionController {
             @PathVariable String subscriptionUuid
     ) {
         boolean isActive = subscriptionService.isSubscriptionActive(subscriptionUuid);
-        return ResponseEntity.ok(ApiResponse.success(isActive, "Subscription status checked successfully"));
+        return ResponseEntity.ok(ApiResponse.success(isActive, "Subscription status checked successfully",HttpStatus.OK.value()));
     }
 }
 

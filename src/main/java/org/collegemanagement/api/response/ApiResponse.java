@@ -52,10 +52,10 @@ public class ApiResponse<T> {
 
     // ---- Factory Methods ----
 
-    public static <T> ApiResponse<T> success(T data, String message) {
+    public static <T> ApiResponse<T> success(T data, String message, int status) {
         return ApiResponse.<T>builder()
                 .success(true)
-                .status(200)
+                .status(status)
                 .message(message)
                 .data(data)
                 .metadata(ResponseMetadata.builder().build())

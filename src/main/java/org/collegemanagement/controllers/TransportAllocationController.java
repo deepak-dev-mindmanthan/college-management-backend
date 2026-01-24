@@ -17,6 +17,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
@@ -52,7 +53,7 @@ public class TransportAllocationController {
             @Valid @RequestBody CreateTransportAllocationRequest request
     ) {
         TransportAllocationResponse allocation = transportAllocationService.createTransportAllocation(request);
-        return ResponseEntity.ok(ApiResponse.success(allocation, "Transport allocation created successfully"));
+        return ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse.success(allocation, "Transport allocation created successfully",HttpStatus.CREATED.value()));
     }
 
     @Operation(
@@ -67,7 +68,7 @@ public class TransportAllocationController {
             @Valid @RequestBody UpdateTransportAllocationRequest request
     ) {
         TransportAllocationResponse allocation = transportAllocationService.updateTransportAllocation(allocationUuid, request);
-        return ResponseEntity.ok(ApiResponse.success(allocation, "Transport allocation updated successfully"));
+        return ResponseEntity.ok(ApiResponse.success(allocation, "Transport allocation updated successfully",HttpStatus.OK.value()));
     }
 
     @Operation(
@@ -81,7 +82,7 @@ public class TransportAllocationController {
             @PathVariable String allocationUuid
     ) {
         TransportAllocationResponse allocation = transportAllocationService.getTransportAllocationByUuid(allocationUuid);
-        return ResponseEntity.ok(ApiResponse.success(allocation, "Transport allocation retrieved successfully"));
+        return ResponseEntity.ok(ApiResponse.success(allocation, "Transport allocation retrieved successfully",HttpStatus.OK.value()));
     }
 
     @Operation(
@@ -102,7 +103,7 @@ public class TransportAllocationController {
     ) {
         Pageable pageable = PageRequest.of(page, size, Sort.by(direction, sortBy));
         Page<TransportAllocationResponse> allocations = transportAllocationService.getAllTransportAllocations(pageable);
-        return ResponseEntity.ok(ApiResponse.success(allocations, "Transport allocations retrieved successfully"));
+        return ResponseEntity.ok(ApiResponse.success(allocations, "Transport allocations retrieved successfully",HttpStatus.OK.value()));
     }
 
     @Operation(
@@ -123,7 +124,7 @@ public class TransportAllocationController {
     ) {
         Pageable pageable = PageRequest.of(page, size, Sort.by(direction, sortBy));
         Page<TransportAllocationResponse> allocations = transportAllocationService.getActiveTransportAllocations(pageable);
-        return ResponseEntity.ok(ApiResponse.success(allocations, "Active transport allocations retrieved successfully"));
+        return ResponseEntity.ok(ApiResponse.success(allocations, "Active transport allocations retrieved successfully",HttpStatus.OK.value()));
     }
 
     @Operation(
@@ -137,7 +138,7 @@ public class TransportAllocationController {
             @PathVariable String studentUuid
     ) {
         List<TransportAllocationResponse> allocations = transportAllocationService.getTransportAllocationsByStudent(studentUuid);
-        return ResponseEntity.ok(ApiResponse.success(allocations, "Transport allocations retrieved successfully"));
+        return ResponseEntity.ok(ApiResponse.success(allocations, "Transport allocations retrieved successfully",HttpStatus.OK.value()));
     }
 
     @Operation(
@@ -151,7 +152,7 @@ public class TransportAllocationController {
             @PathVariable String studentUuid
     ) {
         TransportAllocationResponse allocation = transportAllocationService.getActiveTransportAllocationByStudent(studentUuid);
-        return ResponseEntity.ok(ApiResponse.success(allocation, "Active transport allocation retrieved successfully"));
+        return ResponseEntity.ok(ApiResponse.success(allocation, "Active transport allocation retrieved successfully",HttpStatus.OK.value()));
     }
 
     @Operation(
@@ -170,7 +171,7 @@ public class TransportAllocationController {
     ) {
         Pageable pageable = PageRequest.of(page, size);
         Page<TransportAllocationResponse> allocations = transportAllocationService.getTransportAllocationsByRoute(routeUuid, pageable);
-        return ResponseEntity.ok(ApiResponse.success(allocations, "Transport allocations retrieved successfully"));
+        return ResponseEntity.ok(ApiResponse.success(allocations, "Transport allocations retrieved successfully",HttpStatus.OK.value()));
     }
 
     @Operation(
@@ -184,7 +185,7 @@ public class TransportAllocationController {
             @PathVariable String routeUuid
     ) {
         List<TransportAllocationResponse> allocations = transportAllocationService.getActiveTransportAllocationsByRoute(routeUuid);
-        return ResponseEntity.ok(ApiResponse.success(allocations, "Active transport allocations retrieved successfully"));
+        return ResponseEntity.ok(ApiResponse.success(allocations, "Active transport allocations retrieved successfully",HttpStatus.OK.value()));
     }
 
     @Operation(
@@ -198,7 +199,7 @@ public class TransportAllocationController {
             @PathVariable String allocationUuid
     ) {
         TransportAllocationResponse allocation = transportAllocationService.releaseTransportAllocation(allocationUuid);
-        return ResponseEntity.ok(ApiResponse.success(allocation, "Transport allocation released successfully"));
+        return ResponseEntity.ok(ApiResponse.success(allocation, "Transport allocation released successfully",HttpStatus.OK.value()));
     }
 
     @Operation(
@@ -221,7 +222,7 @@ public class TransportAllocationController {
     ) {
         Pageable pageable = PageRequest.of(page, size, Sort.by(direction, sortBy));
         Page<TransportAllocationResponse> allocations = transportAllocationService.searchTransportAllocations(q, pageable);
-        return ResponseEntity.ok(ApiResponse.success(allocations, "Search results retrieved successfully"));
+        return ResponseEntity.ok(ApiResponse.success(allocations, "Search results retrieved successfully",HttpStatus.OK.value()));
     }
 
     @Operation(
@@ -235,7 +236,7 @@ public class TransportAllocationController {
             @PathVariable String allocationUuid
     ) {
         transportAllocationService.deleteTransportAllocation(allocationUuid);
-        return ResponseEntity.ok(ApiResponse.success(null, "Transport allocation deleted successfully"));
+        return ResponseEntity.ok(ApiResponse.success(null, "Transport allocation deleted successfully",HttpStatus.OK.value()));
     }
 }
 
