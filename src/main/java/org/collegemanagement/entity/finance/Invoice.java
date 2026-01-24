@@ -36,7 +36,7 @@ public class Invoice extends BaseEntity {
      * Tenant (FK)
      */
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
-    @JoinColumn(name = "college_id", nullable = false)
+    @JoinColumn(name = "college_id", nullable = false,updatable = false)
     private College college;
 
 
@@ -44,16 +44,16 @@ public class Invoice extends BaseEntity {
      * Subscription (FK)
      */
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
-    @JoinColumn(name = "subscription_id", nullable = false)
+    @JoinColumn(name = "subscription_id", nullable = false,updatable = false)
     private Subscription subscription;
 
-    @Column(name = "invoice_number", nullable = false, unique = true, length = 50)
+    @Column(name = "invoice_number", nullable = false, unique = true, length = 50,updatable = false)
     private String invoiceNumber;
 
     /**
      * Invoice amount (use BigDecimal for money)
      */
-    @Column(nullable = false, precision = 12, scale = 2)
+    @Column(nullable = false, precision = 12, scale = 2, updatable = false)
     private BigDecimal amount;
 
     @Column(nullable = false, length = 10)
@@ -63,7 +63,7 @@ public class Invoice extends BaseEntity {
     @Column(nullable = false, length = 20)
     private InvoiceStatus status;
 
-    @Column(name = "due_date", nullable = false)
+    @Column(name = "due_date", nullable = false,updatable = false)
     private LocalDate dueDate;
 
     @Column(name = "paid_at")
@@ -72,13 +72,11 @@ public class Invoice extends BaseEntity {
     @OneToMany(mappedBy = "invoice", fetch = FetchType.LAZY)
     private Set<Payment> payments;
 
-
-    @Column(name = "period_start", nullable = false)
+    @Column(name = "period_start", nullable = false,updatable = false)
     private LocalDate periodStart;
 
-    @Column(name = "period_end", nullable = false)
+    @Column(name = "period_end", nullable = false,updatable = false)
     private LocalDate periodEnd;
-
 
     /**
      * Default values

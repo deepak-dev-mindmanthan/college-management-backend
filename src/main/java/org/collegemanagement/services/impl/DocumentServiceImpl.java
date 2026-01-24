@@ -200,21 +200,21 @@ public class DocumentServiceImpl implements DocumentService {
             case STUDENT -> {
                 Student student = studentRepository.findById(ownerId)
                         .orElseThrow(() -> new ResourceNotFoundException("Student not found with ID: " + ownerId));
-                tenantAccessGuard.assertCurrentTenantId(student.getCollege().getId());
+                tenantAccessGuard.assertCurrentTenant(student.getCollege());
                 String ownerName = student.getUser() != null ? student.getUser().getName() : null;
                 yield new OwnerInfo(ownerId, student.getUuid(), ownerName);
             }
             case STAFF -> {
                 StaffProfile staffProfile = staffProfileRepository.findById(ownerId)
                         .orElseThrow(() -> new ResourceNotFoundException("Staff profile not found with ID: " + ownerId));
-                tenantAccessGuard.assertCurrentTenantId(staffProfile.getCollege().getId());
+                tenantAccessGuard.assertCurrentTenant(staffProfile.getCollege());
                 String ownerName = staffProfile.getUser() != null ? staffProfile.getUser().getName() : null;
                 yield new OwnerInfo(ownerId, staffProfile.getUuid(), ownerName);
             }
             case PARENT -> {
                 Parent parent = parentRepository.findById(ownerId)
                         .orElseThrow(() -> new ResourceNotFoundException("Parent not found with ID: " + ownerId));
-                tenantAccessGuard.assertCurrentTenantId(parent.getCollege().getId());
+                tenantAccessGuard.assertCurrentTenant(parent.getCollege());
                 String ownerName = parent.getUser() != null ? parent.getUser().getName() : null;
                 yield new OwnerInfo(ownerId, parent.getUuid(), ownerName);
             }

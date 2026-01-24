@@ -6,6 +6,7 @@ import lombok.RequiredArgsConstructor;
 import org.collegemanagement.entity.subscription.SubscriptionPlan;
 import org.collegemanagement.enums.BillingCycle;
 import org.collegemanagement.enums.SubscriptionPlanType;
+import org.collegemanagement.exception.ResourceNotFoundException;
 import org.collegemanagement.repositories.SubscriptionPlanRepository;
 import org.collegemanagement.services.SubscriptionPlanService;
 import org.springframework.stereotype.Service;
@@ -36,7 +37,7 @@ public class SubscriptionPlanServiceImpl
         return planRepository
                 .findByCodeAndBillingCycleAndActiveTrue(planType, billingCycle)
                 .orElseThrow(() ->
-                        new IllegalStateException(
+                        new ResourceNotFoundException(
                                 "Active plan not found: " + planType + " / " + billingCycle
                         )
                 );

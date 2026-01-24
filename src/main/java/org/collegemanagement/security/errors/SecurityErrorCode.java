@@ -18,7 +18,9 @@ public enum SecurityErrorCode implements ErrorCodeContract {
     INVALID_CREDENTIALS(HttpStatus.UNAUTHORIZED, "Invalid credentials"),
     RESOURCE_NOT_FOUND(HttpStatus.NOT_FOUND, "Resource not found"),
     RESOURCE_CONFLICT(HttpStatus.CONFLICT, "Resource conflict"),
-    INVALID_TOKEN(HttpStatus.UNAUTHORIZED, "Invalid or malformed access token");
+    INVALID_TOKEN(HttpStatus.UNAUTHORIZED, "Invalid or malformed access token"),
+    MALFORMED_REQUEST(HttpStatus.BAD_REQUEST,"Invalid request body format"),
+    TARGET_TENANT_REQUIRED(HttpStatus.UNAUTHORIZED,"Target tenant required"),;
 
     private final HttpStatus status;
     private final String defaultMessage;

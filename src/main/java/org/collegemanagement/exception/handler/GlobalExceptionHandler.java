@@ -9,7 +9,10 @@ import org.collegemanagement.exception.factory.ApiErrorResponseFactory;
 import org.collegemanagement.security.errors.SecurityErrorCode;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.converter.HttpMessageNotReadableException;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.authentication.BadCredentialsException;
+import org.springframework.security.authorization.AuthorizationDeniedException;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.oauth2.jwt.BadJwtException;
 import org.springframework.security.oauth2.server.resource.InvalidBearerTokenException;
@@ -71,18 +74,6 @@ public class GlobalExceptionHandler {
         return ResponseEntity.badRequest().body(response);
     }
 
-    @ExceptionHandler(Exception.class)
-    public ResponseEntity<ApiResponse<?>> handleUnexpected(Exception ex) {
-
-        log.error("Unexpected error", ex);
-
-        ApiResponse<?> response =
-                ApiErrorResponseFactory.from(ErrorCode.INTERNAL_SERVER_ERROR);
-
-        return ResponseEntity
-                .status(ErrorCode.INTERNAL_SERVER_ERROR.getStatus())
-                .body(response);
-    }
 
     @ExceptionHandler(UsernameNotFoundException.class)
     public ResponseEntity<ApiResponse<?>> handleUsernameNotFound(
@@ -130,6 +121,53 @@ public class GlobalExceptionHandler {
 
         return ResponseEntity
                 .status(SecurityErrorCode.INVALID_TOKEN.getStatus())
+                .body(response);
+    }
+
+
+    @ExceptionHandler({
+            AuthorizationDeniedException.class,
+            AccessDeniedException.class
+    })
+    public ResponseEntity<ApiResponse<?>> handleAuthorizationDenied(
+            RuntimeException ex
+    ) {
+
+        ApiResponse<?> response =
+                ApiErrorResponseFactory.from(
+                        SecurityErrorCode.ACCESS_DENIED, ex.getMessage()
+                );
+
+        return ResponseEntity
+                .status(SecurityErrorCode.ACCESS_DENIED.getStatus())
+                .body(response);
+    }
+
+    @ExceptionHandler({
+            HttpMessageNotReadableException.class,
+    })
+    public ResponseEntity<ApiResponse<?>> handleHttpMessageNotReadableException(
+            RuntimeException ex
+    ) {
+        ApiResponse<?> response =
+                ApiErrorResponseFactory.from(SecurityErrorCode.MALFORMED_REQUEST);
+
+        return ResponseEntity
+                .status(SecurityErrorCode.MALFORMED_REQUEST.getStatus())
+                .body(response);
+    }
+
+
+    @ExceptionHandler(Exception.class)
+    public ResponseEntity<ApiResponse<?>> handleUnexpected(Exception ex) {
+
+        log.error("Unexpected error", ex);
+
+        ApiResponse<?> response =
+                ApiErrorResponseFactory.from(ErrorCode.INTERNAL_SERVER_ERROR);
+
+        return ResponseEntity
+                .status(ErrorCode.INTERNAL_SERVER_ERROR.getStatus())
                 .body(response);
     }
 
