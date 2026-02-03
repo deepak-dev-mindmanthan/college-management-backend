@@ -7,7 +7,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.collegemanagement.api.response.ApiResponse;
 import org.collegemanagement.dto.admission.AdmissionResponse;
-import org.collegemanagement.services.AdmissionService;
+import org.collegemanagement.services.admin.AdminAdmissionService;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -21,7 +21,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
-@RequestMapping("/api/v1/admin/accountants")
+@RequestMapping("/api/v1/admin/admissions")
 @RequiredArgsConstructor
 @Tag(
         name = "Admin Admission Management",
@@ -29,7 +29,7 @@ import org.springframework.web.bind.annotation.RestController;
 )
 public class AdminAdmissionController {
 
-    private final AdmissionService admissionService;
+    private final AdminAdmissionService adminAdmissionService;
 
 
     @Operation(
@@ -49,7 +49,7 @@ public class AdminAdmissionController {
             @RequestParam(defaultValue = "DESC") Sort.Direction direction
     ) {
         Pageable pageable = PageRequest.of(page, size, Sort.by(direction, sortBy));
-        Page<AdmissionResponse> admissions = admissionService.getAllAdmissions(pageable);
+        Page<AdmissionResponse> admissions = adminAdmissionService.getAllAdmissions(pageable);
         return ResponseEntity.ok(ApiResponse.success(admissions, "Admission applications retrieved successfully", HttpStatus.OK.value()));
     }
 }

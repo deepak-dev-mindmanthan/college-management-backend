@@ -1,9 +1,9 @@
 package org.collegemanagement.security.handler;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import jakarta.annotation.Nullable;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import lombok.NonNull;
 import org.collegemanagement.exception.factory.ApiErrorResponseFactory;
 import org.collegemanagement.security.errors.SecurityErrorCode;
 import org.springframework.http.MediaType;
@@ -24,7 +24,7 @@ public class CustomAuthenticationEntryPoint implements AuthenticationEntryPoint 
     }
 
     @Override
-    public void commence(@Nullable HttpServletRequest request, HttpServletResponse response, @Nullable AuthenticationException ex) throws IOException {
+    public void commence(@NonNull HttpServletRequest request, HttpServletResponse response, @NonNull AuthenticationException ex) throws IOException {
 
         if (response.isCommitted()) {
             return;

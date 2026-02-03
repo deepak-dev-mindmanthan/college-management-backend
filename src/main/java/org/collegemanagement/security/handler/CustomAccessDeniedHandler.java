@@ -1,9 +1,9 @@
 package org.collegemanagement.security.handler;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import jakarta.annotation.Nullable;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import lombok.NonNull;
 import org.collegemanagement.exception.factory.ApiErrorResponseFactory;
 import org.collegemanagement.security.errors.SecurityErrorCode;
 import org.springframework.http.MediaType;
@@ -23,9 +23,9 @@ public class CustomAccessDeniedHandler implements AccessDeniedHandler {
     }
 
     @Override
-    public void handle(@Nullable HttpServletRequest request,
+    public void handle(@NonNull HttpServletRequest request,
                        HttpServletResponse response,
-                       @Nullable AccessDeniedException ex) throws IOException {
+                       @NonNull AccessDeniedException ex) throws IOException {
 
         if (response.isCommitted()) {
             return;
