@@ -53,6 +53,10 @@ public class Payment extends BaseEntity {
     @Column(name = "payment_date")
     private Instant paymentDate;
 
+
+    @Column(name = "failure_reason", length = 255)
+    private String failureReason;
+
     /**
      * Defaults
      */

@@ -275,25 +275,50 @@ public class SubscriptionServiceImpl implements SubscriptionService {
     @Override
     @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'COLLEGE_ADMIN')")
     public SubscriptionResponse activateSubscription(String subscriptionUuid) {
-
+        // Admin activation uses tenant guard
         Subscription subscription = getSubscriptionForTenant(subscriptionUuid);
 
+        return activateSubscriptionInternal(subscription, getCurrentUserEmail());
+
+    }
+
+    @Override
+    public SubscriptionResponse activateSubscriptionFromSystem(String subscriptionUuid, Long tenantId) {
+        Subscription subscription = subscriptionRepository.findByUuidAndCollegeId(subscriptionUuid, tenantId)
+                .orElseThrow(() -> new ResourceNotFoundException(
+                        "Subscription not found: " + subscriptionUuid
+                ));
+
+        return activateSubscriptionInternal(subscription, "SYSTEM_WEBHOOK");
+    }
+
+
+    private SubscriptionResponse activateSubscriptionInternal(
+            Subscription subscription,
+            String activatedBy
+    ) {
+
         if (subscription.getStatus() != SubscriptionStatus.PENDING) {
-            throw new ResourceConflictException("Only PENDING subscriptions can be activated");
+            throw new ResourceConflictException(
+                    "Only PENDING subscriptions can be activated"
+            );
         }
 
         SubscriptionStatus previousStatus = subscription.getStatus();
+
         subscription.setStatus(SubscriptionStatus.ACTIVE);
         subscription = subscriptionRepository.save(subscription);
 
+        //  History log
         logSubscriptionHistory(
                 subscription,
                 previousStatus,
                 SubscriptionStatus.ACTIVE,
                 "Subscription activated",
-                getCurrentUserEmail()
+                activatedBy
         );
 
+        // Email notification
         try {
             emailService.sendSubscriptionActivatedEmail(
                     subscription.getCollege().getEmail(),
@@ -307,6 +332,8 @@ public class SubscriptionServiceImpl implements SubscriptionService {
 
         return mapToResponse(subscription);
     }
+
+
 
     /* ============================================================
        READ APIs

@@ -8,16 +8,17 @@ import org.collegemanagement.dto.payment.InitiatePaymentRequest;
 import org.collegemanagement.dto.payment.PaymentResponse;
 import org.collegemanagement.entity.finance.Invoice;
 import org.collegemanagement.entity.finance.Payment;
-import org.collegemanagement.enums.PaymentGateway;
-import org.collegemanagement.enums.PaymentStatus;
+import org.collegemanagement.entity.subscription.Subscription;
+import org.collegemanagement.enums.*;
 import org.collegemanagement.exception.ResourceNotFoundException;
 import org.collegemanagement.repositories.InvoiceRepository;
 import org.collegemanagement.repositories.PaymentRepository;
 import org.collegemanagement.security.tenant.TenantAccessGuard;
 import org.collegemanagement.services.EmailService;
-import org.collegemanagement.services.PaymentGatewayService;
 import org.collegemanagement.services.PaymentService;
 import org.collegemanagement.services.SubscriptionService;
+import org.collegemanagement.services.gateway.PaymentGatewayClient;
+import org.collegemanagement.services.gateway.PaymentGatewayFactory;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -26,6 +27,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.time.Instant;
+import java.time.ZoneOffset;
 
 @Service
 @RequiredArgsConstructor
@@ -36,43 +38,36 @@ public class PaymentServiceImpl implements PaymentService {
     private final PaymentRepository paymentRepository;
     private final InvoiceRepository invoiceRepository;
     private final TenantAccessGuard tenantAccessGuard;
-    private final PaymentGatewayService paymentGatewayService;
+    private final PaymentGatewayFactory paymentGatewayFactory;
     private final SubscriptionService subscriptionService;
     private final EmailService emailService;
 
     /* =========================================================
-         INITIATE PAYMENT (ORDER CREATION)
-         ========================================================= */
+       INITIATE PAYMENT (ORDER CREATION)
+       ========================================================= */
     @Override
     @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'COLLEGE_ADMIN')")
     public PaymentResponse initiatePayment(InitiatePaymentRequest request) {
 
         Long collegeId = tenantAccessGuard.getCurrentTenantId();
 
-        Invoice invoice = invoiceRepository
-                .findByUuidAndCollegeId(request.getInvoiceUuid(), collegeId)
-                .orElseThrow(() ->
-                        new ResourceNotFoundException("Invoice not found")
-                );
+        Invoice invoice = fetchInvoice(request.getInvoiceUuid(), collegeId);
 
-        Payment payment = Payment.builder()
-                .invoice(invoice)
-                .gateway(request.getGateway())
-                .amount(invoice.getOutStandingAmount())
-                .status(PaymentStatus.PENDING)
-                .build();
+        Payment payment = createPendingPayment(invoice, request.getGateway());
 
-        payment = paymentRepository.save(payment);
+        PaymentGatewayClient gatewayClient =
+                paymentGatewayFactory.getClient(request.getGateway());
 
         String gatewayOrderId =
-                paymentGatewayService.createOrder(payment, payment.getAmount());
+                gatewayClient.createOrder(invoice.getInvoiceNumber(), payment.getAmount());
 
         payment.setGatewayOrderId(gatewayOrderId);
+        payment.setGatewayTransactionId("transaction_gw_txn_id_from_payload");
+
         paymentRepository.save(payment);
 
         return mapToResponse(payment);
     }
-
 
     /* =========================================================
        CONFIRM PAYMENT (WEBHOOK / CALLBACK)
@@ -80,56 +75,122 @@ public class PaymentServiceImpl implements PaymentService {
     @Override
     public void confirmPayment(ConfirmPaymentRequest request) {
 
-        Payment payment = paymentRepository
-                .findByGatewayOrderId(request.getGatewayOrderId())
-                .orElseThrow(() ->
-                        new ResourceNotFoundException("Payment not found")
-                );
+        Payment payment = fetchPaymentByGatewayOrderId(request.getGatewayOrderId());
 
-        // Idempotency
+        // Idempotent webhook handling
         if (payment.getStatus() == PaymentStatus.SUCCESS) {
+            log.info("Payment already processed successfully. Skipping.");
             return;
         }
+
+        updatePaymentFromWebhook(payment, request);
+
+        if (payment.getStatus() == PaymentStatus.SUCCESS) {
+            processSuccessfulPayment(payment);
+        } else if (payment.getStatus() == PaymentStatus.FAILED) {
+            processFailedPayment(payment, request.getFailureReason());
+        }
+    }
+
+    /* =========================================================
+       SUCCESS PAYMENT FLOW
+       ========================================================= */
+    private void processSuccessfulPayment(Payment payment) {
+
+        Invoice invoice = payment.getInvoice();
+        Long collegeId = invoice.getCollege().getId();
+
+        markInvoicePaidIfFullySettled(invoice, collegeId);
+
+        activateSubscriptionIfNeeded(invoice);
+
+        sendPaymentSuccessEmail(invoice, payment);
+    }
+
+    /* =========================================================
+       FAILED PAYMENT FLOW
+       ========================================================= */
+    private void processFailedPayment(Payment payment, String reason) {
+
+        payment.setFailureReason(reason != null ? reason : "Payment failed");
+        paymentRepository.save(payment);
+
+        sendPaymentFailureEmail(payment, reason);
+
+        log.warn("Payment FAILED | OrderId={} | Reason={}",
+                payment.getGatewayOrderId(), reason);
+    }
+
+    /* =========================================================
+       HELPERS (SINGLE RESPONSIBILITY)
+       ========================================================= */
+
+    private Invoice fetchInvoice(String uuid, Long collegeId) {
+        return invoiceRepository.findByUuidAndCollegeId(uuid, collegeId)
+                .orElseThrow(() -> new ResourceNotFoundException("Invoice not found"));
+    }
+
+    private Payment fetchPaymentByGatewayOrderId(String gatewayOrderId) {
+        return paymentRepository.findByGatewayOrderId(gatewayOrderId)
+                .orElseThrow(() -> new ResourceNotFoundException("Payment not found"));
+    }
+
+    private Payment createPendingPayment(Invoice invoice, PaymentGateway gateway) {
+
+        Payment payment = Payment.builder()
+                .invoice(invoice)
+                .gateway(gateway)
+                .amount(invoice.getOutStandingAmount())
+                .status(PaymentStatus.PENDING)
+                .build();
+
+        return paymentRepository.save(payment);
+    }
+
+    private void updatePaymentFromWebhook(Payment payment, ConfirmPaymentRequest request) {
 
         payment.setGatewayTransactionId(request.getGatewayTransactionId());
         payment.setStatus(request.getStatus());
         payment.setPaymentDate(Instant.now());
 
         paymentRepository.save(payment);
+    }
 
-        if (request.getStatus() == PaymentStatus.SUCCESS) {
-            handleSuccess(payment);
-        } else if (request.getStatus() == PaymentStatus.FAILED) {
-            handleFailure(payment, request.getFailureReason());
+    private void markInvoicePaidIfFullySettled(Invoice invoice, Long collegeId) {
+
+        BigDecimal totalPaid = paymentRepository
+                .findByInvoiceIdAndCollegeId(invoice.getId(), collegeId)
+                .stream()
+                .filter(p -> p.getStatus() == PaymentStatus.SUCCESS)
+                .map(Payment::getAmount)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+        if (totalPaid.compareTo(invoice.getAmount()) >= 0) {
+
+            invoice.setStatus(InvoiceStatus.PAID);
+            invoice.setPaidAt(Instant.now());
+
+            invoiceRepository.save(invoice);
+
+            log.info("Invoice {} marked as PAID", invoice.getInvoiceNumber());
         }
     }
 
-    /* =========================================================
-       SUCCESS HANDLER
-       ========================================================= */
-    private void handleSuccess(Payment payment) {
+    private void activateSubscriptionIfNeeded(Invoice invoice) {
 
-        Invoice invoice = payment.getInvoice();
-        Long collegeId = invoice.getCollege().getId();
+        Subscription subscription = invoice.getSubscription();
 
-        BigDecimal totalPaid =
-                paymentRepository.findByInvoiceIdAndCollegeId(invoice.getId(), collegeId)
-                        .stream()
-                        .filter(p -> p.getStatus() == PaymentStatus.SUCCESS)
-                        .map(Payment::getAmount)
-                        .reduce(BigDecimal.ZERO, BigDecimal::add);
+        if (subscription != null &&
+                subscription.getStatus() == SubscriptionStatus.PENDING) {
 
-        if (totalPaid.compareTo(invoice.getAmount()) >= 0) {
-            invoice.setStatus(org.collegemanagement.enums.InvoiceStatus.PAID);
-            invoice.setPaidAt(Instant.now());
-            invoiceRepository.save(invoice);
+            log.info("Activating subscription {} after successful payment", subscription.getUuid());
+
+            // Webhook-safe internal method
+            subscriptionService.activateSubscriptionFromSystem(subscription.getUuid(), invoice.getCollege().getId());
         }
+    }
 
-        if (invoice.getSubscription() != null) {
-            subscriptionService.activateSubscription(
-                    invoice.getSubscription().getUuid()
-            );
-        }
+    private void sendPaymentSuccessEmail(Invoice invoice, Payment payment) {
 
         emailService.sendPaymentConfirmationEmail(
                 invoice.getCollege().getEmail(),
@@ -140,12 +201,10 @@ public class PaymentServiceImpl implements PaymentService {
         );
     }
 
+    private void sendPaymentFailureEmail(Payment payment, String reason) {
 
-    /* =========================================================
-      FAILURE HANDLER
-      ========================================================= */
-    private void handleFailure(Payment payment, String reason) {
         Invoice invoice = payment.getInvoice();
+
         emailService.sendPaymentFailureEmail(
                 invoice.getCollege().getEmail(),
                 invoice.getCollege().getName(),
@@ -154,116 +213,59 @@ public class PaymentServiceImpl implements PaymentService {
         );
     }
 
-
-    /**
-     * Helper method to update invoice status when payment is successful.
-     * <p>
-     * Payment Success Block:
-     * ======================
-     * This method handles the business logic when a payment succeeds:
-     * - Calculates total paid amount
-     * - Marks invoice as PAID if fully paid
-     * - Automatically activates subscription if payment is for subscription invoice
-     * - Sends confirmation email
-     */
-    private void updateInvoiceOnPaymentSuccess(Payment payment, Invoice invoice, Long collegeId) {
-        // Check if invoice is fully paid
-        BigDecimal totalPaid = paymentRepository.findByInvoiceIdAndCollegeId(invoice.getId(), collegeId)
-                .stream()
-                .filter(p -> p.getStatus() == PaymentStatus.SUCCESS)
-                .map(Payment::getAmount)
-                .reduce(BigDecimal.ZERO, BigDecimal::add);
-
-        totalPaid = totalPaid.add(payment.getAmount());
-
-        if (totalPaid.compareTo(invoice.getAmount()) >= 0) {
-            invoice.setStatus(org.collegemanagement.enums.InvoiceStatus.PAID);
-            invoice.setPaidAt(java.time.Instant.now());
-            invoiceRepository.save(invoice);
-
-            // Payment Success Block - Automatic Subscription Activation:
-            // ===========================================================
-            // Automatically activate subscription if payment is for subscription invoice
-            try {
-                org.collegemanagement.entity.subscription.Subscription subscription = invoice.getSubscription();
-                if (subscription != null && subscription.getStatus() == org.collegemanagement.enums.SubscriptionStatus.PENDING) {
-                    log.info("Auto-activating subscription {} after successful payment", subscription.getUuid());
-                    subscriptionService.activateSubscription(subscription.getUuid());
-
-                    // Send activation email notification
-                    try {
-                        emailService.sendSubscriptionActivatedEmail(
-                                invoice.getCollege().getEmail(),
-                                invoice.getCollege().getName(),
-                                subscription.getPlan().getCode().name(),
-                                subscription.getExpiresAt()
-                        );
-                    } catch (Exception e) {
-                        log.warn("Failed to send subscription activation email: {}", e.getMessage());
-                    }
-                }
-            } catch (Exception e) {
-                log.error("Failed to auto-activate subscription after payment: {}", e.getMessage());
-                // Don't fail the payment process if activation fails
-            }
-
-            // Send payment confirmation email
-            try {
-                emailService.sendPaymentConfirmationEmail(
-                        invoice.getCollege().getEmail(),
-                        invoice.getCollege().getName(),
-                        invoice.getInvoiceNumber(),
-                        payment.getAmount(),
-                        payment.getGatewayTransactionId()
-                );
-            } catch (Exception e) {
-                log.warn("Failed to send payment confirmation email: {}", e.getMessage());
-            }
-
-            // TODO: Integrate payment gateway
-            // - Additional gateway-specific post-payment workflows can be added here
-            // - Gateway webhook processing
-            // - Third-party integrations
-        }
-    }
-
     /* =========================================================
-        READ APIS
-        ========================================================= */
+       READ APIs (Unchanged, Clean)
+       ========================================================= */
+
     @Override
     @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'COLLEGE_ADMIN')")
     public PaymentResponse getPaymentByUuid(String uuid) {
+
         Long collegeId = tenantAccessGuard.getCurrentTenantId();
-        Payment payment = paymentRepository
-                .findByUuidAndCollegeId(uuid, collegeId)
+
+        Payment payment = paymentRepository.findByUuidAndCollegeId(uuid, collegeId)
                 .orElseThrow(() -> new ResourceNotFoundException("Payment not found"));
+
         return mapToResponse(payment);
     }
 
     @Override
     @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'COLLEGE_ADMIN')")
     public Page<PaymentResponse> getPaymentsByInvoiceUuid(String invoiceUuid, Pageable pageable) {
+
         Long collegeId = tenantAccessGuard.getCurrentTenantId();
-        Invoice invoice = invoiceRepository
-                .findByUuidAndCollegeId(invoiceUuid, collegeId)
-                .orElseThrow(() -> new ResourceNotFoundException("Invoice not found"));
-        return paymentRepository
-                .findByInvoiceIdAndCollegeId(invoice.getId(), collegeId, pageable)
+
+        Invoice invoice = fetchInvoice(invoiceUuid, collegeId);
+
+        return paymentRepository.findByInvoiceIdAndCollegeId(invoice.getId(), collegeId, pageable)
                 .map(this::mapToResponse);
     }
 
     @Override
     @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'COLLEGE_ADMIN')")
     public Page<PaymentResponse> getPaymentsByStatus(PaymentStatus status, Pageable pageable) {
-        return paymentRepository.findByStatusAndCollegeId(status,tenantAccessGuard.getCurrentTenantId(), pageable).map(this::mapToResponse);
+        return paymentRepository
+                .findByStatusAndCollegeId(status, tenantAccessGuard.getCurrentTenantId(), pageable)
+                .map(this::mapToResponse);
     }
 
     @Override
     @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'COLLEGE_ADMIN')")
     public Page<PaymentResponse> getPaymentsByGateway(PaymentGateway gateway, Pageable pageable) {
-        return paymentRepository.findByGatewayAndCollegeId(gateway,tenantAccessGuard.getCurrentTenantId(), pageable).map(this::mapToResponse);
+        return paymentRepository
+                .findByGatewayAndCollegeId(gateway, tenantAccessGuard.getCurrentTenantId(), pageable)
+                .map(this::mapToResponse);
     }
 
+    @Override
+    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'COLLEGE_ADMIN')")
+    public Page<PaymentResponse> getAllPayments(Pageable pageable) {
+
+        Long collegeId = tenantAccessGuard.getCurrentTenantId();
+
+        return paymentRepository.findAllByCollegeId(collegeId, pageable)
+                .map(this::mapToResponse);
+    }
 
     @Override
     @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'COLLEGE_ADMIN')")
@@ -276,61 +278,38 @@ public class PaymentServiceImpl implements PaymentService {
         return mapToResponse(payment);
     }
 
-    @Override
-    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'COLLEGE_ADMIN')")
-    public Page<PaymentResponse> getAllPayments(Pageable pageable) {
-        Long collegeId = tenantAccessGuard.getCurrentTenantId();
-
-        return paymentRepository.findAllByCollegeId(collegeId, pageable)
-                .map(this::mapToResponse);
-    }
-
-
+    /* =========================================================
+       PAYMENT SUMMARY
+       ========================================================= */
     @Override
     @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'COLLEGE_ADMIN')")
     public PaymentSummary getPaymentSummary() {
+
         Long collegeId = tenantAccessGuard.getCurrentTenantId();
 
-        long totalPayments = paymentRepository.count();
-        long successfulPayments = paymentRepository.countByStatusAndCollegeId(PaymentStatus.SUCCESS, collegeId);
-        long pendingPayments = paymentRepository.countByStatusAndCollegeId(PaymentStatus.PENDING, collegeId);
-        long failedPayments = paymentRepository.countByStatusAndCollegeId(PaymentStatus.FAILED, collegeId);
+        long successfulPayments =
+                paymentRepository.countByStatusAndCollegeId(PaymentStatus.SUCCESS, collegeId);
 
-        // Calculate amounts (simplified - in production, use aggregation queries)
-        Page<Payment> allPayments = paymentRepository.findAllByCollegeId(collegeId, Pageable.unpaged());
-        BigDecimal totalAmount = allPayments.stream()
-                .map(Payment::getAmount)
-                .reduce(BigDecimal.ZERO, BigDecimal::add);
+        long pendingPayments =
+                paymentRepository.countByStatusAndCollegeId(PaymentStatus.PENDING, collegeId);
 
-        BigDecimal successfulAmount = allPayments.stream()
-                .filter(p -> p.getStatus() == PaymentStatus.SUCCESS)
-                .map(Payment::getAmount)
-                .reduce(BigDecimal.ZERO, BigDecimal::add);
-
-        BigDecimal pendingAmount = allPayments.stream()
-                .filter(p -> p.getStatus() == PaymentStatus.PENDING)
-                .map(Payment::getAmount)
-                .reduce(BigDecimal.ZERO, BigDecimal::add);
-
-        BigDecimal failedAmount = allPayments.stream()
-                .filter(p -> p.getStatus() == PaymentStatus.FAILED)
-                .map(Payment::getAmount)
-                .reduce(BigDecimal.ZERO, BigDecimal::add);
+        long failedPayments =
+                paymentRepository.countByStatusAndCollegeId(PaymentStatus.FAILED, collegeId);
 
         return PaymentSummary.builder()
-                .totalPayments(totalPayments)
                 .successfulPayments(successfulPayments)
                 .pendingPayments(pendingPayments)
                 .failedPayments(failedPayments)
-                .totalAmount(totalAmount)
-                .successfulAmount(successfulAmount)
-                .pendingAmount(pendingAmount)
-                .failedAmount(failedAmount)
                 .build();
     }
 
+    /* =========================================================
+       RESPONSE MAPPER
+       ========================================================= */
     private PaymentResponse mapToResponse(Payment payment) {
+
         Invoice invoice = payment.getInvoice();
+
         return PaymentResponse.builder()
                 .uuid(payment.getUuid())
                 .invoiceUuid(invoice.getUuid())
@@ -341,10 +320,8 @@ public class PaymentServiceImpl implements PaymentService {
                 .amount(payment.getAmount())
                 .status(payment.getStatus())
                 .paymentDate(payment.getPaymentDate())
-                .createdAt(payment.getCreatedAt() != null ? payment.getCreatedAt().atZone(java.time.ZoneId.systemDefault()).toInstant() : null)
-                .updatedAt(payment.getUpdatedAt() != null ? payment.getUpdatedAt().atZone(java.time.ZoneId.systemDefault()).toInstant() : null)
-
+                .createdAt(payment.getCreatedAt().toInstant(ZoneOffset.UTC))
+                .updatedAt(payment.getUpdatedAt().toInstant(ZoneOffset.UTC))
                 .build();
     }
 }
-

@@ -1,41 +1,30 @@
 package org.collegemanagement.services.impl;
 
-import lombok.extern.slf4j.Slf4j;
-import org.collegemanagement.enums.PaymentGateway;
-import org.collegemanagement.services.PaymentWebhookService;
-import org.springframework.stereotype.Service;
-
-/**
- * Default implementation of PaymentWebhookService.
-
- * This is a placeholder implementation for webhook handling.
-
- * TODO: Integrate payment gateway webhooks
- * Replace this implementation with actual webhook handlers:
- * - RazorpayWebhookService for RAZORPAY webhooks
- * - StripeWebhookService for STRIPE webhooks
- * - Use factory pattern to select appropriate handler based on gateway
- */
-
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.collegemanagement.dto.payment.ConfirmPaymentRequest;
+import org.collegemanagement.enums.PaymentGateway;
 import org.collegemanagement.enums.PaymentStatus;
-import org.collegemanagement.services.PaymentGatewayService;
 import org.collegemanagement.services.PaymentService;
+import org.collegemanagement.services.PaymentWebhookService;
+import org.collegemanagement.services.gateway.PaymentGatewayClient;
+import org.collegemanagement.services.gateway.PaymentGatewayFactory;
+import org.springframework.stereotype.Service;
 
 @Service
 @RequiredArgsConstructor
 @Slf4j
 public class PaymentWebhookServiceImpl implements PaymentWebhookService {
 
-    private final PaymentGatewayService gatewayService;
+    private final PaymentGatewayFactory paymentGatewayFactory;
     private final PaymentService paymentService;
 
     @Override
     public void handleRazorpay(String payload, String signature) {
 
-        if (!gatewayService.verifyWebhookSignature(
-                PaymentGateway.RAZORPAY, payload, signature)) {
+        PaymentGatewayClient paymentGatewayClient = paymentGatewayFactory.getClient(PaymentGateway.RAZORPAY);
+
+        if (!paymentGatewayClient.verifySignature(payload, signature)) {
             throw new SecurityException("Invalid Razorpay webhook signature");
         }
 
@@ -57,8 +46,9 @@ public class PaymentWebhookServiceImpl implements PaymentWebhookService {
     @Override
     public void handleStripe(String payload, String signature) {
 
-        if (!gatewayService.verifyWebhookSignature(
-                PaymentGateway.STRIPE, payload, signature)) {
+        PaymentGatewayClient paymentGatewayClient = paymentGatewayFactory.getClient(PaymentGateway.STRIPE);
+
+        if (!paymentGatewayClient.verifySignature(payload, signature)) {
             throw new SecurityException("Invalid Stripe webhook signature");
         }
 
@@ -82,10 +72,10 @@ public class PaymentWebhookServiceImpl implements PaymentWebhookService {
     // -----------------------
 
     private String extractGatewayOrderId(String payload) {
-        return "gw_order_id_from_payload";
+        return "order_gw_order_id_from_payload";
     }
 
     private String extractTransactionId(String payload) {
-        return "gw_txn_id_from_payload";
+        return "transaction_gw_txn_id_from_payload";
     }
 }

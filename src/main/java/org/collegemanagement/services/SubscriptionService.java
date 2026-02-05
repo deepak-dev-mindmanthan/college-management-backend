@@ -73,6 +73,13 @@ public interface SubscriptionService {
      */
     SubscriptionResponse activateSubscription(String subscriptionUuid);
 
+
+    /**
+     * Activate subscription (after payment)
+     */
+    SubscriptionResponse activateSubscriptionFromSystem(String subscriptionUuid,Long tenantId);
+
+
     /**
      * Check if subscription is active
      */
