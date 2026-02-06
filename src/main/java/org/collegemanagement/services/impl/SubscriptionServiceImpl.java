@@ -304,6 +304,9 @@ public class SubscriptionServiceImpl implements SubscriptionService {
             );
         }
 
+        log.info("Activating subscription {} after successful payment", subscription.getUuid());
+
+
         SubscriptionStatus previousStatus = subscription.getStatus();
 
         subscription.setStatus(SubscriptionStatus.ACTIVE);

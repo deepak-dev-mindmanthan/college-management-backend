@@ -8,17 +8,20 @@ import org.collegemanagement.dto.payment.InitiatePaymentRequest;
 import org.collegemanagement.dto.payment.PaymentResponse;
 import org.collegemanagement.entity.finance.Invoice;
 import org.collegemanagement.entity.finance.Payment;
-import org.collegemanagement.entity.subscription.Subscription;
-import org.collegemanagement.enums.*;
+import org.collegemanagement.entity.tenant.College;
+import org.collegemanagement.enums.InvoiceStatus;
+import org.collegemanagement.enums.PaymentGateway;
+import org.collegemanagement.enums.PaymentStatus;
+import org.collegemanagement.events.payments.PaymentFailedEvent;
+import org.collegemanagement.events.payments.PaymentSuccessEvent;
 import org.collegemanagement.exception.ResourceNotFoundException;
 import org.collegemanagement.repositories.InvoiceRepository;
 import org.collegemanagement.repositories.PaymentRepository;
 import org.collegemanagement.security.tenant.TenantAccessGuard;
-import org.collegemanagement.services.EmailService;
 import org.collegemanagement.services.PaymentService;
-import org.collegemanagement.services.SubscriptionService;
 import org.collegemanagement.services.gateway.PaymentGatewayClient;
 import org.collegemanagement.services.gateway.PaymentGatewayFactory;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -39,8 +42,8 @@ public class PaymentServiceImpl implements PaymentService {
     private final InvoiceRepository invoiceRepository;
     private final TenantAccessGuard tenantAccessGuard;
     private final PaymentGatewayFactory paymentGatewayFactory;
-    private final SubscriptionService subscriptionService;
-    private final EmailService emailService;
+    private final ApplicationEventPublisher eventPublisher;
+
 
     /* =========================================================
        INITIATE PAYMENT (ORDER CREATION)
@@ -100,12 +103,19 @@ public class PaymentServiceImpl implements PaymentService {
         Invoice invoice = payment.getInvoice();
         Long collegeId = invoice.getCollege().getId();
 
+        // Core payment responsibility (KEEP)
         markInvoicePaidIfFullySettled(invoice, collegeId);
 
-        activateSubscriptionIfNeeded(invoice);
-
-        sendPaymentSuccessEmail(invoice, payment);
+        // Publish event (REPLACE business logic)
+        eventPublisher.publishEvent(
+                new PaymentSuccessEvent(
+                        payment.getInvoice().getSubscription().getUuid(),
+                        payment.getUuid(),
+                        collegeId
+                )
+        );
     }
+
 
     /* =========================================================
        FAILED PAYMENT FLOW
@@ -115,14 +125,26 @@ public class PaymentServiceImpl implements PaymentService {
         payment.setFailureReason(reason != null ? reason : "Payment failed");
         paymentRepository.save(payment);
 
-        sendPaymentFailureEmail(payment, reason);
+        College college = payment.getInvoice().getCollege();
+        // Publish failure event
+        eventPublisher.publishEvent(
+                new PaymentFailedEvent(
+                        payment.getUuid(),
+                        college.getId(),
+                        college.getEmail(),
+                        college.getName(),
+                        payment.getInvoice().getInvoiceNumber(),
+                        reason
+                )
+        );
 
         log.warn("Payment FAILED | OrderId={} | Reason={}",
                 payment.getGatewayOrderId(), reason);
     }
 
+
     /* =========================================================
-       HELPERS (SINGLE RESPONSIBILITY)
+       HELPERS
        ========================================================= */
 
     private Invoice fetchInvoice(String uuid, Long collegeId) {
@@ -176,45 +198,9 @@ public class PaymentServiceImpl implements PaymentService {
         }
     }
 
-    private void activateSubscriptionIfNeeded(Invoice invoice) {
-
-        Subscription subscription = invoice.getSubscription();
-
-        if (subscription != null &&
-                subscription.getStatus() == SubscriptionStatus.PENDING) {
-
-            log.info("Activating subscription {} after successful payment", subscription.getUuid());
-
-            // Webhook-safe internal method
-            subscriptionService.activateSubscriptionFromSystem(subscription.getUuid(), invoice.getCollege().getId());
-        }
-    }
-
-    private void sendPaymentSuccessEmail(Invoice invoice, Payment payment) {
-
-        emailService.sendPaymentConfirmationEmail(
-                invoice.getCollege().getEmail(),
-                invoice.getCollege().getName(),
-                invoice.getInvoiceNumber(),
-                payment.getAmount(),
-                payment.getGatewayTransactionId()
-        );
-    }
-
-    private void sendPaymentFailureEmail(Payment payment, String reason) {
-
-        Invoice invoice = payment.getInvoice();
-
-        emailService.sendPaymentFailureEmail(
-                invoice.getCollege().getEmail(),
-                invoice.getCollege().getName(),
-                invoice.getInvoiceNumber(),
-                reason != null ? reason : "Payment failed"
-        );
-    }
 
     /* =========================================================
-       READ APIs (Unchanged, Clean)
+       READ APIs
        ========================================================= */
 
     @Override
