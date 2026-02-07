@@ -7,7 +7,7 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import java.util.List;
+import java.time.LocalDate;
 
 @Data
 @Builder
@@ -20,5 +20,7 @@ public class AssignFeeToStudentRequest {
 
     @NotNull(message = "Fee structure UUID is required")
     private String feeStructureUuid;
+
+    private LocalDate dueDate;
 }
 

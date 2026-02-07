@@ -11,6 +11,7 @@ import org.springframework.data.repository.query.Param;
 import java.math.BigDecimal;
 import java.util.List;
 import java.util.Optional;
+import java.time.LocalDate;
 
 public interface StudentFeeRepository extends JpaRepository<StudentFee, Long> {
 
@@ -126,6 +127,30 @@ public interface StudentFeeRepository extends JpaRepository<StudentFee, Long> {
     long countByStatusAndCollegeId(@Param("status") FeeStatus status, @Param("collegeId") Long collegeId);
 
     /**
+     * Find all overdue fees by due date (used for reminders)
+     */
+    @Query("""
+            SELECT sf FROM StudentFee sf
+            WHERE sf.status = 'OVERDUE'
+            AND sf.dueAmount > 0
+            AND sf.dueDate < :today
+            """)
+    List<StudentFee> findOverdueByDueDate(@Param("today") LocalDate today);
+
+    /**
+     * Find overdue fees needing reminders (throttled)
+     */
+    @Query("""
+            SELECT sf FROM StudentFee sf
+            WHERE sf.status = 'OVERDUE'
+            AND sf.dueAmount > 0
+            AND sf.dueDate < :today
+            AND (sf.lastOverdueNotifiedAt IS NULL OR sf.lastOverdueNotifiedAt < :cutoff)
+            """)
+    List<StudentFee> findOverdueForReminder(@Param("today") LocalDate today,
+                                            @Param("cutoff") java.time.Instant cutoff);
+
+    /**
      * Calculate total due amount by college ID
      */
     @Query("""
@@ -147,9 +172,22 @@ public interface StudentFeeRepository extends JpaRepository<StudentFee, Long> {
      * Calculate total amount by college ID
      */
     @Query("""
-            SELECT COALESCE(SUM(sf.totalAmount), 0) FROM StudentFee sf
+            SELECT COALESCE(SUM(COALESCE(sf.netAmount, sf.totalAmount)), 0) FROM StudentFee sf
             WHERE sf.student.college.id = :collegeId
             """)
     BigDecimal calculateTotalAmountByCollegeId(@Param("collegeId") Long collegeId);
+
+    /**
+     * Mark overdue fees by due date
+     */
+    @org.springframework.data.jpa.repository.Modifying
+    @Query("""
+            UPDATE StudentFee sf
+            SET sf.status = :status
+            WHERE sf.dueDate < :today
+            AND sf.dueAmount > 0
+            AND sf.status IN ('PENDING', 'PARTIALLY_PAID')
+            """)
+    int markOverdueByDueDate(@Param("status") FeeStatus status, @Param("today") java.time.LocalDate today);
 }
 

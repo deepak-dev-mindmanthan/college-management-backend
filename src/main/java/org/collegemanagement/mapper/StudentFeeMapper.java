@@ -2,12 +2,16 @@ package org.collegemanagement.mapper;
 
 import org.collegemanagement.dto.fees.*;
 import org.collegemanagement.entity.fees.FeeComponent;
+import org.collegemanagement.entity.fees.FeeInstallment;
+import org.collegemanagement.entity.fees.FeeInstallmentTemplate;
 import org.collegemanagement.entity.fees.FeePayment;
 import org.collegemanagement.entity.fees.FeeStructure;
 import org.collegemanagement.entity.fees.StudentFee;
+import org.collegemanagement.entity.fees.FeeAdjustment;
 import org.collegemanagement.enums.FeeStatus;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -45,6 +49,30 @@ public final class StudentFeeMapper {
                 .collect(Collectors.toList());
     }
 
+    public static FeeInstallmentTemplateResponse toInstallmentTemplateResponse(FeeInstallmentTemplate installment) {
+        if (installment == null) {
+            return null;
+        }
+
+        return FeeInstallmentTemplateResponse.builder()
+                .uuid(installment.getUuid())
+                .name(installment.getName())
+                .amount(installment.getAmount())
+                .dueDate(installment.getDueDate())
+                .createdAt(installment.getCreatedAt())
+                .updatedAt(installment.getUpdatedAt())
+                .build();
+    }
+
+    public static List<FeeInstallmentTemplateResponse> toInstallmentTemplateResponseList(List<FeeInstallmentTemplate> installments) {
+        if (installments == null) {
+            return List.of();
+        }
+        return installments.stream()
+                .map(StudentFeeMapper::toInstallmentTemplateResponse)
+                .collect(Collectors.toList());
+    }
+
     /**
      * Convert FeeStructure entity to FeeStructureResponse
      */
@@ -55,6 +83,8 @@ public final class StudentFeeMapper {
 
         List<FeeComponent> components = feeStructure.getComponents() != null ?
                 feeStructure.getComponents().stream().toList() : List.of();
+        List<FeeInstallmentTemplate> installments = feeStructure.getInstallmentTemplates() != null ?
+                feeStructure.getInstallmentTemplates().stream().toList() : List.of();
 
         return FeeStructureResponse.builder()
                 .uuid(feeStructure.getUuid())
@@ -63,6 +93,8 @@ public final class StudentFeeMapper {
                 .section(feeStructure.getClassRoom() != null ? feeStructure.getClassRoom().getSection() : null)
                 .totalAmount(feeStructure.getTotalAmount())
                 .components(toComponentResponseList(components))
+                .dueDate(feeStructure.getDueDate())
+                .installments(toInstallmentTemplateResponseList(installments))
                 .createdAt(feeStructure.getCreatedAt())
                 .updatedAt(feeStructure.getUpdatedAt())
                 .build();
@@ -90,8 +122,13 @@ public final class StudentFeeMapper {
                 .section(feeStructure != null && feeStructure.getClassRoom() != null ?
                         feeStructure.getClassRoom().getSection() : null)
                 .totalAmount(studentFee.getTotalAmount())
+                .netAmount(studentFee.getNetAmount() != null ? studentFee.getNetAmount() : studentFee.getTotalAmount())
+                .discountAmount(studentFee.getDiscountAmount() != null ? studentFee.getDiscountAmount() : BigDecimal.ZERO)
+                .waiverAmount(studentFee.getWaiverAmount() != null ? studentFee.getWaiverAmount() : BigDecimal.ZERO)
+                .penaltyAmount(studentFee.getPenaltyAmount() != null ? studentFee.getPenaltyAmount() : BigDecimal.ZERO)
                 .paidAmount(studentFee.getPaidAmount())
                 .dueAmount(studentFee.getDueAmount())
+                .dueDate(studentFee.getDueDate())
                 .status(studentFee.getStatus())
                 .createdAt(studentFee.getCreatedAt())
                 .updatedAt(studentFee.getUpdatedAt())
@@ -130,6 +167,7 @@ public final class StudentFeeMapper {
                 .paymentMode(feePayment.getPaymentMode())
                 .transactionId(feePayment.getTransactionId())
                 .paymentDate(feePayment.getPaymentDate())
+                .receiptNumber(feePayment.getReceipt() != null ? feePayment.getReceipt().getReceiptNumber() : null)
                 .createdAt(feePayment.getCreatedAt())
                 .updatedAt(feePayment.getUpdatedAt())
                 .build();
@@ -147,10 +185,63 @@ public final class StudentFeeMapper {
                 .collect(Collectors.toList());
     }
 
+    public static FeeInstallmentResponse toFeeInstallmentResponse(FeeInstallment installment) {
+        if (installment == null) {
+            return null;
+        }
+
+        return FeeInstallmentResponse.builder()
+                .uuid(installment.getUuid())
+                .studentFeeUuid(installment.getStudentFee() != null ? installment.getStudentFee().getUuid() : null)
+                .name(installment.getName())
+                .amount(installment.getAmount())
+                .paidAmount(installment.getPaidAmount())
+                .dueAmount(installment.getDueAmount())
+                .status(installment.getStatus())
+                .dueDate(installment.getDueDate())
+                .createdAt(installment.getCreatedAt())
+                .updatedAt(installment.getUpdatedAt())
+                .build();
+    }
+
+    public static List<FeeInstallmentResponse> toFeeInstallmentResponseList(List<FeeInstallment> installments) {
+        if (installments == null) {
+            return List.of();
+        }
+        return installments.stream()
+                .map(StudentFeeMapper::toFeeInstallmentResponse)
+                .collect(Collectors.toList());
+    }
+
+    public static FeeAdjustmentResponse toFeeAdjustmentResponse(FeeAdjustment adjustment) {
+        if (adjustment == null) {
+            return null;
+        }
+
+        return FeeAdjustmentResponse.builder()
+                .uuid(adjustment.getUuid())
+                .studentFeeUuid(adjustment.getStudentFee() != null ? adjustment.getStudentFee().getUuid() : null)
+                .type(adjustment.getType())
+                .amount(adjustment.getAmount())
+                .reason(adjustment.getReason())
+                .createdAt(adjustment.getCreatedAt())
+                .updatedAt(adjustment.getUpdatedAt())
+                .build();
+    }
+
+    public static List<FeeAdjustmentResponse> toFeeAdjustmentResponseList(List<FeeAdjustment> adjustments) {
+        if (adjustments == null) {
+            return List.of();
+        }
+        return adjustments.stream()
+                .map(StudentFeeMapper::toFeeAdjustmentResponse)
+                .collect(Collectors.toList());
+    }
+
     /**
      * Calculate fee status based on paid and due amounts
      */
-    public static FeeStatus calculateFeeStatus(BigDecimal totalAmount, BigDecimal paidAmount, BigDecimal dueAmount) {
+    public static FeeStatus calculateFeeStatus(BigDecimal totalAmount, BigDecimal paidAmount, BigDecimal dueAmount, LocalDate dueDate) {
         if (paidAmount == null) {
             paidAmount = BigDecimal.ZERO;
         }
@@ -162,15 +253,26 @@ public final class StudentFeeMapper {
         }
 
         if (paidAmount.compareTo(BigDecimal.ZERO) == 0) {
+            if (isOverdue(dueDate, dueAmount)) {
+                return FeeStatus.OVERDUE;
+            }
             return FeeStatus.PENDING;
         } else if (paidAmount.compareTo(totalAmount) >= 0) {
             return FeeStatus.PAID;
         } else if (dueAmount.compareTo(BigDecimal.ZERO) > 0) {
-            // Check if overdue (can be enhanced with due date logic)
+            if (isOverdue(dueDate, dueAmount)) {
+                return FeeStatus.OVERDUE;
+            }
             return FeeStatus.PARTIALLY_PAID;
         } else {
             return FeeStatus.PARTIALLY_PAID;
         }
+    }
+
+    private static boolean isOverdue(LocalDate dueDate, BigDecimal dueAmount) {
+        return dueDate != null && dueAmount != null
+                && dueAmount.compareTo(BigDecimal.ZERO) > 0
+                && dueDate.isBefore(LocalDate.now());
     }
 }
 

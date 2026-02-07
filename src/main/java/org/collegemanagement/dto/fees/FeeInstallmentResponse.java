@@ -4,28 +4,26 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import org.collegemanagement.enums.PaymentMode;
+import org.collegemanagement.enums.InstallmentStatus;
 
 import java.math.BigDecimal;
-import java.time.Instant;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 @Data
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class FeePaymentResponse {
+public class FeeInstallmentResponse {
 
     private String uuid;
     private String studentFeeUuid;
-    private String studentUuid;
-    private String studentName;
+    private String name;
     private BigDecimal amount;
-    private PaymentMode paymentMode;
-    private String transactionId;
-    private Instant paymentDate;
-    private String receiptNumber;
+    private BigDecimal paidAmount;
+    private BigDecimal dueAmount;
+    private InstallmentStatus status;
+    private LocalDate dueDate;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 }
-

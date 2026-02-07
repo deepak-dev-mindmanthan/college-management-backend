@@ -14,8 +14,9 @@ spring:
   mail:
     host: smtp.gmail.com
     port: 587
-    username: dummy-email@example.com
-    password: dummy-password
+    username: ${MAIL_USERNAME:dummy-email@example.com}
+    password: ${MAIL_PASSWORD:dummy-password}
+    default-encoding: UTF-8
     properties:
       mail:
         smtp:
@@ -25,10 +26,17 @@ spring:
           connectiontimeout: 5000
           timeout: 5000
           writetimeout: 5000
+        mime:
+          charset: UTF-8
         from:
           name: College Management System
     # TODO: Replace with actual SMTP credentials
     # For production, use environment variables or secure configuration
+
+fees:
+  overdue:
+    cron: "0 30 1 * * ?"
+    reminder-hours: 24
 
 
 

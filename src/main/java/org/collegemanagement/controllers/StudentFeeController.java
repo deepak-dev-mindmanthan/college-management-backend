@@ -56,7 +56,7 @@ public class StudentFeeController {
             @Valid @RequestBody CreateFeeStructureRequest request
     ) {
         FeeStructureResponse feeStructure = studentFeeService.createFeeStructure(request);
-        return ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse.success(feeStructure, "Fee structure created successfully",HttpStatus.CONTINUE.value()));
+        return ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse.success(feeStructure, "Fee structure created successfully",HttpStatus.CREATED.value()));
     }
 
     @Operation(
@@ -379,6 +379,49 @@ public class StudentFeeController {
         Pageable pageable = PageRequest.of(page, size);
         Page<FeePaymentResponse> feePayments = studentFeeService.getFeePaymentsByDateRange(startDate, endDate, pageable);
         return ResponseEntity.ok(ApiResponse.success(feePayments, "Fee payments retrieved successfully",HttpStatus.OK.value()));
+    }
+
+    @Operation(
+            summary = "Get fee installments for a student fee",
+            description = "Retrieves all installments for a specific student fee. Accessible by all authenticated users."
+    )
+    @GetMapping("/student-fees/{studentFeeUuid}/installments")
+    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'COLLEGE_ADMIN', 'ACCOUNTANT', 'TEACHER', 'STUDENT')")
+    public ResponseEntity<ApiResponse<List<FeeInstallmentResponse>>> getFeeInstallmentsByStudentFee(
+            @Parameter(description = "UUID of the student fee")
+            @PathVariable String studentFeeUuid
+    ) {
+        List<FeeInstallmentResponse> installments = studentFeeService.getFeeInstallmentsByStudentFeeUuid(studentFeeUuid);
+        return ResponseEntity.ok(ApiResponse.success(installments, "Fee installments retrieved successfully", HttpStatus.OK.value()));
+    }
+
+    @Operation(
+            summary = "Apply fee adjustment",
+            description = "Applies a discount, waiver, or penalty to a student fee. Requires COLLEGE_ADMIN, SUPER_ADMIN, or ACCOUNTANT role."
+    )
+    @PostMapping("/student-fees/{studentFeeUuid}/adjustments")
+    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'COLLEGE_ADMIN', 'ACCOUNTANT')")
+    public ResponseEntity<ApiResponse<FeeAdjustmentResponse>> applyFeeAdjustment(
+            @Parameter(description = "UUID of the student fee")
+            @PathVariable String studentFeeUuid,
+            @Valid @RequestBody FeeAdjustmentRequest request
+    ) {
+        FeeAdjustmentResponse adjustment = studentFeeService.applyFeeAdjustment(studentFeeUuid, request);
+        return ResponseEntity.ok(ApiResponse.success(adjustment, "Fee adjustment applied successfully", HttpStatus.OK.value()));
+    }
+
+    @Operation(
+            summary = "Get fee adjustments",
+            description = "Retrieves all adjustments for a specific student fee. Accessible by all authenticated users."
+    )
+    @GetMapping("/student-fees/{studentFeeUuid}/adjustments")
+    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'COLLEGE_ADMIN', 'ACCOUNTANT', 'TEACHER', 'STUDENT')")
+    public ResponseEntity<ApiResponse<List<FeeAdjustmentResponse>>> getFeeAdjustments(
+            @Parameter(description = "UUID of the student fee")
+            @PathVariable String studentFeeUuid
+    ) {
+        List<FeeAdjustmentResponse> adjustments = studentFeeService.getFeeAdjustmentsByStudentFeeUuid(studentFeeUuid);
+        return ResponseEntity.ok(ApiResponse.success(adjustments, "Fee adjustments retrieved successfully", HttpStatus.OK.value()));
     }
 
     // ========== Summary and Reports Endpoints ==========

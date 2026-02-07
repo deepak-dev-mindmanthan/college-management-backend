@@ -43,11 +43,29 @@ public class StudentFee extends BaseEntity {
     @Column(name = "total_amount", nullable = false)
     private BigDecimal totalAmount;
 
+    @Column(name = "net_amount")
+    private BigDecimal netAmount;
+
+    @Column(name = "discount_amount")
+    private BigDecimal discountAmount = BigDecimal.ZERO;
+
+    @Column(name = "waiver_amount")
+    private BigDecimal waiverAmount = BigDecimal.ZERO;
+
+    @Column(name = "penalty_amount")
+    private BigDecimal penaltyAmount = BigDecimal.ZERO;
+
     @Column(name = "paid_amount", nullable = false)
     private BigDecimal paidAmount = BigDecimal.ZERO;
 
     @Column(name = "due_amount", nullable = false)
     private BigDecimal dueAmount;
+
+    @Column(name = "due_date")
+    private java.time.LocalDate dueDate;
+
+    @Column(name = "last_overdue_notified_at")
+    private java.time.Instant lastOverdueNotifiedAt;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 20)
@@ -59,5 +77,21 @@ public class StudentFee extends BaseEntity {
             cascade = CascadeType.ALL
     )
     private Set<FeePayment> payments = new HashSet<>();
+
+    @OneToMany(
+            mappedBy = "studentFee",
+            fetch = FetchType.LAZY,
+            cascade = CascadeType.ALL,
+            orphanRemoval = true
+    )
+    private Set<FeeInstallment> installments = new HashSet<>();
+
+    @OneToMany(
+            mappedBy = "studentFee",
+            fetch = FetchType.LAZY,
+            cascade = CascadeType.ALL,
+            orphanRemoval = true
+    )
+    private Set<FeeAdjustment> adjustments = new HashSet<>();
 }
 

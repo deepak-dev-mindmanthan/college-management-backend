@@ -43,6 +43,9 @@ public class FeeStructure extends BaseEntity {
     @Column(name = "total_amount", nullable = false)
     private BigDecimal totalAmount;
 
+    @Column(name = "due_date")
+    private java.time.LocalDate dueDate;
+
     @OneToMany(
             mappedBy = "feeStructure",
             fetch = FetchType.LAZY,
@@ -50,5 +53,13 @@ public class FeeStructure extends BaseEntity {
             orphanRemoval = true
     )
     private Set<FeeComponent> components = new HashSet<>();
+
+    @OneToMany(
+            mappedBy = "feeStructure",
+            fetch = FetchType.LAZY,
+            cascade = CascadeType.ALL,
+            orphanRemoval = true
+    )
+    private Set<FeeInstallmentTemplate> installmentTemplates = new HashSet<>();
 }
 

@@ -12,6 +12,12 @@ import java.time.Instant;
 @Entity
 @Table(
         name = "fee_payments",
+        uniqueConstraints = {
+                @UniqueConstraint(
+                        name = "uk_fee_payment_transaction",
+                        columnNames = {"transaction_id"}
+                )
+        },
         indexes = {
                 @Index(name = "idx_fee_payment_student_fee", columnList = "student_fee_id"),
                 @Index(name = "idx_fee_payment_txn", columnList = "transaction_id")
@@ -40,5 +46,8 @@ public class FeePayment extends BaseEntity {
 
     @Column(name = "payment_date", nullable = false)
     private Instant paymentDate;
+
+    @OneToOne(mappedBy = "feePayment", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
+    private FeeReceipt receipt;
 }
 

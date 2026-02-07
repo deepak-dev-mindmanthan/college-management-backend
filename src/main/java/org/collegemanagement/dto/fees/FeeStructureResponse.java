@@ -6,6 +6,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -21,6 +22,8 @@ public class FeeStructureResponse {
     private String section;
     private BigDecimal totalAmount;
     private List<FeeComponentResponse> components;
+    private LocalDate dueDate;
+    private List<FeeInstallmentTemplateResponse> installments;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 }

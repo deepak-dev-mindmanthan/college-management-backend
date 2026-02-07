@@ -126,6 +126,21 @@ public interface StudentFeeService {
      */
     Page<FeePaymentResponse> getFeePaymentsByDateRange(Instant startDate, Instant endDate, Pageable pageable);
 
+    /**
+     * Get fee installments for a student fee
+     */
+    List<FeeInstallmentResponse> getFeeInstallmentsByStudentFeeUuid(String studentFeeUuid);
+
+    /**
+     * Apply an adjustment (discount/waiver/penalty) to a student fee
+     */
+    FeeAdjustmentResponse applyFeeAdjustment(String studentFeeUuid, FeeAdjustmentRequest request);
+
+    /**
+     * Get adjustments for a student fee
+     */
+    List<FeeAdjustmentResponse> getFeeAdjustmentsByStudentFeeUuid(String studentFeeUuid);
+
     // ========== Summary and Reports ==========
 
     /**

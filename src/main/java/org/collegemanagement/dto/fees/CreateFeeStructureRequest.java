@@ -9,6 +9,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.util.List;
+import java.time.LocalDate;
 
 @Data
 @Builder
@@ -22,5 +23,10 @@ public class CreateFeeStructureRequest {
     @NotEmpty(message = "At least one fee component is required")
     @Valid
     private List<FeeComponentRequest> components;
+
+    private LocalDate dueDate;
+
+    @Valid
+    private List<FeeInstallmentTemplateRequest> installments;
 }
 
